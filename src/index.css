@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    direction: rtl;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Cairo', 'Inter', sans-serif;
+    background-color: #0d0d0d;
+    color: #f5f5f5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #C9A84C;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e8c56a;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply bg-gold-500 hover:bg-gold-400 text-dark-900 font-bold py-2.5 px-5 rounded-xl
+           transition-all duration-200 shadow-gold hover:shadow-gold-lg
+           active:scale-95 cursor-pointer border-0 inline-flex items-center gap-2;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-dark-600 text-gold-400 font-semibold py-2.5 px-5 rounded-xl
+           transition-all duration-200 border border-gold-500/30 hover:border-gold-500
+           active:scale-95 cursor-pointer inline-flex items-center gap-2;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-500 text-white font-semibold py-2.5 px-5 rounded-xl
+           transition-all duration-200 active:scale-95 cursor-pointer inline-flex items-center gap-2;
+  }
+
+  .card {
+    @apply bg-dark-700 border border-dark-500/50 rounded-2xl p-6
+           shadow-lg hover:border-gold-500/30 transition-all duration-300;
+  }
+
+  .card-gold {
+    @apply bg-gradient-to-br from-gold-500/10 to-gold-700/5
+           border border-gold-500/30 rounded-2xl p-6 shadow-gold;
+  }
+
+  .input-field {
+    @apply w-full bg-dark-600 border border-dark-400 rounded-xl px-4 py-3
+           text-white placeholder-dark-300 focus:outline-none focus:border-gold-500
+           focus:ring-1 focus:ring-gold-500/50 transition-all duration-200
+           font-cairo text-sm;
+  }
+
+  .label {
+    @apply block text-dark-200 text-sm font-semibold mb-1.5;
+  }
+
+  .badge-active {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold
+           bg-emerald-500/15 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .badge-expired {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold
+           bg-red-500/15 text-red-400 border border-red-500/30;
+  }
+
+  .badge-gold {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold
+           bg-gold-500/15 text-gold-400 border border-gold-500/30;
+  }
+
+  .table-row {
+    @apply border-b border-dark-600 hover:bg-dark-600/50 transition-colors duration-150;
+  }
+
+  .table-header {
+    @apply text-dark-300 text-xs font-semibold uppercase tracking-wider py-3 px-4 text-right;
+  }
+
+  .table-cell {
+    @apply py-4 px-4 text-sm text-dark-100;
+  }
+
+  .stat-card {
+    @apply card flex flex-col gap-3 relative overflow-hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-gold-500/5 to-transparent opacity-0
+           hover:opacity-100 transition-opacity duration-300 pointer-events-none;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply bg-dark-700 border border-dark-500 rounded-2xl shadow-2xl w-full max-w-lg
+           max-h-[90vh] overflow-y-auto animate-fade-in;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-dark-200 font-semibold
+           hover:bg-gold-500/10 hover:text-gold-400 transition-all duration-200 cursor-pointer;
+  }
+
+  .sidebar-link.active {
+    @apply bg-gold-500/15 text-gold-400 border-r-2 border-gold-500;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold text-white mb-6;
+  }
+
+  .section-title {
+    @apply text-lg font-bold text-gold-400 mb-4;
+  }
+}
+
+@layer utilities {
+  .font-cairo {
+    font-family: 'Cairo', sans-serif;
+  }
+
+  .text-gold {
+    color: #C9A84C;
+  }
+
+  .bg-gold-gradient {
+    background: linear-gradient(135deg, #C9A84C 0%, #e8c56a 50%, #C9A84C 100%);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
