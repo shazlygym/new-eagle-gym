@@ -207,6 +207,26 @@ export const en = {
   'settings.offlineReady': 'Ready to use offline',
   'settings.version': 'Version',
 
+  'workout.nothingLogged': 'Nothing logged yet',
+  'workout.nothingLoggedBody': 'Tick off at least one set, or discard this workout.',
+  'workout.history': 'Previous sessions',
+
+  'plates.title': 'Plate calculator',
+  'plates.target': 'Target',
+  'plates.bar': 'Bar',
+  'plates.perSide': 'Load per side',
+  'plates.barOnly': 'Just the bar — no plates needed.',
+  'plates.belowBar': 'That target is lighter than the bar itself.',
+  'plates.remainder': "{amount} per side can't be made from standard plates. The closest you can load is {total}.",
+
+  'exerciseHistory.empty': "You haven't logged this exercise yet.",
+
+  'home.repeat': 'Repeat last workout',
+
+  'session.edit': 'Edit workout',
+  'session.doneEditing': 'Done',
+  'session.addExercise': 'Add exercise',
+
   'install.title': 'Add to your Home Screen',
   'install.body':
     'Tap Share in Safari, then "Add to Home Screen" — the app then opens full screen and keeps your data safer.',

@@ -1,14 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CalendarDays, Dumbbell, Flame, Play, Plus, Weight } from 'lucide-react'
+import { startOfWeek } from 'date-fns'
+import { CalendarDays, Dumbbell, Flame, Play, Plus, RotateCcw, Weight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import InstallHint from '../components/InstallHint'
 import StatCard from '../components/StatCard'
 import {
   getActiveSession,
-  listCompletedSets,
+  listCompletedSetsSince,
   listRoutines,
   listSessions,
+  listSetsForSessions,
+  repeatSession,
   startSession,
 } from '../db/repository'
 import {
@@ -29,16 +32,34 @@ export default function Home() {
 
   const routines = useLiveQuery(() => (profileId ? listRoutines(profileId) : []), [profileId]) ?? []
   const sessions = useLiveQuery(() => (profileId ? listSessions(profileId) : []), [profileId]) ?? []
-  const sets = useLiveQuery(() => (profileId ? listCompletedSets(profileId) : []), [profileId]) ?? []
   const active = useLiveQuery(
     () => (profileId ? getActiveSession(profileId) : undefined),
     [profileId]
   )
 
+  const recent = sessions.filter((s) => s.status === 'done').slice(0, 3)
+  const recentIds = recent.map((s) => s.id)
+
+  // Two scoped reads rather than a lifetime of sets: this week's totals, and the
+  // handful of sessions actually shown below. Home is opened constantly, and
+  // after a couple of years of training the unbounded query is thousands of rows.
+  const weekSets =
+    useLiveQuery(
+      () =>
+        profileId
+          ? listCompletedSetsSince(profileId, startOfWeek(new Date(), { weekStartsOn: 6 }).getTime())
+          : [],
+      [profileId]
+    ) ?? []
+  const recentSets =
+    useLiveQuery(
+      () => (recentIds.length ? listSetsForSessions(recentIds) : []),
+      [recentIds.join(',')]
+    ) ?? []
+
   if (!profile) return null
 
   const streak = weekStreak(sessions)
-  const recent = sessions.filter((s) => s.status === 'done').slice(0, 3)
 
   const begin = async (routineId?: string) => {
     // Started from a tap, so this is a valid moment to unlock audio for the
@@ -47,6 +68,13 @@ export default function Home() {
     const existing = await getActiveSession(profile.id)
     // Never orphan a workout in progress — resume it rather than starting a second.
     const sessionId = existing?.id ?? (await startSession(profile.id, routineId))
+    navigate(`/workout/${sessionId}`)
+  }
+
+  const repeat = async (sourceId: string) => {
+    unlockAudio()
+    const existing = await getActiveSession(profile.id)
+    const sessionId = existing?.id ?? (await repeatSession(profile.id, sourceId))
     navigate(`/workout/${sessionId}`)
   }
 
@@ -95,7 +123,7 @@ export default function Home() {
           label={t('common.volume')}
           // Compact from the first thousand, unit in the hint — the tile is a
           // third of a phone wide and can't hold both.
-          value={volumeValue(volumeThisWeek(sessions, sets), units, { compact: true })}
+          value={volumeValue(volumeThisWeek(sessions, weekSets), units, { compact: true })}
           hint={unitLabel(units, locale)}
         />
       </section>
@@ -136,16 +164,39 @@ export default function Home() {
           </ul>
         )}
 
-        <button
-          type="button"
-          onClick={() => begin()}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border
-                     border-dashed border-dark-400 py-3.5 text-sm font-medium
-                     text-gold-500 active:bg-dark-700"
-        >
-          <Plus size={18} />
-          {t('home.startEmpty')}
-        </button>
+        <div className="space-y-2">
+          {recent.length > 0 && (
+            <button
+              type="button"
+              onClick={() => repeat(recent[0].id)}
+              className="card flex w-full items-center gap-3 p-4 text-start active:bg-dark-600"
+            >
+              <div className="rounded-xl bg-dark-600 p-2.5 text-gold-500">
+                <RotateCcw size={18} className="rtl-flip" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-dark-50">{t('home.repeat')}</p>
+                <p className="truncate text-xs text-dark-300">
+                  {(locale === 'ar' ? recent[0].titleAr : recent[0].titleEn) ||
+                    t('workout.untitled')}{' '}
+                  · {formatTimeAgo(recent[0].startedAt, locale)}
+                </p>
+              </div>
+              <Play size={18} className="shrink-0 text-gold-500" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => begin()}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border
+                       border-dashed border-dark-400 py-3.5 text-sm font-medium
+                       text-gold-500 active:bg-dark-700"
+          >
+            <Plus size={18} />
+            {t('home.startEmpty')}
+          </button>
+        </div>
       </section>
 
       <section className="px-5 pt-7">
@@ -183,11 +234,12 @@ export default function Home() {
                   </div>
                   <span className="tabular shrink-0 text-sm font-semibold text-gold-500">
                     {formatVolume(
-                      sets
-                        .filter((s) => s.sessionId === session.id)
+                      recentSets
+                        .filter((s) => s.sessionId === session.id && s.done === 1)
                         .reduce((total, s) => total + s.weight * s.reps, 0),
                       units,
-                      locale
+                      locale,
+                      { compact: true }
                     )}
                   </span>
                 </Link>

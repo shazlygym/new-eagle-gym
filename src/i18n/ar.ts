@@ -206,6 +206,26 @@ export const ar: Record<TranslationKey, string> = {
   'settings.offlineReady': 'جاهز للعمل بدون إنترنت',
   'settings.version': 'الإصدار',
 
+  'workout.nothingLogged': 'لم تسجّل أي شيء بعد',
+  'workout.nothingLoggedBody': 'علّم مجموعة واحدة على الأقل كمكتملة، أو ألغِ هذا التمرين.',
+  'workout.history': 'المرات السابقة',
+
+  'plates.title': 'حاسبة الأوزان',
+  'plates.target': 'الوزن المطلوب',
+  'plates.bar': 'البار',
+  'plates.perSide': 'الأوزان لكل جانب',
+  'plates.barOnly': 'البار فقط — لا تحتاج أوزاناً.',
+  'plates.belowBar': 'الوزن المطلوب أقل من وزن البار نفسه.',
+  'plates.remainder': 'لا يمكن تكوين {amount} لكل جانب بالأوزان المتاحة. أقرب وزن يمكن تحميله هو {total}.',
+
+  'exerciseHistory.empty': 'لم تسجّل هذا التمرين بعد.',
+
+  'home.repeat': 'كرر آخر تمرين',
+
+  'session.edit': 'تعديل التمرين',
+  'session.doneEditing': 'تم',
+  'session.addExercise': 'إضافة تمرين',
+
   'install.title': 'أضف التطبيق للشاشة الرئيسية',
   'install.body':
     'اضغط زر المشاركة في سفاري، ثم "إضافة إلى الشاشة الرئيسية" — سيفتح التطبيق بملء الشاشة وتصبح بياناتك أكثر أماناً.',

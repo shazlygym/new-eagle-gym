@@ -1,17 +1,22 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Clock, Layers, Weight } from 'lucide-react'
+import { Clock, Layers, Plus, Weight } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import ConfirmDialog from '../components/ConfirmDialog'
+import ExercisePicker from '../components/ExercisePicker'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
+import WorkoutExerciseCard from '../components/WorkoutExerciseCard'
 import { sessionStats } from '../db/queries'
 import {
+  addExerciseToSession,
+  addSet,
   deleteSession,
   getSession,
   listExercises,
   listSessionExercises,
   listSetsForSession,
+  updateSession,
 } from '../db/repository'
 import { exerciseName, useT } from '../i18n'
 import {
@@ -31,6 +36,10 @@ export default function SessionDetail() {
   const { profile, units } = useActiveProfile()
 
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // Forgetting to log a set, or fat-fingering a weight, is routine. Without an
+  // edit mode the only remedy was deleting the whole workout.
+  const [editing, setEditing] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const session = useLiveQuery(() => getSession(sessionId), [sessionId])
   const sessionExercises = useLiveQuery(() => listSessionExercises(sessionId), [sessionId]) ?? []
@@ -49,6 +58,16 @@ export default function SessionDetail() {
         title={(locale === 'ar' ? session.titleAr : session.titleEn) || t('workout.untitled')}
         subtitle={formatDay(session.startedAt, locale)}
         onBack="history"
+        action={
+          <button
+            type="button"
+            onClick={() => setEditing(!editing)}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold active:scale-95 transition-transform
+                        ${editing ? 'bg-gold-500 text-dark-900' : 'bg-dark-700 text-dark-100'}`}
+          >
+            {editing ? t('session.doneEditing') : t('common.edit')}
+          </button>
+        }
       />
 
       <div className="space-y-4 px-4 py-4">
@@ -67,49 +86,98 @@ export default function SessionDetail() {
           />
         </div>
 
-        {sessionExercises.map((sessionExercise) => {
-          const rows = sets
-            .filter((s) => s.sessionExerciseId === sessionExercise.id)
-            .sort((a, b) => a.setNumber - b.setNumber)
-          if (rows.length === 0) return null
+        {editing &&
+          profile &&
+          sessionExercises.map((sessionExercise, index) => (
+            // The live workout card already does all of this correctly, down to
+            // renumbering after a delete — reusing it keeps one implementation
+            // of set editing rather than a second, subtly different one.
+            <WorkoutExerciseCard
+              key={sessionExercise.id}
+              sessionExercise={sessionExercise}
+              sets={sets.filter((s) => s.sessionExerciseId === sessionExercise.id)}
+              units={units}
+              profileId={profile.id}
+              onSetCompleted={() => {}} // no rest timer when editing after the fact
+              isFirst={index === 0}
+              isLast={index === sessionExercises.length - 1}
+            />
+          ))}
 
-          return (
-            <article key={sessionExercise.id} className="card overflow-hidden">
-              <h2 className="border-b border-dark-500/50 px-4 py-3 font-semibold text-dark-50">
-                {exerciseName(
-                  exercises.find((e) => e.id === sessionExercise.exerciseId),
-                  locale
-                )}
-              </h2>
-              <ul className="divide-y divide-dark-500/40">
-                {rows.map((row) => (
-                  <li
-                    key={row.id}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-dark-100"
-                  >
-                    <span className="tabular w-6 text-xs font-semibold text-dark-300">
-                      {row.isWarmup ? 'W' : row.setNumber}
-                    </span>
-                    <span className="tabular flex-1">
-                      {formatNumber(toDisplayWeight(row.weight, units))} {unitLabel(units, locale)}
-                    </span>
-                    <span className="tabular text-dark-200">
-                      {row.reps} {t('common.reps')}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          )
-        })}
+        {editing && profile && (
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border
+                       border-dashed border-dark-400 py-3.5 text-sm font-medium
+                       text-gold-500 active:bg-dark-700"
+          >
+            <Plus size={18} />
+            {t('session.addExercise')}
+          </button>
+        )}
 
-        {session.notes && (
+        {!editing &&
+          sessionExercises.map((sessionExercise) => {
+            const rows = sets
+              .filter((s) => s.sessionExerciseId === sessionExercise.id)
+              .sort((a, b) => a.setNumber - b.setNumber)
+            if (rows.length === 0) return null
+
+            return (
+              <article key={sessionExercise.id} className="card overflow-hidden">
+                <h2 className="border-b border-dark-500/50 px-4 py-3 font-semibold text-dark-50">
+                  {exerciseName(
+                    exercises.find((e) => e.id === sessionExercise.exerciseId),
+                    locale
+                  )}
+                </h2>
+                <ul className="divide-y divide-dark-500/40">
+                  {rows.map((row) => (
+                    <li
+                      key={row.id}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-dark-100"
+                    >
+                      <span className="tabular w-6 text-xs font-semibold text-dark-300">
+                        {row.isWarmup ? 'W' : row.setNumber}
+                      </span>
+                      <span className="tabular flex-1">
+                        {formatNumber(toDisplayWeight(row.weight, units))}{' '}
+                        {unitLabel(units, locale)}
+                      </span>
+                      <span className="tabular text-dark-200">
+                        {row.reps} {t('common.reps')}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            )
+          })}
+
+        {editing ? (
           <div className="card p-4">
-            <h2 className="mb-1.5 text-xs font-medium text-dark-200">{t('common.notes')}</h2>
-            <p data-selectable className="whitespace-pre-wrap text-sm text-dark-100">
-              {session.notes}
-            </p>
+            <label className="mb-2 block text-xs font-medium text-dark-200" htmlFor="notes">
+              {t('common.notes')}
+            </label>
+            <textarea
+              id="notes"
+              rows={2}
+              defaultValue={session.notes ?? ''}
+              onBlur={(event) => updateSession(sessionId, { notes: event.target.value })}
+              placeholder={t('workout.notesPlaceholder')}
+              className="field resize-none"
+            />
           </div>
+        ) : (
+          session.notes && (
+            <div className="card p-4">
+              <h2 className="mb-1.5 text-xs font-medium text-dark-200">{t('common.notes')}</h2>
+              <p data-selectable className="whitespace-pre-wrap text-sm text-dark-100">
+                {session.notes}
+              </p>
+            </div>
+          )
         )}
 
         <button
@@ -120,6 +188,20 @@ export default function SessionDetail() {
           {t('common.delete')}
         </button>
       </div>
+
+      {profile && (
+        <ExercisePicker
+          open={pickerOpen}
+          profileId={profile.id}
+          onClose={() => setPickerOpen(false)}
+          selectedIds={sessionExercises.map((s) => s.exerciseId)}
+          onPick={async (exerciseId) => {
+            setPickerOpen(false)
+            const sessionExerciseId = await addExerciseToSession(sessionId, exerciseId)
+            await addSet(sessionExerciseId)
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDelete}

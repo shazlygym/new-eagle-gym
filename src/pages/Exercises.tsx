@@ -9,6 +9,7 @@ import { createExercise, deleteExercise, listExercises } from '../db/repository'
 import type { MuscleGroup } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
+import { filterExercises } from '../lib/exerciseSearch'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Exercises() {
@@ -23,18 +24,10 @@ export default function Exercises() {
 
   const exercises = useLiveQuery(() => (profileId ? listExercises(profileId) : []), [profileId]) ?? []
 
-  const results = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    return exercises
-      .filter((exercise) => group === 'all' || exercise.muscleGroup === group)
-      .filter(
-        (exercise) =>
-          !needle ||
-          exercise.nameEn.toLowerCase().includes(needle) ||
-          exercise.nameAr.includes(needle)
-      )
-      .sort((a, b) => exerciseName(a, locale).localeCompare(exerciseName(b, locale), locale))
-  }, [exercises, query, group, locale])
+  const results = useMemo(
+    () => filterExercises(exercises, { query, group, locale }),
+    [exercises, query, group, locale]
+  )
 
   if (!profile) return null
 

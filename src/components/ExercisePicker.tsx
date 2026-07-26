@@ -5,6 +5,7 @@ import { createExercise, listExercises } from '../db/repository'
 import type { MuscleGroup } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
+import { filterExercises } from '../lib/exerciseSearch'
 import NewExerciseSheet, { MUSCLE_GROUPS } from './NewExerciseSheet'
 import Sheet from './Sheet'
 
@@ -32,20 +33,10 @@ export default function ExercisePicker({
   const exercises = useLiveQuery(() => listExercises(profileId), [profileId]) ?? []
   const selected = new Set(selectedIds)
 
-  const results = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    return exercises
-      .filter((exercise) => group === 'all' || exercise.muscleGroup === group)
-      // Match against both languages regardless of UI locale — people search
-      // "bench" even with the app in Arabic.
-      .filter(
-        (exercise) =>
-          !needle ||
-          exercise.nameEn.toLowerCase().includes(needle) ||
-          exercise.nameAr.includes(needle)
-      )
-      .sort((a, b) => exerciseName(a, locale).localeCompare(exerciseName(b, locale), locale))
-  }, [exercises, query, group, locale])
+  const results = useMemo(
+    () => filterExercises(exercises, { query, group, locale }),
+    [exercises, query, group, locale]
+  )
 
   return (
     <>

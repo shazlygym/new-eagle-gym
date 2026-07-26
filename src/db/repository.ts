@@ -196,9 +196,14 @@ export async function startSession(profileId: string, routineId?: string): Promi
   if (routine) {
     await Promise.all(
       routine.items.map(async (item) => {
-        const previous = await lastPerformance(profileId, item.exerciseId)
-        const heaviest = previous.filter((s) => s.isWarmup === 0).at(-1)
-        if (heaviest) lastWeights.set(item.exerciseId, heaviest.weight)
+        const working = (await lastPerformance(profileId, item.exerciseId)).filter(
+          (s) => s.isWarmup === 0
+        )
+        if (working.length === 0) return
+        // The top set from last time, not the final one — people often drop the
+        // weight on their last set, and seeding from that walks the load down
+        // week over week.
+        lastWeights.set(item.exerciseId, Math.max(...working.map((s) => s.weight)))
       })
     )
   }
@@ -233,6 +238,61 @@ export async function startSession(profileId: string, routineId?: string): Promi
           reps: item.targetReps,
           isWarmup: 0 as const,
           done: 0 as const,
+        }))
+      )
+    }
+  })
+
+  return session.id
+}
+
+/**
+ * Starts a new session with the same exercises as a past one, seeded with the
+ * weights and reps that were actually performed. Most training is a repeat of
+ * last time with one number nudged, so this is the shortest path to logging.
+ */
+export async function repeatSession(profileId: string, sourceId: string): Promise<string> {
+  const source = await db.sessions.get(sourceId)
+  if (!source) throw new Error(`No session ${sourceId}`)
+
+  const sourceExercises = await listSessionExercises(sourceId)
+  const sourceSets = await db.sets.where('sessionId').equals(sourceId).toArray()
+
+  const session: Session = {
+    id: newId(),
+    profileId,
+    routineId: source.routineId,
+    titleAr: source.titleAr,
+    titleEn: source.titleEn,
+    startedAt: Date.now(),
+    status: 'active',
+  }
+
+  await db.transaction('rw', db.sessions, db.sessionExercises, db.sets, async () => {
+    await db.sessions.add(session)
+
+    for (const sourceExercise of sourceExercises) {
+      const sessionExerciseId = newId()
+      await db.sessionExercises.add({
+        ...sourceExercise,
+        id: sessionExerciseId,
+        sessionId: session.id,
+      })
+
+      const rows = sourceSets
+        .filter((s) => s.sessionExerciseId === sourceExercise.id)
+        .sort((a, b) => a.setNumber - b.setNumber)
+
+      await db.sets.bulkAdd(
+        rows.map((row, index) => ({
+          ...row,
+          id: newId(),
+          sessionExerciseId,
+          sessionId: session.id,
+          setNumber: index + 1,
+          // Targets carry over; the performance is what you're about to do.
+          done: 0 as const,
+          completedAt: undefined,
         }))
       )
     }
@@ -326,6 +386,32 @@ export function listCompletedSets(profileId: string): Promise<SetEntry[]> {
     .toArray()
 }
 
+/**
+ * Completed sets from `since` onward. Screens that only need a recent window —
+ * Home's this-week totals — use this instead of reading a lifetime of sets on
+ * every render.
+ */
+export function listCompletedSetsSince(profileId: string, since: number): Promise<SetEntry[]> {
+  return db.sets
+    .where('[profileId+completedAt]')
+    .between([profileId, since], [profileId, Infinity])
+    .toArray()
+}
+
+export function listSetsForSessions(sessionIds: string[]): Promise<SetEntry[]> {
+  return db.sets.where('sessionId').anyOf(sessionIds).toArray()
+}
+
+/** Every completed set of one exercise, newest first. Powers the history sheet. */
+export function listSetsForExercise(profileId: string, exerciseId: string): Promise<SetEntry[]> {
+  return db.sets
+    .where('[exerciseId+completedAt]')
+    .between([exerciseId, 0], [exerciseId, Infinity])
+    .reverse()
+    .filter((s) => s.profileId === profileId && s.isWarmup === 0)
+    .toArray()
+}
+
 export async function addSet(
   sessionExerciseId: string,
   seed?: { weight?: number; reps?: number }
@@ -360,10 +446,21 @@ export async function updateSet(id: string, patch: Partial<SetEntry>): Promise<v
 }
 
 export async function setSetDone(id: string, done: boolean): Promise<void> {
-  await db.sets.update(id, {
-    done: done ? 1 : 0,
-    completedAt: done ? Date.now() : undefined,
-  })
+  if (!done) {
+    await db.sets.update(id, { done: 0, completedAt: undefined })
+    return
+  }
+
+  const entry = await db.sets.get(id)
+  const session = entry ? await db.sessions.get(entry.sessionId) : undefined
+
+  // Sets added while editing a past workout must be stamped with that workout's
+  // date, not today's. Using Date.now() unconditionally would file them under
+  // the current week and quietly skew every chart and personal record.
+  const completedAt =
+    session && session.status === 'done' ? (session.endedAt ?? session.startedAt) : Date.now()
+
+  await db.sets.update(id, { done: 1, completedAt })
 }
 
 export async function deleteSet(id: string): Promise<void> {

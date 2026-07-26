@@ -42,6 +42,7 @@ export default function Workout() {
   if (session === null || !session || !profile) return <Navigate to="/" replace />
 
   const title = (locale === 'ar' ? session.titleAr : session.titleEn) || t('workout.untitled')
+  const completedCount = sets.filter((s) => s.done === 1).length
 
   const addExercise = async (exerciseId: string) => {
     setPickerOpen(false)
@@ -74,7 +75,9 @@ export default function Workout() {
         action={
           <button
             type="button"
-            onClick={() => setConfirmFinish(true)}
+            // Finishing with nothing ticked off would leave an empty workout in
+            // History and a zero in every chart, so that path discards instead.
+            onClick={() => (completedCount > 0 ? setConfirmFinish(true) : setConfirmDiscard(true))}
             className="rounded-xl bg-gold-500 px-4 py-2 text-sm font-semibold text-dark-900 active:scale-95 transition-transform"
           >
             {t('workout.finish')}
@@ -172,8 +175,8 @@ export default function Workout() {
 
       <ConfirmDialog
         open={confirmDiscard}
-        title={t('workout.discardConfirm')}
-        body={t('common.confirmDelete')}
+        title={completedCount > 0 ? t('workout.discardConfirm') : t('workout.nothingLogged')}
+        body={completedCount > 0 ? t('common.confirmDelete') : t('workout.nothingLoggedBody')}
         confirmLabel={t('common.delete')}
         destructive
         onCancel={() => setConfirmDiscard(false)}

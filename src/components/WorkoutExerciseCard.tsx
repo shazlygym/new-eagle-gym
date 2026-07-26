@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import { Calculator, Check, ChevronDown, ChevronUp, History, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   addSet,
@@ -15,7 +15,9 @@ import type { SessionExercise, SetEntry, Units } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
 import { formatNumber, toDisplayWeight, toStoredWeight, unitLabel } from '../lib/format'
 import ConfirmDialog from './ConfirmDialog'
+import ExerciseHistorySheet from './ExerciseHistorySheet'
 import NumberField from './NumberField'
+import PlateCalculatorSheet from './PlateCalculatorSheet'
 
 interface Props {
   sessionExercise: SessionExercise
@@ -39,6 +41,8 @@ export default function WorkoutExerciseCard({
 }: Props) {
   const { t, locale } = useT()
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [platesOpen, setPlatesOpen] = useState(false)
 
   const exercise = useLiveQuery(
     () => getExercise(sessionExercise.exerciseId),
@@ -62,8 +66,17 @@ export default function WorkoutExerciseCard({
   return (
     <article className="card overflow-hidden">
       <header className="flex items-center gap-2 border-b border-dark-500/50 px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-dark-50">{exerciseName(exercise, locale)}</h3>
+        {/* The name is a button: tapping it answers "what did I lift last time?"
+            without leaving the workout. */}
+        <button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          className="min-w-0 flex-1 text-start active:opacity-60"
+        >
+          <h3 className="truncate font-semibold text-dark-50">
+            {exerciseName(exercise, locale)}
+            <History size={13} className="ms-1.5 inline shrink-0 text-dark-300 align-baseline" />
+          </h3>
           {sessionExercise.targetSets && sessionExercise.targetReps && (
             <p className="text-xs text-dark-300">
               {t('workout.target', {
@@ -72,7 +85,16 @@ export default function WorkoutExerciseCard({
               })}
             </p>
           )}
-        </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPlatesOpen(true)}
+          aria-label={t('plates.title')}
+          className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600"
+        >
+          <Calculator size={17} />
+        </button>
 
         <button
           type="button"
@@ -208,6 +230,31 @@ export default function WorkoutExerciseCard({
           void removeSessionExercise(sessionExercise.id)
         }}
       />
+
+      {historyOpen && (
+        <ExerciseHistorySheet
+          open
+          onClose={() => setHistoryOpen(false)}
+          profileId={profileId}
+          exerciseId={sessionExercise.exerciseId}
+          units={units}
+        />
+      )}
+
+      {/* Mounted only while open so the sheet's internal state is seeded from
+          the current weight each time. Kept mounted, useState would capture
+          whatever the weight was when the card first rendered — normally zero. */}
+      {platesOpen && (
+        <PlateCalculatorSheet
+          open
+          onClose={() => setPlatesOpen(false)}
+          units={units}
+          initialTarget={toDisplayWeight(
+            ordered.reduce((max, entry) => Math.max(max, entry.weight), 0),
+            units
+          )}
+        />
+      )}
     </article>
   )
 }
