@@ -49,7 +49,7 @@ export default function SessionDetail() {
   const exercises =
     useLiveQuery(() => (profile ? listExercises(profile.id) : []), [profile?.id]) ?? []
 
-  if (session === undefined) return <div className="min-h-dvh bg-dark-900" />
+  if (session === undefined) return <div className="min-h-dvh bg-ink-950" />
   if (!session) return <Navigate to="/history" replace />
 
   const stats = sessionStats(session, sets)
@@ -65,7 +65,7 @@ export default function SessionDetail() {
             type="button"
             onClick={() => setEditing(!editing)}
             className={`rounded-xl px-4 py-2 text-sm font-semibold active:scale-95 transition-transform
-                        ${editing ? 'bg-gold-500 text-dark-900' : 'bg-dark-700 text-dark-100'}`}
+                        ${editing ? 'bg-brand-500 text-white' : 'bg-ink-700 text-ink-100'}`}
           >
             {editing ? t('session.doneEditing') : t('common.edit')}
           </button>
@@ -113,8 +113,8 @@ export default function SessionDetail() {
             type="button"
             onClick={() => setPickerOpen(true)}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border
-                       border-dashed border-dark-400 py-3.5 text-sm font-medium
-                       text-gold-500 active:bg-dark-700"
+                       border-dashed border-ink-400 py-3.5 text-sm font-medium
+                       text-brand-500 active:bg-ink-700"
           >
             <Plus size={18} />
             {t('session.addExercise')}
@@ -130,19 +130,19 @@ export default function SessionDetail() {
 
             return (
               <article key={sessionExercise.id} className="card overflow-hidden">
-                <h2 className="border-b border-dark-500/50 px-4 py-3 font-semibold text-dark-50">
+                <h2 className="border-b border-ink-500/50 px-4 py-3 font-semibold text-ink-50">
                   {exerciseName(
                     exercises.find((e) => e.id === sessionExercise.exerciseId),
                     locale
                   )}
                 </h2>
-                <ul className="divide-y divide-dark-500/40">
+                <ul className="divide-y divide-ink-500/40">
                   {rows.map((row) => (
                     <li
                       key={row.id}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-dark-100"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-ink-100"
                     >
-                      <span className="tabular w-6 text-xs font-semibold text-dark-300">
+                      <span className="tabular w-6 text-xs font-semibold text-ink-300">
                         {SET_TYPE_BADGE[row.setType] ?? row.setNumber}
                       </span>
                       <span className="tabular flex-1">
@@ -150,7 +150,7 @@ export default function SessionDetail() {
                           ? `${formatNumber(toDisplayWeight(row.weight, units))} ${unitLabel(units, locale)}`
                           : t('common.empty')}
                       </span>
-                      <span className="tabular text-dark-200">
+                      <span className="tabular text-ink-200">
                         {row.durationSeconds
                           ? formatClock(row.durationSeconds)
                           : `${row.reps} ${t('common.reps')}`}
@@ -164,7 +164,7 @@ export default function SessionDetail() {
 
         {editing ? (
           <div className="card p-4">
-            <label className="mb-2 block text-xs font-medium text-dark-200" htmlFor="notes">
+            <label className="mb-2 block text-xs font-medium text-ink-200" htmlFor="notes">
               {t('common.notes')}
             </label>
             <textarea
@@ -179,8 +179,8 @@ export default function SessionDetail() {
         ) : (
           session.notes && (
             <div className="card p-4">
-              <h2 className="mb-1.5 text-xs font-medium text-dark-200">{t('common.notes')}</h2>
-              <p data-selectable className="whitespace-pre-wrap text-sm text-dark-100">
+              <h2 className="mb-1.5 text-xs font-medium text-ink-200">{t('common.notes')}</h2>
+              <p data-selectable className="whitespace-pre-wrap text-sm text-ink-100">
                 {session.notes}
               </p>
             </div>

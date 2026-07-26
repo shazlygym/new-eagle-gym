@@ -43,7 +43,7 @@ export default function Workout() {
   // returns below — hooks must run unconditionally on every render.
   const elapsed = useElapsed(session?.startedAt)
 
-  if (session === undefined) return <div className="min-h-dvh bg-dark-900" />
+  if (session === undefined) return <div className="min-h-dvh bg-ink-950" />
   if (session === null || !session || !profile) return <Navigate to="/" replace />
 
   const title = (locale === 'ar' ? session.titleAr : session.titleEn) || t('workout.untitled')
@@ -72,7 +72,7 @@ export default function Workout() {
   }
 
   return (
-    <div className="min-h-dvh bg-dark-900">
+    <div className="min-h-dvh bg-ink-950">
       <PageHeader
         title={title}
         // A live stopwatch, not "less than a minute ago" — you want to know how
@@ -85,7 +85,7 @@ export default function Workout() {
             // Finishing with nothing ticked off would leave an empty workout in
             // History and a zero in every chart, so that path discards instead.
             onClick={() => (completedCount > 0 ? setConfirmFinish(true) : setConfirmDiscard(true))}
-            className="rounded-xl bg-gold-500 px-4 py-2 text-sm font-semibold text-dark-900 active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
           >
             {t('workout.finish')}
           </button>
@@ -135,8 +135,8 @@ export default function Workout() {
               type="button"
               onClick={() => setPickerOpen(true)}
               className="flex w-full items-center justify-center gap-2 rounded-2xl border
-                         border-dashed border-dark-400 py-3.5 text-sm font-medium
-                         text-gold-500 active:bg-dark-700"
+                         border-dashed border-ink-400 py-3.5 text-sm font-medium
+                         text-brand-500 active:bg-ink-700"
             >
               <Plus size={18} />
               {t('workout.addExercise')}
@@ -145,7 +145,7 @@ export default function Workout() {
         )}
 
         <div className="card p-4">
-          <label className="mb-2 block text-xs font-medium text-dark-200" htmlFor="session-notes">
+          <label className="mb-2 block text-xs font-medium text-ink-200" htmlFor="session-notes">
             {t('common.notes')}
           </label>
           <textarea

@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Ruler, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CartesianGrid,
   Line,
@@ -17,6 +17,7 @@ import NumberField from '../components/NumberField'
 import PageHeader from '../components/PageHeader'
 import Sheet from '../components/Sheet'
 import { bodyWeightSeries } from '../db/queries'
+import type { BodyStat } from '../db/schema'
 import { deleteBodyStat, listBodyStats, saveBodyStat, today } from '../db/repository'
 import { useT } from '../i18n'
 import {
@@ -58,7 +59,7 @@ export default function Body() {
           <button
             type="button"
             onClick={() => setFormOpen(true)}
-            className="rounded-xl bg-gold-500 px-4 py-2 text-sm font-semibold text-dark-900 active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
           >
             {t('common.add')}
           </button>
@@ -113,10 +114,10 @@ export default function Body() {
               {[...stats].reverse().map((stat) => (
                 <li key={stat.id} className="card flex items-start gap-3 p-4">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-dark-50">
+                    <p className="text-sm font-medium text-ink-50">
                       {formatShortDay(new Date(`${stat.date}T00:00:00`), locale)}
                     </p>
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-dark-300">
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-300">
                       {stat.weight !== undefined && (
                         <span className="tabular">
                           {t('body.weight')}: {formatNumber(toDisplayWeight(stat.weight, units))}{' '}
@@ -140,7 +141,7 @@ export default function Body() {
                     type="button"
                     onClick={() => setPendingDelete(stat.id)}
                     aria-label={t('common.delete')}
-                    className="shrink-0 rounded-lg p-1.5 text-dark-300 active:bg-dark-600"
+                    className="shrink-0 rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -151,15 +152,17 @@ export default function Body() {
         )}
       </div>
 
-      <BodyStatSheet
-        open={formOpen}
-        units={units}
-        onClose={() => setFormOpen(false)}
-        onSave={async (input) => {
-          await saveBodyStat(profile.id, input)
-          setFormOpen(false)
-        }}
-      />
+      {formOpen && (
+        <BodyStatSheet
+          units={units}
+          existingFor={(date) => stats.find((stat) => stat.date === date)}
+          onClose={() => setFormOpen(false)}
+          onSave={async (input) => {
+            await saveBodyStat(profile.id, input)
+            setFormOpen(false)
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={pendingDelete !== null}
@@ -178,13 +181,13 @@ export default function Body() {
 }
 
 function BodyStatSheet({
-  open,
   units,
+  existingFor,
   onClose,
   onSave,
 }: {
-  open: boolean
   units: 'kg' | 'lb'
+  existingFor: (date: string) => BodyStat | undefined
   onClose: () => void
   onSave: (input: {
     date: string
@@ -210,6 +213,28 @@ function BodyStatSheet({
     thighs: 0,
   })
 
+  // Saving writes the whole row for that date, so the form has to start from
+  // what is already stored — otherwise re-opening it on a day you have already
+  // logged and correcting one number would silently wipe the rest.
+  const load = (next: string) => {
+    setDate(next)
+    const row = existingFor(next)
+    setWeight(row?.weight !== undefined ? toDisplayWeight(row.weight, units) : 0)
+    setBodyFat(row?.bodyFat ?? 0)
+    setSizes(
+      Object.fromEntries(MEASUREMENTS.map((key) => [key, row?.[key] ?? 0])) as Record<
+        Measurement,
+        number
+      >
+    )
+  }
+
+  useEffect(() => {
+    load(today())
+    // Runs once when the sheet mounts; it is only mounted while open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Zero means "not measured" rather than a real reading, so it is dropped
   // instead of being written as a data point.
   const orUndefined = (value: number) => (value > 0 ? value : undefined)
@@ -224,17 +249,17 @@ function BodyStatSheet({
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title={t('body.log')}>
+    <Sheet open onClose={onClose} title={t('body.log')}>
       <div className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="stat-date">
+          <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="stat-date">
             {t('body.date')}
           </label>
           <input
             id="stat-date"
             type="date"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={(event) => load(event.target.value)}
             className="field"
           />
         </div>

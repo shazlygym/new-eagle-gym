@@ -8,14 +8,19 @@ import {
   type Profile,
   type Routine,
   type RoutineItem,
+  type Food,
+  type MealEntry,
+  type MealSlot,
   type Program,
+  type SavedMeal,
   type Session,
   type SessionExercise,
   type SetEntry,
   type SetType,
   type Units,
 } from './schema'
-import { SEED_EXERCISES, STARTER_ROUTINES } from './seed'
+import { SEED_FOODS } from './foods'
+import { SEED_EXERCISES } from './seed'
 
 // Every read and write in the app goes through this module — nothing else
 // imports Dexie directly. That keeps the storage engine swappable: adding a
@@ -28,13 +33,16 @@ export function listProfiles(): Promise<Profile[]> {
 }
 
 /**
- * Writes the built-in library on every launch rather than only when it is empty,
- * so exercises added or reclassified in a new app version reach members who
- * already have the app installed. Custom exercises are untouched — they live
- * under the profile id, never SHARED.
+ * Writes the built-in food table on every launch rather than only when empty, so
+ * foods added or corrected in a new app version reach members who already have
+ * the app installed. Custom foods live under the profile id, never SHARED, so
+ * they are never touched.
+ *
+ * There is no exercise equivalent any more — that list is entirely the member's.
  */
-export async function ensureExerciseLibrary(): Promise<void> {
-  await db.exercises.bulkPut(SEED_EXERCISES)
+export async function ensureSeedData(): Promise<void> {
+  await db.foods.bulkPut(SEED_FOODS)
+  if (SEED_EXERCISES.length > 0) await db.exercises.bulkPut(SEED_EXERCISES)
 }
 
 export async function createProfile(input: {
@@ -50,26 +58,9 @@ export async function createProfile(input: {
     createdAt: Date.now(),
   }
 
-  await db.transaction('rw', db.profiles, db.exercises, db.routines, async () => {
+  await db.transaction('rw', db.profiles, db.foods, async () => {
     await db.profiles.add(profile)
-    await ensureExerciseLibrary()
-
-    // Give the profile something to start from — an empty Home screen makes the
-    // app look broken on first launch.
-    const routines: Routine[] = STARTER_ROUTINES.map((r) => ({
-      id: newId(),
-      profileId: profile.id,
-      nameEn: r.nameEn,
-      nameAr: r.nameAr,
-      createdAt: Date.now(),
-      items: r.items.map(([exerciseId, targetSets, targetReps, restSeconds]) => ({
-        exerciseId,
-        targetSets,
-        targetReps,
-        restSeconds,
-      })),
-    }))
-    await db.routines.bulkAdd(routines)
+    await ensureSeedData()
   })
 
   return profile
@@ -91,6 +82,9 @@ export async function deleteProfile(id: string): Promise<void> {
       db.sets,
       db.bodyStats,
       db.exercises,
+      db.foods,
+      db.mealEntries,
+      db.savedMeals,
     ],
     async () => {
       const sessionIds = (await db.sessions.where('profileId').equals(id).primaryKeys()) as string[]
@@ -102,6 +96,9 @@ export async function deleteProfile(id: string): Promise<void> {
       await db.bodyStats.where('profileId').equals(id).delete()
       // Only this profile's custom exercises; the shared library stays.
       await db.exercises.where('profileId').equals(id).delete()
+      await db.foods.where('profileId').equals(id).delete()
+      await db.mealEntries.where('profileId').equals(id).delete()
+      await db.savedMeals.where('profileId').equals(id).delete()
       await db.profiles.delete(id)
     }
   )
@@ -127,13 +124,16 @@ export async function createExercise(
   return exercise
 }
 
+export async function updateExercise(id: string, patch: Partial<Exercise>): Promise<void> {
+  await db.exercises.update(id, patch)
+}
+
 /**
- * Custom exercises only. Past sets keep referencing the id, so history stays
- * readable even after the exercise is gone from the picker.
+ * Past sets keep referencing the id, so history stays readable even after the
+ * exercise is gone from the picker.
  */
 export async function deleteExercise(id: string): Promise<void> {
-  const exercise = await db.exercises.get(id)
-  if (exercise?.isCustom) await db.exercises.delete(id)
+  await db.exercises.delete(id)
 }
 
 // ─── Routines ─────────────────────────────────────────────────────────────────
@@ -751,7 +751,8 @@ export async function listBodyStats(profileId: string): Promise<BodyStat[]> {
 
 export async function saveBodyStat(
   profileId: string,
-  input: Omit<BodyStat, 'id' | 'profileId' | 'createdAt'>
+  input: Omit<BodyStat, 'id' | 'profileId' | 'createdAt'>,
+  options: { merge?: boolean } = {}
 ): Promise<void> {
   // One row per day: logging twice on the same date updates rather than duplicates.
   const existing = await db.bodyStats
@@ -759,12 +760,24 @@ export async function saveBodyStat(
     .equals([profileId, input.date])
     .first()
 
+  // The full form owns the whole row — clearing a field there has to clear it in
+  // storage. The quick weight log only knows about one number, so it merges and
+  // leaves the day's measurements alone.
+  const fields = options.merge ? { ...existing, ...stripUndefined(input) } : input
+
   await db.bodyStats.put({
-    ...input,
+    ...fields,
+    date: input.date,
     id: existing?.id ?? newId(),
     profileId,
     createdAt: existing?.createdAt ?? Date.now(),
   })
+}
+
+function stripUndefined<T extends object>(value: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, v]) => v !== undefined)
+  ) as Partial<T>
 }
 
 export async function deleteBodyStat(id: string): Promise<void> {
@@ -778,13 +791,16 @@ export async function deleteBodyStat(id: string): Promise<void> {
 
 export interface Backup {
   app: 'eagle-gym'
-  /** 1 predates set types and programs; both are accepted on import. */
-  version: 1 | 2
+  /** 1 predates set types and programs, 2 predates nutrition. All are accepted. */
+  version: 1 | 2 | 3
   exportedAt: string
   profiles: Profile[]
   exercises: Exercise[]
   routines: Routine[]
   programs?: Program[]
+  foods?: Food[]
+  mealEntries?: MealEntry[]
+  savedMeals?: SavedMeal[]
   sessions: Session[]
   sessionExercises: SessionExercise[]
   sets: SetEntry[]
@@ -792,27 +808,45 @@ export interface Backup {
 }
 
 export async function exportBackup(): Promise<Backup> {
-  const [profiles, exercises, routines, programs, sessions, sessionExercises, sets, bodyStats] =
-    await Promise.all([
-      db.profiles.toArray(),
-      // Built-ins are recreated from code on import; only custom ones need carrying.
-      db.exercises.filter((e) => e.isCustom === 1).toArray(),
-      db.routines.toArray(),
-      db.programs.toArray(),
-      db.sessions.toArray(),
-      db.sessionExercises.toArray(),
-      db.sets.toArray(),
-      db.bodyStats.toArray(),
-    ])
+  const [
+    profiles,
+    exercises,
+    routines,
+    programs,
+    foods,
+    mealEntries,
+    savedMeals,
+    sessions,
+    sessionExercises,
+    sets,
+    bodyStats,
+  ] = await Promise.all([
+    db.profiles.toArray(),
+    // Exercises are all the member's own now, so every one of them is carried.
+    db.exercises.toArray(),
+    db.routines.toArray(),
+    db.programs.toArray(),
+    // The built-in food table is recreated from code; only custom foods need carrying.
+    db.foods.filter((f) => f.isCustom === 1).toArray(),
+    db.mealEntries.toArray(),
+    db.savedMeals.toArray(),
+    db.sessions.toArray(),
+    db.sessionExercises.toArray(),
+    db.sets.toArray(),
+    db.bodyStats.toArray(),
+  ])
 
   return {
     app: 'eagle-gym',
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     profiles,
     exercises,
     routines,
     programs,
+    foods,
+    mealEntries,
+    savedMeals,
     sessions,
     sessionExercises,
     sets,
@@ -851,6 +885,9 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
       db.exercises,
       db.routines,
       db.programs,
+      db.foods,
+      db.mealEntries,
+      db.savedMeals,
       db.sessions,
       db.sessionExercises,
       db.sets,
@@ -863,6 +900,9 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
           db.exercises.clear(),
           db.routines.clear(),
           db.programs.clear(),
+          db.foods.clear(),
+          db.mealEntries.clear(),
+          db.savedMeals.clear(),
           db.sessions.clear(),
           db.sessionExercises.clear(),
           db.sets.clear(),
@@ -872,12 +912,15 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
 
       // Matching ids overwrite, so re-importing the same file is a no-op rather
       // than a duplicate.
-      await db.exercises.bulkPut(SEED_EXERCISES)
+      await db.foods.bulkPut(SEED_FOODS)
       await Promise.all([
         db.profiles.bulkPut(backup.profiles ?? []),
         db.exercises.bulkPut(backup.exercises ?? []),
         db.routines.bulkPut(backup.routines ?? []),
         db.programs.bulkPut(backup.programs ?? []),
+        db.foods.bulkPut(backup.foods ?? []),
+        db.mealEntries.bulkPut(backup.mealEntries ?? []),
+        db.savedMeals.bulkPut(backup.savedMeals ?? []),
         db.sessions.bulkPut(backup.sessions ?? []),
         db.sessionExercises.bulkPut(backup.sessionExercises ?? []),
         db.sets.bulkPut(backup.sets ?? []),
@@ -888,16 +931,177 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
 }
 
 export async function clearProfileData(profileId: string): Promise<void> {
-  await db.transaction('rw', [db.sessions, db.sessionExercises, db.sets, db.bodyStats], async () => {
-    const sessionIds = (await db.sessions
-      .where('profileId')
-      .equals(profileId)
-      .primaryKeys()) as string[]
-    await db.sets.where('sessionId').anyOf(sessionIds).delete()
-    await db.sessionExercises.where('sessionId').anyOf(sessionIds).delete()
-    await db.sessions.where('profileId').equals(profileId).delete()
-    await db.bodyStats.where('profileId').equals(profileId).delete()
-  })
+  await db.transaction(
+    'rw',
+    [db.sessions, db.sessionExercises, db.sets, db.bodyStats, db.mealEntries],
+    async () => {
+      const sessionIds = (await db.sessions
+        .where('profileId')
+        .equals(profileId)
+        .primaryKeys()) as string[]
+      await db.sets.where('sessionId').anyOf(sessionIds).delete()
+      await db.sessionExercises.where('sessionId').anyOf(sessionIds).delete()
+      await db.sessions.where('profileId').equals(profileId).delete()
+      await db.bodyStats.where('profileId').equals(profileId).delete()
+      await db.mealEntries.where('profileId').equals(profileId).delete()
+    }
+  )
 }
 
 export const today = () => format(new Date(), 'yyyy-MM-dd')
+
+// ─── Nutrition ────────────────────────────────────────────────────────────────
+
+/** The built-in table plus this profile's own foods. */
+export function listFoods(profileId: string): Promise<Food[]> {
+  return db.foods.where('profileId').anyOf([SHARED, profileId]).toArray()
+}
+
+export function getFood(id: string): Promise<Food | undefined> {
+  return db.foods.get(id)
+}
+
+export async function createFood(
+  profileId: string,
+  input: Omit<Food, 'id' | 'profileId' | 'isCustom'>
+): Promise<Food> {
+  const food: Food = { ...input, id: newId(), profileId, isCustom: 1 }
+  await db.foods.put(food)
+  return food
+}
+
+export async function updateFood(id: string, patch: Partial<Food>): Promise<void> {
+  await db.foods.update(id, patch)
+}
+
+/** Custom foods only — the built-in table is not the member's to edit away. */
+export async function deleteFood(id: string): Promise<void> {
+  const food = await db.foods.get(id)
+  if (food?.isCustom) await db.foods.delete(id)
+}
+
+export function listMealEntries(profileId: string, date: string): Promise<MealEntry[]> {
+  return db.mealEntries.where('[profileId+date]').equals([profileId, date]).toArray()
+}
+
+/** Entries across a date range, for the weekly calorie chart. */
+export function listMealEntriesBetween(
+  profileId: string,
+  from: string,
+  to: string
+): Promise<MealEntry[]> {
+  return db.mealEntries.where('[profileId+date]').between([profileId, from], [profileId, to], true, true).toArray()
+}
+
+/**
+ * Scales a food's per-100 g macros to the portion eaten and snapshots the result.
+ * Storing the computed numbers rather than a reference means correcting a food's
+ * data later never silently rewrites what you ate last month.
+ */
+export function scaleFood(food: Food, grams: number) {
+  const factor = grams / 100
+  return {
+    kcal: Math.round(food.kcal * factor),
+    protein: Math.round(food.protein * factor * 10) / 10,
+    carbs: Math.round(food.carbs * factor * 10) / 10,
+    fat: Math.round(food.fat * factor * 10) / 10,
+  }
+}
+
+export async function logMealEntry(
+  profileId: string,
+  input: { date: string; slot: MealSlot; food: Food; grams: number }
+): Promise<string> {
+  const macros = scaleFood(input.food, input.grams)
+  const entry: MealEntry = {
+    id: newId(),
+    profileId,
+    date: input.date,
+    slot: input.slot,
+    foodId: input.food.id,
+    nameAr: input.food.nameAr,
+    nameEn: input.food.nameEn,
+    grams: input.grams,
+    ...macros,
+    createdAt: Date.now(),
+  }
+  await db.mealEntries.add(entry)
+  return entry.id
+}
+
+export async function updateMealEntry(id: string, grams: number): Promise<void> {
+  const entry = await db.mealEntries.get(id)
+  if (!entry) return
+  const food = await db.foods.get(entry.foodId)
+  // Fall back to rescaling the snapshot when the food itself is gone.
+  const per100 = food ?? {
+    ...entry,
+    kcal: (entry.kcal / entry.grams) * 100,
+    protein: (entry.protein / entry.grams) * 100,
+    carbs: (entry.carbs / entry.grams) * 100,
+    fat: (entry.fat / entry.grams) * 100,
+  }
+  await db.mealEntries.update(id, { grams, ...scaleFood(per100 as Food, grams) })
+}
+
+export async function deleteMealEntry(id: string): Promise<void> {
+  await db.mealEntries.delete(id)
+}
+
+export function listSavedMeals(profileId: string): Promise<SavedMeal[]> {
+  return db.savedMeals.where('profileId').equals(profileId).toArray()
+}
+
+export async function saveMeal(
+  profileId: string,
+  input: { id?: string; nameAr: string; nameEn: string; items: SavedMeal['items'] }
+): Promise<string> {
+  const id = input.id ?? newId()
+  const existing = input.id ? await db.savedMeals.get(input.id) : undefined
+  await db.savedMeals.put({
+    id,
+    profileId,
+    nameAr: input.nameAr.trim() || input.nameEn.trim(),
+    nameEn: input.nameEn.trim() || input.nameAr.trim(),
+    items: input.items,
+    createdAt: existing?.createdAt ?? Date.now(),
+  })
+  return id
+}
+
+export async function deleteSavedMeal(id: string): Promise<void> {
+  await db.savedMeals.delete(id)
+}
+
+/** Builds a saved meal out of everything already logged in one slot today. */
+export async function saveSlotAsMeal(
+  profileId: string,
+  entries: MealEntry[],
+  nameAr: string,
+  nameEn: string
+): Promise<string> {
+  return saveMeal(profileId, {
+    nameAr,
+    nameEn,
+    items: entries.map((entry) => ({ foodId: entry.foodId, grams: entry.grams })),
+  })
+}
+
+/** Logs every item of a saved meal into a slot in one go. */
+export async function logSavedMeal(
+  profileId: string,
+  meal: SavedMeal,
+  date: string,
+  slot: MealSlot
+): Promise<void> {
+  const foods = await db.foods.bulkGet(meal.items.map((item) => item.foodId))
+  await Promise.all(
+    meal.items.map((item, index) => {
+      const food = foods[index]
+      // A food deleted since the meal was saved is skipped rather than logged as
+      // a zero-calorie mystery row.
+      if (!food) return undefined
+      return logMealEntry(profileId, { date, slot, food, grams: item.grams })
+    })
+  )
+}

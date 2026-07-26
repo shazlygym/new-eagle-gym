@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader'
 import Reveal from '../components/Reveal'
 import StatCard from '../components/StatCard'
 import TodayPlanCard from '../components/TodayPlanCard'
+import WeightCard from '../components/WeightCard'
 import {
   getActiveProgram,
   getActiveSession,
@@ -111,8 +112,8 @@ export default function Home() {
           <button
             type="button"
             onClick={() => navigate(`/workout/${active.id}`)}
-            className="flex w-full animate-pulse-gold items-center gap-3 rounded-2xl
-                       bg-gold-gradient p-4 text-start text-dark-900 active:scale-[0.99]
+            className="flex w-full animate-pulse-brand items-center gap-3 rounded-2xl
+                       bg-brand-gradient p-4 text-start text-white active:scale-[0.99]
                        transition-transform"
           >
             <Play size={20} className="shrink-0" fill="currentColor" />
@@ -155,15 +156,19 @@ export default function Home() {
         />
       </Reveal>
 
+      <Reveal index={3} className="px-5 pt-3">
+        <WeightCard />
+      </Reveal>
+
       <section className="px-5 pt-5">
         <InstallHint />
       </section>
 
-      <Reveal index={3} className="px-5 pt-5">
+      <Reveal index={4} className="px-5 pt-5">
         <h2 className="section-title mb-3">{t('home.quickStart')}</h2>
 
         {routines.length === 0 ? (
-          <p className="mb-3 text-sm text-dark-300">{t('home.noRoutines')}</p>
+          <p className="mb-3 text-sm text-ink-300">{t('home.noRoutines')}</p>
         ) : (
           <ul className="mb-3 space-y-2">
             {routines.map((routine) => (
@@ -171,20 +176,20 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => begin(routine.id)}
-                  className="card flex w-full items-center gap-3 p-4 text-start active:bg-dark-600"
+                  className="card flex w-full items-center gap-3 p-4 text-start active:bg-ink-600"
                 >
-                  <div className="rounded-xl bg-dark-600 p-2.5 text-gold-500">
+                  <div className="rounded-xl bg-ink-600 p-2.5 text-brand-500">
                     <Dumbbell size={18} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-dark-50">
+                    <p className="truncate font-medium text-ink-50">
                       {routineName(routine, locale)}
                     </p>
-                    <p className="text-xs text-dark-300">
+                    <p className="text-xs text-ink-300">
                       {t('routines.exerciseCount', { count: routine.items.length })}
                     </p>
                   </div>
-                  <Play size={18} className="shrink-0 text-gold-500" />
+                  <Play size={18} className="shrink-0 text-brand-500" />
                 </button>
               </li>
             ))}
@@ -196,20 +201,20 @@ export default function Home() {
             <button
               type="button"
               onClick={() => repeat(recent[0].id)}
-              className="card flex w-full items-center gap-3 p-4 text-start active:bg-dark-600"
+              className="card flex w-full items-center gap-3 p-4 text-start active:bg-ink-600"
             >
-              <div className="rounded-xl bg-dark-600 p-2.5 text-gold-500">
+              <div className="rounded-xl bg-ink-600 p-2.5 text-brand-500">
                 <RotateCcw size={18} className="rtl-flip" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-dark-50">{t('home.repeat')}</p>
-                <p className="truncate text-xs text-dark-300">
+                <p className="truncate font-medium text-ink-50">{t('home.repeat')}</p>
+                <p className="truncate text-xs text-ink-300">
                   {(locale === 'ar' ? recent[0].titleAr : recent[0].titleEn) ||
                     t('workout.untitled')}{' '}
                   · {formatTimeAgo(recent[0].startedAt, locale)}
                 </p>
               </div>
-              <Play size={18} className="shrink-0 text-gold-500" />
+              <Play size={18} className="shrink-0 text-brand-500" />
             </button>
           )}
 
@@ -217,8 +222,8 @@ export default function Home() {
             type="button"
             onClick={() => begin()}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border
-                       border-dashed border-dark-400 py-3.5 text-sm font-medium
-                       text-gold-500 active:bg-dark-700"
+                       border-dashed border-ink-400 py-3.5 text-sm font-medium
+                       text-brand-500 active:bg-ink-700"
           >
             <Plus size={18} />
             {t('home.startEmpty')}
@@ -226,11 +231,11 @@ export default function Home() {
         </div>
       </Reveal>
 
-      <Reveal index={4} className="px-5 pt-7">
+      <Reveal index={5} className="px-5 pt-7">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="section-title">{t('home.recent')}</h2>
           {recent.length > 0 && (
-            <Link to="/history" className="text-xs font-medium text-gold-500">
+            <Link to="/history" className="text-xs font-medium text-brand-500">
               {t('common.viewAll')}
             </Link>
           )}
@@ -248,18 +253,18 @@ export default function Home() {
               <li key={session.id}>
                 <Link
                   to={`/history/${session.id}`}
-                  className="card flex items-center gap-3 p-4 active:bg-dark-600"
+                  className="card flex items-center gap-3 p-4 active:bg-ink-600"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-dark-50">
+                    <p className="truncate font-medium text-ink-50">
                       {(locale === 'ar' ? session.titleAr : session.titleEn) ||
                         t('workout.untitled')}
                     </p>
-                    <p className="text-xs text-dark-300">
+                    <p className="text-xs text-ink-300">
                       {formatTimeAgo(session.startedAt, locale)}
                     </p>
                   </div>
-                  <span className="tabular shrink-0 text-sm font-semibold text-gold-500">
+                  <span className="tabular shrink-0 text-sm font-semibold text-brand-500">
                     {formatVolume(
                       recentSets
                         .filter((s) => s.sessionId === session.id && s.done === 1)

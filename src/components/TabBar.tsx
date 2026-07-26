@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Home, Settings2, Zap } from 'lucide-react'
+import { Apple, BarChart3, Home, Settings2, Zap } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
@@ -6,7 +6,7 @@ import type { TranslationKey } from '../i18n/en'
 const TABS: Array<{ to: string; icon: typeof Home; label: TranslationKey }> = [
   { to: '/', icon: Home, label: 'nav.home' },
   { to: '/train', icon: Zap, label: 'nav.train' },
-  { to: '/history', icon: CalendarDays, label: 'nav.history' },
+  { to: '/nutrition', icon: Apple, label: 'nav.nutrition' },
   { to: '/progress', icon: BarChart3, label: 'nav.progress' },
   { to: '/settings', icon: Settings2, label: 'nav.settings' },
 ]
@@ -16,8 +16,8 @@ export default function TabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-dark-500/60
-                 bg-dark-800/95 pb-safe-b backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-500/60
+                 bg-ink-800/95 pb-safe-b backdrop-blur-xl"
     >
       <ul className="flex">
         {TABS.map(({ to, icon: Icon, label }) => (
@@ -29,7 +29,7 @@ export default function TabBar() {
               end={to === '/'}
               className={({ isActive }) =>
                 `flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium
-                 transition-colors ${isActive ? 'text-gold-500' : 'text-dark-200'}`
+                 transition-colors ${isActive ? 'text-brand-500' : 'text-ink-200'}`
               }
             >
               {({ isActive }) => (

@@ -13,7 +13,7 @@ export default function SegmentedControl<T extends string>({
   className = '',
 }: Props<T>) {
   return (
-    <div className={`flex rounded-xl bg-dark-800 p-1 ${className}`}>
+    <div className={`flex rounded-xl bg-ink-800 p-1 ${className}`}>
       {options.map((option) => {
         const selected = option.value === value
         return (
@@ -23,7 +23,7 @@ export default function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             aria-pressed={selected}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-                        ${selected ? 'bg-gold-500 text-dark-900' : 'text-dark-200 active:bg-dark-700'}`}
+                        ${selected ? 'bg-brand-500 text-white' : 'text-ink-200 active:bg-ink-700'}`}
           >
             {option.label}
           </button>

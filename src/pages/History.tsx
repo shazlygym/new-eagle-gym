@@ -56,18 +56,18 @@ export default function History() {
               type="button"
               onClick={() => setMonth(addMonths(month, -1))}
               aria-label="previous month"
-              className="rounded-lg p-1.5 text-dark-200 active:bg-dark-600"
+              className="rounded-lg p-1.5 text-ink-200 active:bg-ink-600"
             >
               <ChevronLeft size={20} className="rtl-flip" />
             </button>
-            <h2 className="text-sm font-semibold text-dark-50">
+            <h2 className="text-sm font-semibold text-ink-50">
               {format(month, 'MMMM yyyy', { locale: dateLocale(locale) })}
             </h2>
             <button
               type="button"
               onClick={() => setMonth(addMonths(month, 1))}
               aria-label="next month"
-              className="rounded-lg p-1.5 text-dark-200 active:bg-dark-600"
+              className="rounded-lg p-1.5 text-ink-200 active:bg-ink-600"
             >
               <ChevronRight size={20} className="rtl-flip" />
             </button>
@@ -77,7 +77,7 @@ export default function History() {
               column lands on the right without any extra handling. */}
           <div className="grid grid-cols-7 gap-1 text-center">
             {weekdays.map((day) => (
-              <span key={day.toISOString()} className="pb-1 text-[10px] font-medium text-dark-300">
+              <span key={day.toISOString()} className="pb-1 text-[10px] font-medium text-ink-300">
                 {format(day, 'EEEEE', { locale: dateLocale(locale) })}
               </span>
             ))}
@@ -91,12 +91,12 @@ export default function History() {
                 <div
                   key={key}
                   className={`flex aspect-square flex-col items-center justify-center rounded-lg
-                              text-xs ${outside ? 'text-dark-400' : 'text-dark-100'}
-                              ${count > 0 ? 'bg-gold-500/15 font-semibold text-gold-400' : ''}
-                              ${isToday(day) ? 'ring-1 ring-inset ring-gold-500/60' : ''}`}
+                              text-xs ${outside ? 'text-ink-400' : 'text-ink-100'}
+                              ${count > 0 ? 'bg-brand-500/15 font-semibold text-brand-400' : ''}
+                              ${isToday(day) ? 'ring-1 ring-inset ring-brand-500/60' : ''}`}
                 >
                   <span className="tabular">{format(day, 'd')}</span>
-                  {count > 0 && <span className="mt-0.5 h-1 w-1 rounded-full bg-gold-500" />}
+                  {count > 0 && <span className="mt-0.5 h-1 w-1 rounded-full bg-brand-500" />}
                 </div>
               )
             })}
@@ -117,19 +117,19 @@ export default function History() {
                 <li key={session.id}>
                   <Link
                     to={`/history/${session.id}`}
-                    className="card flex items-center gap-3 p-4 active:bg-dark-600"
+                    className="card flex items-center gap-3 p-4 active:bg-ink-600"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-dark-50">
+                      <p className="truncate font-medium text-ink-50">
                         {(locale === 'ar' ? session.titleAr : session.titleEn) ||
                           t('workout.untitled')}
                       </p>
-                      <p className="mt-0.5 text-xs text-dark-300">
+                      <p className="mt-0.5 text-xs text-ink-300">
                         {formatShortDay(session.startedAt, locale)} ·{' '}
                         {t('history.exercisesCount', { count: exerciseCount })}
                       </p>
                     </div>
-                    <span className="tabular shrink-0 text-sm font-semibold text-gold-500">
+                    <span className="tabular shrink-0 text-sm font-semibold text-brand-500">
                       {formatVolume(
                         sessionSets.reduce((total, s) => total + s.weight * s.reps, 0),
                         units,

@@ -35,7 +35,7 @@ export default function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={stroke}
-          className="text-dark-500"
+          className="text-ink-500"
         />
         <circle
           cx={size / 2}
@@ -47,12 +47,12 @@ export default function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped)}
-          className="text-gold-500 transition-[stroke-dashoffset] duration-700 ease-out"
+          className="text-brand-500 transition-[stroke-dashoffset] duration-700 ease-out"
         />
       </svg>
 
       {label && (
-        <span className="tabular absolute inset-0 flex items-center justify-center text-[11px] font-bold text-dark-50">
+        <span className="tabular absolute inset-0 flex items-center justify-center text-[11px] font-bold text-ink-50">
           {label}
         </span>
       )}

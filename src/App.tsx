@@ -5,6 +5,7 @@ import { useActiveProfile } from './lib/useActiveProfile'
 import Exercises from './pages/Exercises'
 import History from './pages/History'
 import Home from './pages/Home'
+import Nutrition from './pages/Nutrition'
 import Onboarding from './pages/Onboarding'
 import ProgramEdit from './pages/ProgramEdit'
 import Programs from './pages/Programs'
@@ -28,7 +29,7 @@ export default function App() {
 
   // Dexie reads are fast but not synchronous; painting the onboarding screen
   // during that gap would flash it at every returning user.
-  if (loading) return <div className="min-h-dvh bg-dark-900" />
+  if (loading) return <div className="min-h-dvh bg-ink-950" />
 
   if (!profile) {
     return (
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="/programs" element={<Programs />} />
           <Route path="/programs/new" element={<ProgramEdit />} />
           <Route path="/programs/:programId" element={<ProgramEdit />} />
+          <Route path="/nutrition" element={<Nutrition />} />
           <Route path="/history" element={<History />} />
           <Route path="/history/:sessionId" element={<SessionDetail />} />
           <Route
@@ -88,5 +90,5 @@ export default function App() {
 
 /** Matches the page background so the split chunk never flashes white. */
 function ChartsLoading() {
-  return <div className="min-h-dvh bg-dark-900" />
+  return <div className="min-h-dvh bg-ink-950" />
 }

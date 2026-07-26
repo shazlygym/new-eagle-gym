@@ -13,7 +13,7 @@ export default function AppShell() {
   }, [pathname])
 
   return (
-    <div className="flex min-h-dvh flex-col bg-dark-900">
+    <div className="flex min-h-dvh flex-col bg-ink-950">
       {/* pb-tabbar reserves room for the fixed bar plus the home indicator, so
           the last row of every list stays reachable. */}
       <main className="scroll-area flex-1 pb-tabbar">

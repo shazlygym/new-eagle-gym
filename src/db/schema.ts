@@ -55,6 +55,11 @@ export interface Profile {
   units: Units
   /** Adds a reps-in-reserve field to every set row. Off by default. */
   trackRpe?: 0 | 1
+  /** Daily nutrition goals. Unset until the member fills them in. */
+  kcalTarget?: number
+  proteinTarget?: number
+  carbsTarget?: number
+  fatTarget?: number
   createdAt: number
 }
 
@@ -69,6 +74,8 @@ export interface Exercise {
   movement?: Movement
   /** Defaults to 'reps' when absent. */
   tracking?: Tracking
+  /** A YouTube (or any) link to a form demo, opened in the browser. */
+  videoUrl?: string
   isCustom: 0 | 1
 }
 
@@ -195,6 +202,79 @@ export interface Program {
   createdAt: number
 }
 
+export type FoodCategory =
+  | 'egyptian'
+  | 'protein'
+  | 'carbs'
+  | 'dairy'
+  | 'legumes'
+  | 'vegetables'
+  | 'fruit'
+  | 'fats'
+  | 'sweets'
+  | 'drinks'
+  | 'fastfood'
+
+/** A household measure, so nobody has to weigh a loaf of bread. */
+export interface FoodPortion {
+  nameAr: string
+  nameEn: string
+  grams: number
+}
+
+/**
+ * Macros are per 100 g — or per 100 ml for drinks, which are close enough to
+ * water in density that the distinction never shows up in a daily total.
+ */
+export interface Food {
+  id: string
+  /** SHARED for the built-in table, otherwise the owning profile. */
+  profileId: string
+  nameAr: string
+  nameEn: string
+  category: FoodCategory
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  portions?: FoodPortion[]
+  isCustom: 0 | 1
+}
+
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack'
+
+/**
+ * One logged item. The name and macros are snapshotted rather than looked up,
+ * so correcting a food's data — or deleting it — never silently rewrites what
+ * you ate last month.
+ */
+export interface MealEntry {
+  id: string
+  profileId: string
+  /** 'yyyy-MM-dd'. */
+  date: string
+  slot: MealSlot
+  foodId: string
+  nameAr: string
+  nameEn: string
+  grams: number
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  createdAt: number
+}
+
+/** A combination you eat often, loggable in one tap. */
+export interface SavedMeal {
+  id: string
+  profileId: string
+  nameAr: string
+  nameEn: string
+  items: Array<{ foodId: string; grams: number }>
+  createdAt: number
+}
+
 class EagleGymDB extends Dexie {
   profiles!: Table<Profile, string>
   exercises!: Table<Exercise, string>
@@ -204,6 +284,9 @@ class EagleGymDB extends Dexie {
   sessionExercises!: Table<SessionExercise, string>
   sets!: Table<SetEntry, string>
   bodyStats!: Table<BodyStat, string>
+  foods!: Table<Food, string>
+  mealEntries!: Table<MealEntry, string>
+  savedMeals!: Table<SavedMeal, string>
 
   constructor() {
     super('eagle-gym')
@@ -232,6 +315,36 @@ class EagleGymDB extends Dexie {
           .modify((set: SetEntry & { isWarmup?: 0 | 1 }) => {
             set.setType = set.isWarmup === 1 ? 'warmup' : 'working'
             delete set.isWarmup
+          })
+      })
+
+    // v3 adds nutrition, and retires the built-in exercise library — members
+    // build their own list now.
+    this.version(3)
+      .stores({
+        foods: 'id, profileId, category, [profileId+category]',
+        mealEntries: 'id, profileId, [profileId+date]',
+        savedMeals: 'id, profileId',
+      })
+      .upgrade(async (tx) => {
+        // Any seeded exercise that was actually trained becomes the member's
+        // own, so their history stays readable. The rest simply go away.
+        const usedIds = new Set<string>(
+          (await tx.table('sets').toArray()).map((set: SetEntry) => set.exerciseId)
+        )
+        const owner: string | undefined = (await tx.table('profiles').toArray())[0]?.id
+
+        await tx
+          .table('exercises')
+          .toCollection()
+          .modify((exercise: Exercise, ref) => {
+            if (exercise.profileId !== SHARED) return
+            if (owner && usedIds.has(exercise.id)) {
+              exercise.profileId = owner
+              exercise.isCustom = 1
+            } else {
+              delete ref.value
+            }
           })
       })
   }

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import './index.css'
-import { ensureExerciseLibrary } from './db/repository'
+import { ensureSeedData } from './db/repository'
 import { applyLocaleToDocument, useAppStore } from './stores/appStore'
 
 // Direction has to be right before React paints, otherwise the first frame
@@ -15,9 +15,9 @@ useAppStore.subscribe((state) => applyLocaleToDocument(state.locale))
 // refuse — Settings surfaces the outcome, and export exists for when it does.
 void navigator.storage?.persist?.()
 
-// Seeds the built-in exercise library on a cold install and repairs it if it
-// was ever cleared out from under us.
-void ensureExerciseLibrary()
+// Seeds the built-in food table on a cold install and repairs it if it was ever
+// cleared out from under us.
+void ensureSeedData()
 
 registerSW({ immediate: true })
 

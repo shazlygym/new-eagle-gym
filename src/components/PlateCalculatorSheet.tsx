@@ -45,16 +45,16 @@ export default function PlateCalculatorSheet({ open, onClose, units, initialTarg
         </div>
 
         {plan.belowBar ? (
-          <p className="rounded-xl bg-dark-700 px-4 py-6 text-center text-sm text-dark-300">
+          <p className="rounded-xl bg-ink-700 px-4 py-6 text-center text-sm text-ink-300">
             {t('plates.belowBar')}
           </p>
         ) : (
           <>
-            <div className="rounded-xl bg-dark-700 p-4">
-              <p className="mb-3 text-xs font-medium text-dark-200">{t('plates.perSide')}</p>
+            <div className="rounded-xl bg-ink-700 p-4">
+              <p className="mb-3 text-xs font-medium text-ink-200">{t('plates.perSide')}</p>
 
               {plan.perSide.length === 0 ? (
-                <p className="text-sm text-dark-300">{t('plates.barOnly')}</p>
+                <p className="text-sm text-ink-300">{t('plates.barOnly')}</p>
               ) : (
                 <ul className="space-y-2">
                   {plan.perSide.map((stack) => (
@@ -62,13 +62,13 @@ export default function PlateCalculatorSheet({ open, onClose, units, initialTarg
                       {/* Bar width tracks plate size, so the stack reads at a
                           glance the way a loaded bar looks. */}
                       <span
-                        className="h-7 shrink-0 rounded bg-gold-gradient"
+                        className="h-7 shrink-0 rounded bg-brand-gradient"
                         style={{ width: `${Math.max(10, (stack.weight / 25) * 46)}px` }}
                       />
-                      <span className="tabular flex-1 text-sm font-semibold text-dark-50">
+                      <span className="tabular flex-1 text-sm font-semibold text-ink-50">
                         {formatNumber(stack.weight)} {unit}
                       </span>
-                      <span className="tabular text-sm font-bold text-gold-500">
+                      <span className="tabular text-sm font-bold text-brand-500">
                         × {stack.count}
                       </span>
                     </li>

@@ -26,17 +26,17 @@ export default function InstallHint() {
   // Deliberately in the normal document flow on Home only. As a fixed overlay it
   // sat on top of the tab bar and covered the bottom of every screen.
   return (
-    <div className="card animate-fade-in flex gap-3 border-gold-500/30 p-4">
-      <Share size={18} className="mt-0.5 shrink-0 text-gold-500" />
+    <div className="card animate-fade-in flex gap-3 border-brand-500/30 p-4">
+      <Share size={18} className="mt-0.5 shrink-0 text-brand-500" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-dark-50">{t('install.title')}</p>
-        <p className="mt-1 text-xs leading-relaxed text-dark-200">{t('install.body')}</p>
+        <p className="text-sm font-semibold text-ink-50">{t('install.title')}</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-200">{t('install.body')}</p>
       </div>
       <button
         type="button"
         onClick={dismiss}
         aria-label={t('install.dismiss')}
-        className="-me-1 -mt-1 h-8 w-8 shrink-0 rounded-full text-dark-300 active:bg-dark-600"
+        className="-me-1 -mt-1 h-8 w-8 shrink-0 rounded-full text-ink-300 active:bg-ink-600"
       >
         <X size={16} className="mx-auto" />
       </button>
