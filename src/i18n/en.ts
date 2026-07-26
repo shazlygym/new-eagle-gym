@@ -314,6 +314,33 @@ export const en = {
   'settings.trackRpeHint':
     'Adds a reps-in-reserve field to every set. Useful for autoregulation, noise if you do not use it.',
 
+  'common.time': 'Time',
+  'common.duration': 'Duration',
+
+  'workout.startTimer': 'Start timer',
+  'workout.stopTimer': 'Stop',
+  'workout.targetTime': 'target {time}',
+  'workout.elapsed': 'Elapsed',
+
+  'exercises.tracking': 'Measured in',
+  'exercises.trackingReps': 'Reps',
+  'exercises.trackingDuration': 'Time',
+  'exercises.trackingHint':
+    'Time-based exercises get a start/stop timer instead of a reps field.',
+
+  'summary.timeUnderTension': 'Time worked',
+  'progress.bestHold': 'Longest hold',
+
+  'nav.train': 'Train',
+  'train.title': 'Train',
+  'train.programs': 'Programs',
+  'train.programsHint': 'Multi-week plans that schedule your routines',
+  'train.routines': 'Routines',
+  'train.routinesHint': 'Saved exercise lists you can start in one tap',
+  'train.exercises': 'Exercise library',
+  'train.exercisesHint': 'Browse the library and add your own',
+  'train.activeProgram': 'Active program',
+
   'install.title': 'Add to your Home Screen',
   'install.body':
     'Tap Share in Safari, then "Add to Home Screen" — the app then opens full screen and keeps your data safer.',

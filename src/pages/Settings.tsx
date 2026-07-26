@@ -1,9 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   Check,
-  ChevronRight,
   Download,
-  Dumbbell,
   HardDrive,
   ShieldCheck,
   ShieldAlert,
@@ -113,7 +111,7 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title={t('settings.title')} />
+      <PageHeader title={t('settings.title')} large />
 
       <div className="space-y-6 px-4 py-4">
         <Section title={t('settings.profile')}>
@@ -221,17 +219,6 @@ export default function Settings() {
             </ul>
           </Section>
         )}
-
-        <Section title={t('exercises.title')}>
-          <Link
-            to="/exercises"
-            className="card flex items-center gap-3 p-4 text-sm font-medium text-dark-50 active:bg-dark-600"
-          >
-            <Dumbbell size={18} className="shrink-0 text-gold-500" />
-            <span className="flex-1">{t('exercises.title')}</span>
-            <ChevronRight size={18} className="rtl-flip shrink-0 text-dark-300" />
-          </Link>
-        </Section>
 
         <Section title={t('settings.data')} hint={t('settings.dataHint')}>
           <div className="space-y-1.5">
@@ -384,7 +371,7 @@ function Section({
 }) {
   return (
     <section>
-      <h2 className="mb-2 px-1 text-sm font-semibold text-dark-100">{title}</h2>
+      <h2 className="section-title mb-2 px-1">{title}</h2>
       {hint && <p className="mb-2 px-1 text-xs leading-relaxed text-dark-300">{hint}</p>}
       {children}
     </section>

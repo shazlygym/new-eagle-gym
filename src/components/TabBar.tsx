@@ -1,11 +1,11 @@
-import { BarChart3, CalendarDays, Dumbbell, Home, Settings2 } from 'lucide-react'
+import { BarChart3, CalendarDays, Home, Settings2, Zap } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
 
 const TABS: Array<{ to: string; icon: typeof Home; label: TranslationKey }> = [
   { to: '/', icon: Home, label: 'nav.home' },
-  { to: '/routines', icon: Dumbbell, label: 'nav.routines' },
+  { to: '/train', icon: Zap, label: 'nav.train' },
   { to: '/history', icon: CalendarDays, label: 'nav.history' },
   { to: '/progress', icon: BarChart3, label: 'nav.progress' },
   { to: '/settings', icon: Settings2, label: 'nav.settings' },

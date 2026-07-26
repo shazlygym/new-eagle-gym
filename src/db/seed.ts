@@ -1,4 +1,11 @@
-import { SHARED, type Equipment, type Exercise, type MuscleGroup, type Movement } from './schema'
+import {
+  SHARED,
+  type Equipment,
+  type Exercise,
+  type MuscleGroup,
+  type Movement,
+  type Tracking,
+} from './schema'
 
 type Seed = [
   id: string,
@@ -7,6 +14,7 @@ type Seed = [
   group: MuscleGroup,
   equipment: Equipment,
   movement?: Movement,
+  tracking?: Tracking,
 ]
 
 // Stable ids (not random) so re-seeding is idempotent and a routine exported from
@@ -77,31 +85,31 @@ const SEEDS: Seed[] = [
   ['goblet-squat', 'Goblet Squat', 'سكوات جوبليت', 'legs', 'dumbbell'],
 
   // ─── Core ──────────────────────────────────────────────────────────────────
-  ['plank', 'Plank', 'بلانك', 'core', 'bodyweight'],
+  ['plank', 'Plank', 'بلانك', 'core', 'bodyweight', 'other', 'duration'],
   ['crunch', 'Crunch', 'بطن كرنش', 'core', 'bodyweight'],
   ['hanging-leg-raise', 'Hanging Leg Raise', 'رفع الأرجل معلقاً', 'core', 'bodyweight'],
   ['russian-twist', 'Russian Twist', 'تويست روسي', 'core', 'bodyweight'],
   ['cable-crunch', 'Cable Crunch', 'بطن بالكابل', 'core', 'cable'],
   ['ab-wheel', 'Ab Wheel Rollout', 'عجلة البطن', 'core', 'other'],
-  ['side-plank', 'Side Plank', 'بلانك جانبي', 'core', 'bodyweight'],
+  ['side-plank', 'Side Plank', 'بلانك جانبي', 'core', 'bodyweight', 'other', 'duration'],
 
   // ─── Cardio ────────────────────────────────────────────────────────────────
-  ['treadmill', 'Treadmill', 'المشاية', 'cardio', 'machine'],
-  ['stationary-bike', 'Stationary Bike', 'الدراجة الثابتة', 'cardio', 'machine'],
-  ['rowing-machine', 'Rowing Machine', 'جهاز التجديف', 'cardio', 'machine'],
-  ['elliptical', 'Elliptical', 'الأوربتراك', 'cardio', 'machine'],
-  ['jump-rope', 'Jump Rope', 'نط الحبل', 'cardio', 'bodyweight'],
-  ['stair-climber', 'Stair Climber', 'جهاز الدرج', 'cardio', 'machine'],
+  ['treadmill', 'Treadmill', 'المشاية', 'cardio', 'machine', 'other', 'duration'],
+  ['stationary-bike', 'Stationary Bike', 'الدراجة الثابتة', 'cardio', 'machine', 'other', 'duration'],
+  ['rowing-machine', 'Rowing Machine', 'جهاز التجديف', 'cardio', 'machine', 'pull', 'duration'],
+  ['elliptical', 'Elliptical', 'الأوربتراك', 'cardio', 'machine', 'other', 'duration'],
+  ['jump-rope', 'Jump Rope', 'نط الحبل', 'cardio', 'bodyweight', 'other', 'duration'],
+  ['stair-climber', 'Stair Climber', 'جهاز الدرج', 'cardio', 'machine', 'legs', 'duration'],
 
   // ─── Full body ─────────────────────────────────────────────────────────────
   ['clean-and-press', 'Clean and Press', 'خطف ودفع', 'fullBody', 'barbell'],
   ['kettlebell-swing', 'Kettlebell Swing', 'أرجحة الكيتل بيل', 'fullBody', 'other'],
   ['burpee', 'Burpee', 'بيربي', 'fullBody', 'bodyweight'],
-  ['farmers-walk', "Farmer's Walk", 'مشية المزارع', 'fullBody', 'dumbbell'],
+  ['farmers-walk', "Farmer's Walk", 'مشية المزارع', 'fullBody', 'dumbbell', 'other', 'duration'],
 ]
 
 export const SEED_EXERCISES: Exercise[] = SEEDS.map(
-  ([id, nameEn, nameAr, muscleGroup, equipment, movement]) => ({
+  ([id, nameEn, nameAr, muscleGroup, equipment, movement, tracking]) => ({
     id,
     profileId: SHARED,
     nameEn,
@@ -109,6 +117,7 @@ export const SEED_EXERCISES: Exercise[] = SEEDS.map(
     muscleGroup,
     equipment,
     movement,
+    tracking,
     isCustom: 0,
   })
 )

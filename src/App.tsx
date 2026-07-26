@@ -12,6 +12,7 @@ import RoutineEdit from './pages/RoutineEdit'
 import Routines from './pages/Routines'
 import SessionDetail from './pages/SessionDetail'
 import Settings from './pages/Settings'
+import Train from './pages/Train'
 import Workout from './pages/Workout'
 import WorkoutSummary from './pages/WorkoutSummary'
 
@@ -49,6 +50,7 @@ export default function App() {
 
         <Route element={<AppShell />}>
           <Route path="/" element={<Home />} />
+          <Route path="/train" element={<Train />} />
           <Route path="/routines" element={<Routines />} />
           <Route path="/routines/new" element={<RoutineEdit />} />
           <Route path="/routines/:routineId" element={<RoutineEdit />} />

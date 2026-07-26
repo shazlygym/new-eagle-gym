@@ -19,7 +19,8 @@ import {
   updateSession,
 } from '../db/repository'
 import { useT } from '../i18n'
-import { formatTimeAgo } from '../lib/format'
+import { formatClock } from '../lib/format'
+import { useElapsed } from '../lib/useClock'
 import { useActiveProfile } from '../lib/useActiveProfile'
 import { useRestTimer } from '../lib/useRestTimer'
 
@@ -37,6 +38,10 @@ export default function Workout() {
   const session = useLiveQuery(() => getSession(sessionId), [sessionId])
   const sessionExercises = useLiveQuery(() => listSessionExercises(sessionId), [sessionId]) ?? []
   const sets = useLiveQuery(() => listSetsForSession(sessionId), [sessionId]) ?? []
+
+  // Declared after the session query it reads from, and before the early
+  // returns below — hooks must run unconditionally on every render.
+  const elapsed = useElapsed(session?.startedAt)
 
   if (session === undefined) return <div className="min-h-dvh bg-dark-900" />
   if (session === null || !session || !profile) return <Navigate to="/" replace />
@@ -70,7 +75,9 @@ export default function Workout() {
     <div className="min-h-dvh bg-dark-900">
       <PageHeader
         title={title}
-        subtitle={formatTimeAgo(session.startedAt, locale)}
+        // A live stopwatch, not "less than a minute ago" — you want to know how
+        // long you have actually been in the gym while you are still in it.
+        subtitle={formatClock(elapsed)}
         onBack={() => navigate('/')}
         action={
           <button

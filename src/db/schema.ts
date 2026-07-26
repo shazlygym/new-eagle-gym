@@ -36,6 +36,12 @@ export type Equipment = 'barbell' | 'dumbbell' | 'machine' | 'cable' | 'bodyweig
 export type Movement = 'push' | 'pull' | 'legs' | 'other'
 
 /**
+ * How a set of this exercise is measured. A plank or a treadmill interval is a
+ * length of time, not a count — logging "12 reps" for either is nonsense.
+ */
+export type Tracking = 'reps' | 'duration'
+
+/**
  * Warm-ups are excluded from volume and personal records. Drop sets and sets
  * taken to failure do count — they are working sets — but they are marked so
  * the log reflects what actually happened.
@@ -61,6 +67,8 @@ export interface Exercise {
   muscleGroup: MuscleGroup
   equipment: Equipment
   movement?: Movement
+  /** Defaults to 'reps' when absent. */
+  tracking?: Tracking
   isCustom: 0 | 1
 }
 
@@ -129,6 +137,8 @@ export interface SetEntry {
   /** Kilograms. */
   weight: number
   reps: number
+  /** Seconds held or worked, on duration-tracked exercises. */
+  durationSeconds?: number
   /** Reps in reserve, 0–5. Optional: most people log it on hard sets only. */
   rpe?: number
   setType: SetType

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CalendarRange, ChevronRight, ListPlus, Pencil, Play, Plus } from 'lucide-react'
+import { ListPlus, Pencil, Play, Plus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
@@ -29,6 +29,7 @@ export default function Routines() {
     <div>
       <PageHeader
         title={t('routines.title')}
+        onBack="history"
         action={
           <Link
             to="/routines/new"
@@ -41,20 +42,6 @@ export default function Routines() {
       />
 
       <div className="px-4 py-4">
-        <Link
-          to="/programs"
-          className="card mb-4 flex items-center gap-3 p-4 active:bg-dark-600"
-        >
-          <div className="rounded-xl bg-dark-600 p-2.5 text-gold-500">
-            <CalendarRange size={18} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-dark-50">{t('programs.title')}</p>
-            <p className="truncate text-xs text-dark-300">{t('programs.emptyHint')}</p>
-          </div>
-          <ChevronRight size={18} className="rtl-flip shrink-0 text-dark-300" />
-        </Link>
-
         {routines.length === 0 ? (
           <EmptyState
             icon={ListPlus}

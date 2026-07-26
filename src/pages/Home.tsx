@@ -4,6 +4,8 @@ import { CalendarDays, Dumbbell, Flame, Play, Plus, RotateCcw, Weight } from 'lu
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import InstallHint from '../components/InstallHint'
+import PageHeader from '../components/PageHeader'
+import Reveal from '../components/Reveal'
 import StatCard from '../components/StatCard'
 import TodayPlanCard from '../components/TodayPlanCard'
 import {
@@ -98,17 +100,14 @@ export default function Home() {
 
   return (
     <div className="pb-6">
-      <header className="px-5 pb-2 pt-safe-t">
-        <div className="flex items-baseline justify-between pt-6">
-          <h1 className="text-2xl font-bold text-dark-50">
-            {t('home.greeting', { name: profile.name })}
-          </h1>
-        </div>
-        <p className="mt-1 text-sm text-dark-300">{formatShortDay(Date.now(), locale)}</p>
-      </header>
+      <PageHeader
+        title={t('home.greeting', { name: profile.name })}
+        subtitle={formatShortDay(Date.now(), locale)}
+        large
+      />
 
       {active && (
-        <section className="px-5 pt-4">
+        <Reveal className="px-5 pt-4">
           <button
             type="button"
             onClick={() => navigate(`/workout/${active.id}`)}
@@ -125,20 +124,20 @@ export default function Home() {
             </div>
             <span className="shrink-0 text-sm font-bold">{t('home.resume')}</span>
           </button>
-        </section>
+        </Reveal>
       )}
 
       {program && (
-        <section className="px-5 pt-4">
+        <Reveal index={1} className="px-5 pt-4">
           <TodayPlanCard
             program={program}
             progress={programProgress(program, sessions)}
             onStartDay={startProgramDay}
           />
-        </section>
+        </Reveal>
       )}
 
-      <section className="grid grid-cols-3 gap-2.5 px-5 pt-4">
+      <Reveal index={2} className="grid grid-cols-3 gap-2.5 px-5 pt-4">
         <StatCard icon={Flame} label={t('home.streak')} value={String(streak)} />
         <StatCard
           icon={CalendarDays}
@@ -154,14 +153,14 @@ export default function Home() {
           value={volumeValue(volumeThisWeek(sessions, weekSets), units, { compact: true })}
           hint={unitLabel(units, locale)}
         />
-      </section>
+      </Reveal>
 
       <section className="px-5 pt-5">
         <InstallHint />
       </section>
 
-      <section className="px-5 pt-5">
-        <h2 className="mb-3 text-sm font-semibold text-dark-100">{t('home.quickStart')}</h2>
+      <Reveal index={3} className="px-5 pt-5">
+        <h2 className="section-title mb-3">{t('home.quickStart')}</h2>
 
         {routines.length === 0 ? (
           <p className="mb-3 text-sm text-dark-300">{t('home.noRoutines')}</p>
@@ -225,11 +224,11 @@ export default function Home() {
             {t('home.startEmpty')}
           </button>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="px-5 pt-7">
+      <Reveal index={4} className="px-5 pt-7">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-dark-100">{t('home.recent')}</h2>
+          <h2 className="section-title">{t('home.recent')}</h2>
           {recent.length > 0 && (
             <Link to="/history" className="text-xs font-medium text-gold-500">
               {t('common.viewAll')}
@@ -275,7 +274,7 @@ export default function Home() {
             ))}
           </ul>
         )}
-      </section>
+      </Reveal>
     </div>
   )
 }

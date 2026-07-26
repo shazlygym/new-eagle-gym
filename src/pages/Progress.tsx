@@ -88,7 +88,7 @@ export default function Progress() {
   if (sets.length === 0) {
     return (
       <div>
-        <PageHeader title={t('progress.title')} />
+        <PageHeader title={t('progress.title')} large />
         <EmptyState
           icon={TrendingUp}
           title={t('progress.noData')}
@@ -103,7 +103,7 @@ export default function Progress() {
 
   return (
     <div>
-      <PageHeader title={t('progress.title')} />
+      <PageHeader title={t('progress.title')} large />
 
       <div className="space-y-4 px-4 py-4">
         <BodyLink />
@@ -205,7 +205,7 @@ export default function Progress() {
         <RecordTimelineCard events={timeline} exercises={exercises} units={units} />
 
         <section>
-          <h2 className="mb-2 px-1 text-sm font-semibold text-dark-100">{t('progress.records')}</h2>
+          <h2 className="section-title mb-2 px-1">{t('progress.records')}</h2>
           <ul className="space-y-1.5">
             {rankedRecords.map((record) => (
               <li key={record.exerciseId} className="card flex items-center gap-3 p-4">

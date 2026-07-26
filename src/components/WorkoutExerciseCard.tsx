@@ -17,6 +17,7 @@ import {
   addWarmupSets,
   deleteSet,
   getExercise,
+  logDurationSet,
   recentSessionsForExercise,
   removeSessionExercise,
   reorderSessionExercise,
@@ -26,11 +27,12 @@ import {
 } from '../db/repository'
 import type { SessionExercise, SetEntry, Units } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
-import { formatNumber, toDisplayWeight, toStoredWeight, unitLabel } from '../lib/format'
+import { formatClock, formatNumber, toDisplayWeight, toStoredWeight, unitLabel } from '../lib/format'
 import { suggestNextLoad } from '../lib/progression'
-import { SET_TYPE_BADGE, SET_TYPE_STYLE, nextSetType } from '../lib/setTypes'
+import { SET_TYPE_BADGE, SET_TYPE_LABEL, SET_TYPE_STYLE, nextSetType } from '../lib/setTypes'
 import { warmupSets } from '../lib/warmup'
 import ConfirmDialog from './ConfirmDialog'
+import DurationTimer from './DurationTimer'
 import ExerciseHistorySheet from './ExerciseHistorySheet'
 import NumberField from './NumberField'
 import PlateCalculatorSheet from './PlateCalculatorSheet'
@@ -82,9 +84,10 @@ export default function WorkoutExerciseCard({
   const previous = recent[0] ?? []
   const ordered = [...sets].sort((a, b) => a.setNumber - b.setNumber)
   const inSuperset = Boolean(sessionExercise.supersetGroup)
+  const isTimed = exercise?.tracking === 'duration'
 
   const suggestion =
-    readOnlyContext || !sessionExercise.targetReps
+    readOnlyContext || isTimed || !sessionExercise.targetReps
       ? null
       : suggestNextLoad(
           recent,
@@ -124,6 +127,12 @@ export default function WorkoutExerciseCard({
     ? 'grid-cols-[1.75rem_3.25rem_1fr_1fr_2.5rem_2.25rem]'
     : 'grid-cols-[2rem_4.5rem_1fr_1fr_2.5rem]'
 
+  const finishTimedSet = async (seconds: number) => {
+    if (seconds <= 0) return
+    await logDurationSet(sessionExercise.id, seconds)
+    if (!supersetContinues) onSetCompleted(sessionExercise.restSeconds)
+  }
+
   return (
     // Superset members stay as separate cards — the list has a gap between them,
     // so merging their borders would just look broken. A violet edge and a chip
@@ -151,7 +160,9 @@ export default function WorkoutExerciseCard({
             {sessionExercise.targetSets && sessionExercise.targetReps
               ? t('workout.target', {
                   sets: sessionExercise.targetSets,
-                  reps: sessionExercise.targetReps,
+                  reps: isTimed
+                    ? formatClock(sessionExercise.targetReps)
+                    : String(sessionExercise.targetReps),
                 })
               : null}
           </p>
@@ -193,6 +204,14 @@ export default function WorkoutExerciseCard({
         </button>
       </header>
 
+      {isTimed && !readOnlyContext && (
+        <DurationTimer
+          sessionExerciseId={sessionExercise.id}
+          target={sessionExercise.targetReps}
+          onFinish={finishTimedSet}
+        />
+      )}
+
       {suggestion && suggestion.kind !== 'hold' && (
         <button
           type="button"
@@ -221,7 +240,7 @@ export default function WorkoutExerciseCard({
           <span className="text-center">#</span>
           <span>{t('workout.previous')}</span>
           <span className="text-center">{unitLabel(units, locale)}</span>
-          <span className="text-center">{t('common.reps')}</span>
+          <span className="text-center">{isTimed ? t('common.time') : t('common.reps')}</span>
           {trackRpe && <span className="text-center">{t('workout.rpe')}</span>}
           <span />
         </div>
@@ -247,16 +266,18 @@ export default function WorkoutExerciseCard({
                 <button
                   type="button"
                   onClick={() => updateSet(entry.id, { setType: nextSetType(entry.setType) })}
-                  title={t('setType.working')}
+                  title={t(SET_TYPE_LABEL[entry.setType])}
                   className={`tabular h-8 rounded-lg text-xs font-bold ${SET_TYPE_STYLE[entry.setType]}`}
                 >
                   {badge ?? entry.setNumber}
                 </button>
 
                 <span className="tabular truncate text-xs text-dark-300">
-                  {prior
-                    ? `${formatNumber(toDisplayWeight(prior.weight, units))}×${prior.reps}`
-                    : t('common.empty')}
+                  {!prior
+                    ? t('common.empty')
+                    : isTimed
+                      ? formatClock(prior.durationSeconds ?? 0)
+                      : `${formatNumber(toDisplayWeight(prior.weight, units))}×${prior.reps}`}
                 </span>
 
                 <NumberField
@@ -264,10 +285,22 @@ export default function WorkoutExerciseCard({
                   onChange={(value) => updateSet(entry.id, { weight: toStoredWeight(value, units) })}
                   step={2.5}
                 />
-                <NumberField
-                  value={entry.reps}
-                  onChange={(value) => updateSet(entry.id, { reps: Math.round(value) })}
-                />
+                {isTimed ? (
+                  // Editable in seconds so a mistimed hold can be corrected;
+                  // the label above the column says what the unit is.
+                  <NumberField
+                    value={entry.durationSeconds ?? 0}
+                    onChange={(value) =>
+                      updateSet(entry.id, { durationSeconds: Math.round(value), reps: 0 })
+                    }
+                    step={5}
+                  />
+                ) : (
+                  <NumberField
+                    value={entry.reps}
+                    onChange={(value) => updateSet(entry.id, { reps: Math.round(value) })}
+                  />
+                )}
 
                 {trackRpe && (
                   <NumberField
@@ -310,7 +343,7 @@ export default function WorkoutExerciseCard({
             {t('workout.addSet')}
           </button>
 
-          {!readOnlyContext && (
+          {!readOnlyContext && !isTimed && (
             <button
               type="button"
               onClick={addWarmup}

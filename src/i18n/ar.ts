@@ -313,6 +313,33 @@ export const ar: Record<TranslationKey, string> = {
   'settings.trackRpeHint':
     'يضيف خانة "التكرارات المتبقية" لكل مجموعة. مفيدة لتنظيم الجهد، وزائدة لو مش هتستخدمها.',
 
+  'common.time': 'الوقت',
+  'common.duration': 'المدة',
+
+  'workout.startTimer': 'ابدأ التايمر',
+  'workout.stopTimer': 'إيقاف',
+  'workout.targetTime': 'الهدف {time}',
+  'workout.elapsed': 'المدة',
+
+  'exercises.tracking': 'يُقاس بـ',
+  'exercises.trackingReps': 'تكرارات',
+  'exercises.trackingDuration': 'وقت',
+  'exercises.trackingHint':
+    'التمارين المحسوبة بالوقت تحصل على تايمر تشغيل وإيقاف بدل خانة التكرارات.',
+
+  'summary.timeUnderTension': 'وقت العمل',
+  'progress.bestHold': 'أطول ثبات',
+
+  'nav.train': 'التدريب',
+  'train.title': 'التدريب',
+  'train.programs': 'البرامج',
+  'train.programsHint': 'خطط متعددة الأسابيع توزّع تماريـنك',
+  'train.routines': 'التمارين اليومية',
+  'train.routinesHint': 'قوائم تمارين محفوظة تبدأها بضغطة واحدة',
+  'train.exercises': 'مكتبة التمارين',
+  'train.exercisesHint': 'تصفّح المكتبة وأضف تماريـنك الخاصة',
+  'train.activeProgram': 'البرنامج النشط',
+
   'install.title': 'أضف التطبيق للشاشة الرئيسية',
   'install.body':
     'اضغط زر المشاركة في سفاري، ثم "إضافة إلى الشاشة الرئيسية" — سيفتح التطبيق بملء الشاشة وتصبح بياناتك أكثر أماناً.',

@@ -35,19 +35,26 @@ export function e1rm(weight: number, reps: number): number {
   return weight * (1 + Math.min(reps, 12) / 30)
 }
 
-/** Tonnage: the sum of weight × reps across sets. Warm-ups don't count. */
+/**
+ * Tonnage: the sum of weight × reps. Warm-ups don't count, and neither does
+ * timed work — a weighted carry has no rep count, so multiplying by one would
+ * be inventing a number rather than measuring one.
+ */
 export function volumeOf(sets: SetEntry[]): number {
-  return sets.reduce(
-    (total, s) => (s.setType === 'warmup' ? total : total + s.weight * s.reps),
-    0
-  )
+  return sets.reduce((total, s) => {
+    if (s.setType === 'warmup' || s.durationSeconds !== undefined) return total
+    return total + s.weight * s.reps
+  }, 0)
 }
 
 export interface SessionStats {
   sets: number
   reps: number
   volume: number
+  /** Wall-clock length of the session. */
   durationMs: number
+  /** Seconds logged on duration-tracked exercises. */
+  workSeconds: number
 }
 
 export function sessionStats(session: Session, sets: SetEntry[]): SessionStats {
@@ -57,6 +64,7 @@ export function sessionStats(session: Session, sets: SetEntry[]): SessionStats {
     reps: working.reduce((total, s) => total + s.reps, 0),
     volume: volumeOf(working),
     durationMs: (session.endedAt ?? Date.now()) - session.startedAt,
+    workSeconds: working.reduce((total, s) => total + (s.durationSeconds ?? 0), 0),
   }
 }
 
@@ -70,6 +78,8 @@ export interface ExerciseRecord {
   /** Most reps at any weight. */
   bestReps: number
   bestVolume: number
+  /** Longest single effort, for duration-tracked exercises. */
+  bestDuration: number
   lastPerformedAt: number
   totalSets: number
 }
@@ -87,6 +97,7 @@ export function personalRecords(sets: SetEntry[]): Map<string, ExerciseRecord> {
       bestE1rm: 0,
       bestReps: 0,
       bestVolume: 0,
+      bestDuration: 0,
       lastPerformedAt: 0,
       totalSets: 0,
     }
@@ -98,6 +109,7 @@ export function personalRecords(sets: SetEntry[]): Map<string, ExerciseRecord> {
     current.bestE1rm = Math.max(current.bestE1rm, e1rm(set.weight, set.reps))
     current.bestReps = Math.max(current.bestReps, set.reps)
     current.bestVolume = Math.max(current.bestVolume, set.weight * set.reps)
+    current.bestDuration = Math.max(current.bestDuration, set.durationSeconds ?? 0)
     current.lastPerformedAt = Math.max(current.lastPerformedAt, set.completedAt ?? 0)
     current.totalSets += 1
 

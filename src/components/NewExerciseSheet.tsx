@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { Equipment, MuscleGroup } from '../db/schema'
+import type { Equipment, MuscleGroup, Tracking } from '../db/schema'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
+import SegmentedControl from './SegmentedControl'
 import Sheet from './Sheet'
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
@@ -29,6 +30,7 @@ export interface NewExerciseInput {
   nameAr: string
   muscleGroup: MuscleGroup
   equipment: Equipment
+  tracking: Tracking
 }
 
 interface Props {
@@ -48,6 +50,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
   const [nameAr, setNameAr] = useState('')
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('chest')
   const [equipment, setEquipment] = useState<Equipment>('barbell')
+  const [tracking, setTracking] = useState<Tracking>('reps')
   const [error, setError] = useState<string | null>(null)
 
   const submit = async () => {
@@ -62,6 +65,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
       nameAr: nameAr.trim() || nameEn.trim(),
       muscleGroup,
       equipment,
+      tracking,
     })
     setNameEn('')
     setNameAr('')
@@ -139,6 +143,23 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <span className="mb-1.5 block text-xs font-medium text-dark-200">
+            {t('exercises.tracking')}
+          </span>
+          <SegmentedControl<Tracking>
+            value={tracking}
+            onChange={setTracking}
+            options={[
+              { value: 'reps', label: t('exercises.trackingReps') },
+              { value: 'duration', label: t('exercises.trackingDuration') },
+            ]}
+          />
+          <p className="mt-1.5 text-xs leading-relaxed text-dark-300">
+            {t('exercises.trackingHint')}
+          </p>
         </div>
 
         {error && <p className="text-xs text-red-400">{error}</p>}

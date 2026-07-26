@@ -61,8 +61,29 @@
 }
 
 @layer components {
+  /* A soft top-lit gradient plus a hairline highlight along the top edge. On a
+     near-black screen a flat fill reads as a hole; this reads as a surface. */
   .card {
-    @apply rounded-2xl bg-dark-700 border border-dark-500/60;
+    @apply rounded-2xl border border-dark-500/50;
+    background-image: linear-gradient(
+      180deg,
+      theme('colors.dark.600') 0%,
+      theme('colors.dark.700') 55%
+    );
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.04),
+      0 1px 2px 0 rgb(0 0 0 / 0.4);
+  }
+
+  /* Section labels. Small, wide-tracked and quiet, so the content below them
+     carries the weight rather than competing with the label. */
+  .section-title {
+    @apply text-[11px] font-bold uppercase tracking-[0.08em] text-dark-300;
+  }
+
+  /* iOS-style large page title. */
+  .display-title {
+    @apply text-[28px] font-bold leading-tight tracking-tight text-dark-50;
   }
 
   .btn-primary {
@@ -91,10 +112,44 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Entrance for content arriving on a screen. Staggered by an inline
+     --enter-delay so a list resolves top-to-bottom instead of all at once. */
+  .enter {
+    animation: enter-up 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Recharts injects focus outlines on its SVG wrappers; they look broken on mobile. */
 .recharts-wrapper:focus,
 .recharts-surface:focus {
   outline: none;
+}
+
+/* Motion is decoration here — every animation has a static equivalent, so
+   honouring the OS preference costs nothing and matters to people who need it. */
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

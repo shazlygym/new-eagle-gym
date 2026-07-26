@@ -47,7 +47,7 @@ export default function History() {
 
   return (
     <div>
-      <PageHeader title={t('history.title')} />
+      <PageHeader title={t('history.title')} large />
 
       <section className="px-4 py-4">
         <div className="card p-4">

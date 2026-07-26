@@ -108,7 +108,7 @@ export default function Body() {
           <EmptyState icon={Ruler} title={t('body.empty')} body={t('body.emptyHint')} />
         ) : (
           <section>
-            <h2 className="mb-2 px-1 text-sm font-semibold text-dark-100">{t('body.history')}</h2>
+            <h2 className="section-title mb-2 px-1">{t('body.history')}</h2>
             <ul className="space-y-1.5">
               {[...stats].reverse().map((stat) => (
                 <li key={stat.id} className="card flex items-start gap-3 p-4">

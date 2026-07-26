@@ -20,6 +20,7 @@ import {
 } from '../db/repository'
 import { exerciseName, useT } from '../i18n'
 import {
+  formatClock,
   formatDay,
   formatDuration,
   formatNumber,
@@ -145,11 +146,14 @@ export default function SessionDetail() {
                         {SET_TYPE_BADGE[row.setType] ?? row.setNumber}
                       </span>
                       <span className="tabular flex-1">
-                        {formatNumber(toDisplayWeight(row.weight, units))}{' '}
-                        {unitLabel(units, locale)}
+                        {row.weight > 0
+                          ? `${formatNumber(toDisplayWeight(row.weight, units))} ${unitLabel(units, locale)}`
+                          : t('common.empty')}
                       </span>
                       <span className="tabular text-dark-200">
-                        {row.reps} {t('common.reps')}
+                        {row.durationSeconds
+                          ? formatClock(row.durationSeconds)
+                          : `${row.reps} ${t('common.reps')}`}
                       </span>
                     </li>
                   ))}

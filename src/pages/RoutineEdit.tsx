@@ -126,7 +126,7 @@ export default function RoutineEdit() {
         </div>
 
         <section>
-          <h2 className="mb-2 px-1 text-sm font-semibold text-dark-100">
+          <h2 className="section-title mb-2 px-1">
             {t('routines.exercises')}
           </h2>
 

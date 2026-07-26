@@ -128,7 +128,7 @@ export default function ProgramEdit() {
         </div>
 
         <section>
-          <h2 className="mb-2 px-1 text-sm font-semibold text-dark-100">{t('programs.days')}</h2>
+          <h2 className="section-title mb-2 px-1">{t('programs.days')}</h2>
 
           <ul className="space-y-2">
             {days.map((day, index) => (
@@ -208,7 +208,7 @@ export default function ProgramEdit() {
         </section>
 
         <section className="card space-y-3 p-4">
-          <h2 className="text-sm font-semibold text-dark-100">{t('programs.progression')}</h2>
+          <h2 className="section-title">{t('programs.progression')}</h2>
           <SegmentedControl<'none' | 'linear'>
             value={kind}
             onChange={setKind}

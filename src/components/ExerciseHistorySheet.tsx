@@ -4,7 +4,7 @@ import { e1rm } from '../db/queries'
 import { getExercise, listSetsForExercise } from '../db/repository'
 import type { SetEntry, Units } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
-import { formatNumber, formatShortDay, toDisplayWeight, unitLabel } from '../lib/format'
+import { formatClock, formatNumber, formatShortDay, toDisplayWeight, unitLabel } from '../lib/format'
 import Sheet from './Sheet'
 
 interface Props {
@@ -38,12 +38,20 @@ export default function ExerciseHistorySheet({
   )
 
   const sessions = useMemo(() => groupBySession(sets ?? []), [sets])
+  const isTimed = exercise?.tracking === 'duration'
   const best = useMemo(() => {
     const rows = sets ?? []
     if (rows.length === 0) return null
     const heaviest = rows.reduce((a, b) => (b.weight > a.weight ? b : a))
     const strongest = rows.reduce((a, b) => (e1rm(b.weight, b.reps) > e1rm(a.weight, a.reps) ? b : a))
-    return { heaviest, e1rm: e1rm(strongest.weight, strongest.reps) }
+    const longest = rows.reduce((a, b) =>
+      (b.durationSeconds ?? 0) > (a.durationSeconds ?? 0) ? b : a
+    )
+    return {
+      heaviest,
+      e1rm: e1rm(strongest.weight, strongest.reps),
+      longest: longest.durationSeconds ?? 0,
+    }
   }, [sets])
 
   return (
@@ -54,19 +62,30 @@ export default function ExerciseHistorySheet({
         <>
           {best && (
             <div className="mb-4 grid grid-cols-2 gap-2">
-              <div className="rounded-xl bg-dark-700 p-3">
-                <p className="text-[11px] text-dark-300">{t('progress.topSet')}</p>
-                <p className="tabular mt-1 text-base font-bold text-gold-500">
-                  {formatNumber(toDisplayWeight(best.heaviest.weight, units))} {unit} ×{' '}
-                  {best.heaviest.reps}
-                </p>
-              </div>
-              <div className="rounded-xl bg-dark-700 p-3">
-                <p className="text-[11px] text-dark-300">{t('progress.e1rm')}</p>
-                <p className="tabular mt-1 text-base font-bold text-gold-500">
-                  {formatNumber(toDisplayWeight(best.e1rm, units))} {unit}
-                </p>
-              </div>
+              {isTimed ? (
+                <div className="col-span-2 rounded-xl bg-dark-700 p-3">
+                  <p className="text-[11px] text-dark-300">{t('progress.bestHold')}</p>
+                  <p className="tabular mt-1 text-base font-bold text-gold-500">
+                    {formatClock(best.longest)}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-xl bg-dark-700 p-3">
+                    <p className="text-[11px] text-dark-300">{t('progress.topSet')}</p>
+                    <p className="tabular mt-1 text-base font-bold text-gold-500">
+                      {formatNumber(toDisplayWeight(best.heaviest.weight, units))} {unit} ×{' '}
+                      {best.heaviest.reps}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-dark-700 p-3">
+                    <p className="text-[11px] text-dark-300">{t('progress.e1rm')}</p>
+                    <p className="tabular mt-1 text-base font-bold text-gold-500">
+                      {formatNumber(toDisplayWeight(best.e1rm, units))} {unit}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -82,7 +101,9 @@ export default function ExerciseHistorySheet({
                       key={set.id}
                       className="tabular rounded-lg bg-dark-600 px-2.5 py-1 text-xs text-dark-50"
                     >
-                      {formatNumber(toDisplayWeight(set.weight, units))} × {set.reps}
+                      {set.durationSeconds
+                        ? formatClock(set.durationSeconds)
+                        : `${formatNumber(toDisplayWeight(set.weight, units))} × ${set.reps}`}
                     </span>
                   ))}
                 </div>

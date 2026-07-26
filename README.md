@@ -15,7 +15,10 @@ Arabic (RTL) and English, switchable at runtime.
 - Supersets — link exercises so rest is taken once at the end of the group.
 - Optional RPE (reps in reserve) column.
 - Plate calculator: what to load per side, seeded from the set you're on.
-- Rest timer that survives the phone being pocketed.
+- Rest timer that survives the phone being pocketed, plus a live workout
+  stopwatch in the header.
+- Time-tracked exercises (planks, carries, cardio) get a start/stop timer
+  instead of a reps field; stopping it logs the set.
 - Tap any exercise mid-workout to see every past session for it.
 
 **Planning**
@@ -39,6 +42,9 @@ Arabic (RTL) and English, switchable at runtime.
 No backend. The app is a static bundle plus a service worker; all data lives in
 IndexedDB on the device.
 
+Navigation: **Home · Train · History · Progress · Settings**, where Train is the
+hub for programs, routines and the exercise library.
+
 ```
 src/
   db/          Dexie schema, repository (all reads/writes), derived queries, seed data
@@ -60,6 +66,14 @@ Two rules keep it maintainable:
 
 Weights are always stored in **kilograms** and measurements in **centimetres**;
 the kg/lb setting is display-only. Otherwise toggling units would rewrite history.
+
+Timed work is measured in `durationSeconds` and never in reps. Tonnage skips
+those sets entirely: a 60-second weighted carry has no rep count, and inventing
+one turns a single carry into thousands of phantom kilograms.
+
+All clocks — rest timer, workout stopwatch, exercise timer — store the instant
+they started or end, never a counter. iOS suspends JavaScript the moment the app
+is backgrounded, so a ticking counter freezes in your pocket and lies.
 
 The schema is versioned. v2 added programs, superset grouping and set types,
 migrating existing `isWarmup` flags in place — an install with months of logged

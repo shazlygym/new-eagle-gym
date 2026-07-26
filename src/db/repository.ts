@@ -27,10 +27,6 @@ export function listProfiles(): Promise<Profile[]> {
   return db.profiles.orderBy('createdAt').toArray()
 }
 
-export function getProfile(id: string): Promise<Profile | undefined> {
-  return db.profiles.get(id)
-}
-
 /**
  * Writes the built-in library on every launch rather than only when it is empty,
  * so exercises added or reclassified in a new app version reach members who
@@ -131,10 +127,6 @@ export async function createExercise(
   return exercise
 }
 
-export async function updateExercise(id: string, patch: Partial<Exercise>): Promise<void> {
-  await db.exercises.update(id, patch)
-}
-
 /**
  * Custom exercises only. Past sets keep referencing the id, so history stays
  * readable even after the exercise is gone from the picker.
@@ -171,8 +163,30 @@ export async function saveRoutine(
   return id
 }
 
+/**
+ * Also strips the routine out of any program that scheduled it. A program day
+ * pointing at a deleted routine would start an empty, untitled workout with no
+ * explanation; a program left with no days is stopped rather than left active
+ * with nothing to do.
+ */
 export async function deleteRoutine(id: string): Promise<void> {
-  await db.routines.delete(id)
+  await db.transaction('rw', db.routines, db.programs, async () => {
+    await db.routines.delete(id)
+
+    const affected = await db.programs.filter((program) =>
+      program.days.some((day) => day.routineId === id)
+    ).toArray()
+
+    await Promise.all(
+      affected.map((program) => {
+        const days = program.days.filter((day) => day.routineId !== id)
+        return db.programs.update(program.id, {
+          days,
+          active: days.length === 0 ? 0 : program.active,
+        })
+      })
+    )
+  })
 }
 
 // ─── Programs ─────────────────────────────────────────────────────────────────
@@ -272,6 +286,15 @@ export async function startSession(
     programDayIndex: program?.dayIndex,
   }
 
+  // Which of the routine's exercises are measured in time rather than reps.
+  // Their `targetReps` is a number of seconds, and writing it into a set's reps
+  // field would turn a 60-second carry into 60 reps of phantom tonnage.
+  const timed = new Set<string>()
+  if (routine) {
+    const rows = await db.exercises.bulkGet(routine.items.map((item) => item.exerciseId))
+    for (const row of rows) if (row?.tracking === 'duration') timed.add(row.id)
+  }
+
   // Seed each slot with the weight used last time, so a routine opens ready to
   // tick off rather than as a grid of zeroes to retype every session.
   const lastWeights = new Map<string, number>()
@@ -318,7 +341,7 @@ export async function startSession(
           exerciseId: item.exerciseId,
           setNumber: setIndex + 1,
           weight: lastWeights.get(item.exerciseId) ?? 0,
-          reps: item.targetReps,
+          reps: timed.has(item.exerciseId) ? 0 : item.targetReps,
           setType: 'working' as const,
           done: 0 as const,
         }))
@@ -507,6 +530,11 @@ export async function addSet(
   const siblings = await db.sets.where('sessionExerciseId').equals(sessionExerciseId).toArray()
   const last = siblings.sort((a, b) => a.setNumber - b.setNumber).at(-1)
 
+  // On a timed exercise `targetReps` holds seconds, so it must not fall through
+  // into the reps field.
+  const exercise = await db.exercises.get(parent.exerciseId)
+  const isTimed = exercise?.tracking === 'duration'
+
   const entry: SetEntry = {
     id: newId(),
     sessionExerciseId,
@@ -516,7 +544,7 @@ export async function addSet(
     setNumber: (last?.setNumber ?? 0) + 1,
     // Carry the previous set forward — most people repeat weight and reps.
     weight: seed?.weight ?? last?.weight ?? 0,
-    reps: seed?.reps ?? last?.reps ?? parent.targetReps ?? 0,
+    reps: isTimed ? 0 : (seed?.reps ?? last?.reps ?? parent.targetReps ?? 0),
     setType: 'working',
     done: 0,
   }
@@ -594,6 +622,32 @@ export async function recentSessionsForExercise(
   }
 
   return grouped.map((rows) => rows.sort((a, b) => a.setNumber - b.setNumber))
+}
+
+/**
+ * Records a timed effort against the next un-ticked set of a duration exercise,
+ * creating one if they have all been used. Returns the set that was filled so
+ * the caller can start the rest timer for it.
+ */
+export async function logDurationSet(
+  sessionExerciseId: string,
+  seconds: number
+): Promise<string | undefined> {
+  const rows = (await db.sets.where('sessionExerciseId').equals(sessionExerciseId).toArray()).sort(
+    (a, b) => a.setNumber - b.setNumber
+  )
+
+  const target = rows.find((row) => row.done === 0)
+  if (target) {
+    await db.sets.update(target.id, { durationSeconds: seconds, reps: 0 })
+    await setSetDone(target.id, true)
+    return target.id
+  }
+
+  const id = await addSet(sessionExerciseId)
+  await db.sets.update(id, { durationSeconds: seconds, reps: 0 })
+  await setSetDone(id, true)
+  return id
 }
 
 /** Prepends a generated warm-up ramp, renumbering the working sets after it. */
