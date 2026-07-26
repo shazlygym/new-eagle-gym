@@ -8,9 +8,11 @@ import {
   type Profile,
   type Routine,
   type RoutineItem,
+  type Program,
   type Session,
   type SessionExercise,
   type SetEntry,
+  type SetType,
   type Units,
 } from './schema'
 import { SEED_EXERCISES, STARTER_ROUTINES } from './seed'
@@ -29,10 +31,14 @@ export function getProfile(id: string): Promise<Profile | undefined> {
   return db.profiles.get(id)
 }
 
-/** Ensures the shared exercise library exists. Safe to call on every launch. */
+/**
+ * Writes the built-in library on every launch rather than only when it is empty,
+ * so exercises added or reclassified in a new app version reach members who
+ * already have the app installed. Custom exercises are untouched — they live
+ * under the profile id, never SHARED.
+ */
 export async function ensureExerciseLibrary(): Promise<void> {
-  const existing = await db.exercises.where('profileId').equals(SHARED).count()
-  if (existing === 0) await db.exercises.bulkPut(SEED_EXERCISES)
+  await db.exercises.bulkPut(SEED_EXERCISES)
 }
 
 export async function createProfile(input: {
@@ -80,13 +86,23 @@ export async function updateProfile(id: string, patch: Partial<Profile>): Promis
 export async function deleteProfile(id: string): Promise<void> {
   await db.transaction(
     'rw',
-    [db.profiles, db.routines, db.sessions, db.sessionExercises, db.sets, db.bodyStats, db.exercises],
+    [
+      db.profiles,
+      db.routines,
+      db.programs,
+      db.sessions,
+      db.sessionExercises,
+      db.sets,
+      db.bodyStats,
+      db.exercises,
+    ],
     async () => {
       const sessionIds = (await db.sessions.where('profileId').equals(id).primaryKeys()) as string[]
       await db.sets.where('sessionId').anyOf(sessionIds).delete()
       await db.sessionExercises.where('sessionId').anyOf(sessionIds).delete()
       await db.sessions.where('profileId').equals(id).delete()
       await db.routines.where('profileId').equals(id).delete()
+      await db.programs.where('profileId').equals(id).delete()
       await db.bodyStats.where('profileId').equals(id).delete()
       // Only this profile's custom exercises; the shared library stays.
       await db.exercises.where('profileId').equals(id).delete()
@@ -159,6 +175,65 @@ export async function deleteRoutine(id: string): Promise<void> {
   await db.routines.delete(id)
 }
 
+// ─── Programs ─────────────────────────────────────────────────────────────────
+
+export function listPrograms(profileId: string): Promise<Program[]> {
+  return db.programs.where('profileId').equals(profileId).toArray()
+}
+
+export function getProgram(id: string): Promise<Program | undefined> {
+  return db.programs.get(id)
+}
+
+export async function getActiveProgram(profileId: string): Promise<Program | undefined> {
+  return db.programs.where('[profileId+active]').equals([profileId, 1]).first()
+}
+
+export async function saveProgram(
+  profileId: string,
+  input: Omit<Program, 'id' | 'profileId' | 'createdAt' | 'active'> & { id?: string }
+): Promise<string> {
+  const id = input.id ?? newId()
+  const existing = input.id ? await db.programs.get(input.id) : undefined
+  await db.programs.put({
+    ...input,
+    id,
+    profileId,
+    active: existing?.active ?? 0,
+    createdAt: existing?.createdAt ?? Date.now(),
+  })
+  return id
+}
+
+/** Only one block runs at a time — two active programs is two conflicting plans. */
+export async function activateProgram(profileId: string, id: string): Promise<void> {
+  await db.transaction('rw', db.programs, async () => {
+    const all = await db.programs.where('profileId').equals(profileId).toArray()
+    await Promise.all(
+      all.map((program) =>
+        db.programs.update(program.id, {
+          active: program.id === id ? 1 : 0,
+          // Starting it (re)sets the clock the week counter reads from.
+          startedAt: program.id === id ? (program.startedAt ?? Date.now()) : program.startedAt,
+        })
+      )
+    )
+  })
+}
+
+export async function deactivateProgram(id: string): Promise<void> {
+  await db.programs.update(id, { active: 0 })
+}
+
+/** Restarts the block from week 1 without losing the plan itself. */
+export async function restartProgram(id: string): Promise<void> {
+  await db.programs.update(id, { startedAt: Date.now(), active: 1 })
+}
+
+export async function deleteProgram(id: string): Promise<void> {
+  await db.programs.delete(id)
+}
+
 // ─── Sessions ─────────────────────────────────────────────────────────────────
 
 export async function getActiveSession(profileId: string): Promise<Session | undefined> {
@@ -178,7 +253,11 @@ export async function listSessions(profileId: string, limit?: number): Promise<S
   return limit ? query.limit(limit).toArray() : query.toArray()
 }
 
-export async function startSession(profileId: string, routineId?: string): Promise<string> {
+export async function startSession(
+  profileId: string,
+  routineId?: string,
+  program?: { id: string; week: number; dayIndex: number }
+): Promise<string> {
   const routine = routineId ? await db.routines.get(routineId) : undefined
   const session: Session = {
     id: newId(),
@@ -188,6 +267,9 @@ export async function startSession(profileId: string, routineId?: string): Promi
     titleAr: routine?.nameAr,
     startedAt: Date.now(),
     status: 'active',
+    programId: program?.id,
+    programWeek: program?.week,
+    programDayIndex: program?.dayIndex,
   }
 
   // Seed each slot with the weight used last time, so a routine opens ready to
@@ -197,7 +279,7 @@ export async function startSession(profileId: string, routineId?: string): Promi
     await Promise.all(
       routine.items.map(async (item) => {
         const working = (await lastPerformance(profileId, item.exerciseId)).filter(
-          (s) => s.isWarmup === 0
+          (s) => s.setType !== 'warmup'
         )
         if (working.length === 0) return
         // The top set from last time, not the final one — people often drop the
@@ -222,6 +304,7 @@ export async function startSession(profileId: string, routineId?: string): Promi
         targetSets: item.targetSets,
         targetReps: item.targetReps,
         restSeconds: item.restSeconds,
+        supersetGroup: item.supersetGroup,
       })
 
       // Lay out the target number of rows up front — that is what the routine
@@ -236,7 +319,7 @@ export async function startSession(profileId: string, routineId?: string): Promi
           setNumber: setIndex + 1,
           weight: lastWeights.get(item.exerciseId) ?? 0,
           reps: item.targetReps,
-          isWarmup: 0 as const,
+          setType: 'working' as const,
           done: 0 as const,
         }))
       )
@@ -408,7 +491,7 @@ export function listSetsForExercise(profileId: string, exerciseId: string): Prom
     .where('[exerciseId+completedAt]')
     .between([exerciseId, 0], [exerciseId, Infinity])
     .reverse()
-    .filter((s) => s.profileId === profileId && s.isWarmup === 0)
+    .filter((s) => s.profileId === profileId && s.setType !== 'warmup')
     .toArray()
 }
 
@@ -434,7 +517,7 @@ export async function addSet(
     // Carry the previous set forward — most people repeat weight and reps.
     weight: seed?.weight ?? last?.weight ?? 0,
     reps: seed?.reps ?? last?.reps ?? parent.targetReps ?? 0,
-    isWarmup: 0,
+    setType: 'working',
     done: 0,
   }
   await db.sets.add(entry)
@@ -478,6 +561,104 @@ export async function deleteSet(id: string): Promise<void> {
       )
     )
   })
+}
+
+/**
+ * Sets grouped by session, most recent session first — the input to progression
+ * suggestions, which need to see a stall across two sessions, not just one.
+ */
+export async function recentSessionsForExercise(
+  profileId: string,
+  exerciseId: string,
+  count: number,
+  excludeSessionId?: string
+): Promise<SetEntry[][]> {
+  const history = await db.sets
+    .where('[exerciseId+completedAt]')
+    .between([exerciseId, 0], [exerciseId, Infinity])
+    .reverse()
+    .filter((s) => s.profileId === profileId && s.sessionId !== excludeSessionId)
+    .toArray()
+
+  const grouped: SetEntry[][] = []
+  const seen = new Map<string, SetEntry[]>()
+  for (const set of history) {
+    let bucket = seen.get(set.sessionId)
+    if (!bucket) {
+      if (seen.size >= count) break
+      bucket = []
+      seen.set(set.sessionId, bucket)
+      grouped.push(bucket)
+    }
+    bucket.push(set)
+  }
+
+  return grouped.map((rows) => rows.sort((a, b) => a.setNumber - b.setNumber))
+}
+
+/** Prepends a generated warm-up ramp, renumbering the working sets after it. */
+export async function addWarmupSets(
+  sessionExerciseId: string,
+  steps: Array<{ weight: number; reps: number }>
+): Promise<void> {
+  if (steps.length === 0) return
+
+  const parent = await db.sessionExercises.get(sessionExerciseId)
+  if (!parent) return
+  const session = await db.sessions.get(parent.sessionId)
+  if (!session) return
+
+  await db.transaction('rw', db.sets, async () => {
+    const existing = (
+      await db.sets.where('sessionExerciseId').equals(sessionExerciseId).toArray()
+    ).sort((a, b) => a.setNumber - b.setNumber)
+
+    // Warm-ups belong at the top, so everything already logged shifts down.
+    await Promise.all(
+      existing.map((entry, index) =>
+        db.sets.update(entry.id, { setNumber: steps.length + index + 1 })
+      )
+    )
+
+    await db.sets.bulkAdd(
+      steps.map((step, index) => ({
+        id: newId(),
+        sessionExerciseId,
+        sessionId: parent.sessionId,
+        profileId: session.profileId,
+        exerciseId: parent.exerciseId,
+        setNumber: index + 1,
+        weight: step.weight,
+        reps: step.reps,
+        setType: 'warmup' as const,
+        done: 0 as const,
+      }))
+    )
+  })
+}
+
+/**
+ * Links an exercise to the one above it as a superset, or breaks it out again.
+ * Grouped exercises are performed back to back, so rest is taken once at the end
+ * of the group rather than after each one.
+ */
+export async function toggleSuperset(sessionExerciseId: string): Promise<void> {
+  const entry = await db.sessionExercises.get(sessionExerciseId)
+  if (!entry) return
+
+  const siblings = await listSessionExercises(entry.sessionId)
+  const index = siblings.findIndex((s) => s.id === sessionExerciseId)
+  const previous = siblings[index - 1]
+  if (!previous) return
+
+  if (entry.supersetGroup && entry.supersetGroup === previous.supersetGroup) {
+    await db.sessionExercises.update(sessionExerciseId, { supersetGroup: undefined })
+    return
+  }
+
+  const group = previous.supersetGroup ?? newId()
+  await db.sessionExercises.update(previous.id, { supersetGroup: group })
+  await db.sessionExercises.update(sessionExerciseId, { supersetGroup: group })
 }
 
 /**
@@ -543,11 +724,13 @@ export async function deleteBodyStat(id: string): Promise<void> {
 
 export interface Backup {
   app: 'eagle-gym'
-  version: 1
+  /** 1 predates set types and programs; both are accepted on import. */
+  version: 1 | 2
   exportedAt: string
   profiles: Profile[]
   exercises: Exercise[]
   routines: Routine[]
+  programs?: Program[]
   sessions: Session[]
   sessionExercises: SessionExercise[]
   sets: SetEntry[]
@@ -555,12 +738,13 @@ export interface Backup {
 }
 
 export async function exportBackup(): Promise<Backup> {
-  const [profiles, exercises, routines, sessions, sessionExercises, sets, bodyStats] =
+  const [profiles, exercises, routines, programs, sessions, sessionExercises, sets, bodyStats] =
     await Promise.all([
       db.profiles.toArray(),
       // Built-ins are recreated from code on import; only custom ones need carrying.
       db.exercises.filter((e) => e.isCustom === 1).toArray(),
       db.routines.toArray(),
+      db.programs.toArray(),
       db.sessions.toArray(),
       db.sessionExercises.toArray(),
       db.sets.toArray(),
@@ -569,11 +753,12 @@ export async function exportBackup(): Promise<Backup> {
 
   return {
     app: 'eagle-gym',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     profiles,
     exercises,
     routines,
+    programs,
     sessions,
     sessionExercises,
     sets,
@@ -590,19 +775,40 @@ export function parseBackup(raw: string): Backup {
   }
   const backup = parsed as Partial<Backup>
   if (backup?.app !== 'eagle-gym' || !Array.isArray(backup.profiles)) throw new Error('not-a-backup')
+
+  // A v1 file predates set types. Bring its sets forward rather than importing
+  // rows the rest of the app can't interpret.
+  if (backup.version === 1 && Array.isArray(backup.sets)) {
+    backup.sets = backup.sets.map((set) => {
+      const legacy = set as SetEntry & { isWarmup?: 0 | 1 }
+      const { isWarmup, ...rest } = legacy
+      return { ...rest, setType: (rest.setType ?? (isWarmup === 1 ? 'warmup' : 'working')) as SetType }
+    })
+  }
+
   return backup as Backup
 }
 
 export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): Promise<void> {
   await db.transaction(
     'rw',
-    [db.profiles, db.exercises, db.routines, db.sessions, db.sessionExercises, db.sets, db.bodyStats],
+    [
+      db.profiles,
+      db.exercises,
+      db.routines,
+      db.programs,
+      db.sessions,
+      db.sessionExercises,
+      db.sets,
+      db.bodyStats,
+    ],
     async () => {
       if (mode === 'replace') {
         await Promise.all([
           db.profiles.clear(),
           db.exercises.clear(),
           db.routines.clear(),
+          db.programs.clear(),
           db.sessions.clear(),
           db.sessionExercises.clear(),
           db.sets.clear(),
@@ -617,6 +823,7 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
         db.profiles.bulkPut(backup.profiles ?? []),
         db.exercises.bulkPut(backup.exercises ?? []),
         db.routines.bulkPut(backup.routines ?? []),
+        db.programs.bulkPut(backup.programs ?? []),
         db.sessions.bulkPut(backup.sessions ?? []),
         db.sessionExercises.bulkPut(backup.sessionExercises ?? []),
         db.sets.bulkPut(backup.sets ?? []),

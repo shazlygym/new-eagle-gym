@@ -13,11 +13,27 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import {
+  BalanceCard,
+  ComparisonCard,
+  LoadRatioCard,
+  MuscleVolumeCard,
+  RecordTimelineCard,
+} from '../components/AnalyticsCards'
 import { CHART, ChartCard, ChartTooltip } from '../components/Chart'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import Sheet from '../components/Sheet'
-import { exerciseProgress, personalRecords, weeklyVolume } from '../db/queries'
+import {
+  comparePeriods,
+  exerciseProgress,
+  loadRatio,
+  movementBalance,
+  personalRecords,
+  recordTimeline,
+  volumeByMuscle,
+  weeklyVolume,
+} from '../db/queries'
 import { listCompletedSets, listExercises, listSessions } from '../db/repository'
 import { exerciseName, useT } from '../i18n'
 import { formatNumber, formatShortDay, toDisplayWeight, unitLabel } from '../lib/format'
@@ -60,6 +76,12 @@ export default function Progress() {
     () => [...records.values()].sort((a, b) => b.lastPerformedAt - a.lastPerformedAt),
     [records]
   )
+
+  const muscleVolume = useMemo(() => volumeByMuscle(sets, exercises), [sets, exercises])
+  const balance = useMemo(() => movementBalance(sets, exercises), [sets, exercises])
+  const load = useMemo(() => loadRatio(sessions, sets), [sessions, sets])
+  const comparison = useMemo(() => comparePeriods(sessions, sets), [sessions, sets])
+  const timeline = useMemo(() => recordTimeline(sets), [sets])
 
   if (!profile) return null
 
@@ -175,6 +197,12 @@ export default function Progress() {
             </ResponsiveContainer>
           )}
         </ChartCard>
+
+        <LoadRatioCard data={load} units={units} />
+        <MuscleVolumeCard data={muscleVolume} units={units} />
+        <BalanceCard data={balance} />
+        <ComparisonCard data={comparison} units={units} />
+        <RecordTimelineCard events={timeline} exercises={exercises} units={units} />
 
         <section>
           <h2 className="mb-2 px-1 text-sm font-semibold text-dark-100">{t('progress.records')}</h2>

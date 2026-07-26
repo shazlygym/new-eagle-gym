@@ -1,4 +1,5 @@
 import {
+  differenceInCalendarWeeks,
   eachWeekOfInterval,
   endOfWeek,
   format,
@@ -7,7 +8,14 @@ import {
   startOfWeek,
   subWeeks,
 } from 'date-fns'
-import type { Session, SetEntry } from './schema'
+import type {
+  Exercise,
+  Movement,
+  MuscleGroup,
+  Program,
+  Session,
+  SetEntry,
+} from './schema'
 
 // Derived numbers — PRs, tonnage, streaks — are computed from the set log rather
 // than stored. A denormalised PR table would need invalidating on every edit,
@@ -29,7 +37,10 @@ export function e1rm(weight: number, reps: number): number {
 
 /** Tonnage: the sum of weight × reps across sets. Warm-ups don't count. */
 export function volumeOf(sets: SetEntry[]): number {
-  return sets.reduce((total, s) => (s.isWarmup ? total : total + s.weight * s.reps), 0)
+  return sets.reduce(
+    (total, s) => (s.setType === 'warmup' ? total : total + s.weight * s.reps),
+    0
+  )
 }
 
 export interface SessionStats {
@@ -67,7 +78,7 @@ export function personalRecords(sets: SetEntry[]): Map<string, ExerciseRecord> {
   const records = new Map<string, ExerciseRecord>()
 
   for (const set of sets) {
-    if (set.done !== 1 || set.isWarmup === 1) continue
+    if (set.done !== 1 || set.setType === 'warmup') continue
 
     const current = records.get(set.exerciseId) ?? {
       exerciseId: set.exerciseId,
@@ -112,7 +123,7 @@ export function newRecordsIn(
     const before = priorBest.get(exerciseId)
     if (!before || record.bestE1rm > before.bestE1rm) {
       const best = sessionSets
-        .filter((s) => s.exerciseId === exerciseId && s.done === 1 && s.isWarmup === 0)
+        .filter((s) => s.exerciseId === exerciseId && s.done === 1 && s.setType !== 'warmup')
         .sort((a, b) => e1rm(b.weight, b.reps) - e1rm(a.weight, a.reps))[0]
       if (best) {
         results.push({
@@ -171,7 +182,7 @@ export interface ExercisePoint {
 /** One point per session in which the exercise was trained, oldest first. */
 export function exerciseProgress(exerciseId: string, sets: SetEntry[]): ExercisePoint[] {
   const relevant = sets.filter(
-    (s) => s.exerciseId === exerciseId && s.done === 1 && s.isWarmup === 0 && s.completedAt
+    (s) => s.exerciseId === exerciseId && s.done === 1 && s.setType !== 'warmup' && s.completedAt
   )
 
   return [...groupBy(relevant, (s) => s.sessionId).values()]
@@ -258,6 +269,226 @@ export function bodyWeightSeries(
       weight: s.weight,
     }))
     .sort((a, b) => a.date - b.date)
+}
+
+// ─── Deeper analytics ─────────────────────────────────────────────────────────
+
+/** Falls back to the muscle group where an exercise has no explicit pattern. */
+export function movementOf(exercise: Exercise | undefined): Movement {
+  if (!exercise) return 'other'
+  if (exercise.movement) return exercise.movement
+  switch (exercise.muscleGroup) {
+    case 'chest':
+    case 'shoulders':
+      return 'push'
+    case 'back':
+      return 'pull'
+    case 'legs':
+      return 'legs'
+    default:
+      return 'other'
+  }
+}
+
+export interface MuscleVolume {
+  muscleGroup: MuscleGroup
+  volume: number
+  sets: number
+}
+
+/** Where the work actually went, descending. Reveals the neglected muscle group. */
+export function volumeByMuscle(sets: SetEntry[], exercises: Exercise[]): MuscleVolume[] {
+  const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]))
+  const totals = new Map<MuscleGroup, MuscleVolume>()
+
+  for (const set of sets) {
+    if (set.done !== 1 || set.setType === 'warmup') continue
+    const group = byId.get(set.exerciseId)?.muscleGroup
+    if (!group) continue
+    const bucket = totals.get(group) ?? { muscleGroup: group, volume: 0, sets: 0 }
+    bucket.volume += set.weight * set.reps
+    bucket.sets += 1
+    totals.set(group, bucket)
+  }
+
+  return [...totals.values()].sort((a, b) => b.volume - a.volume)
+}
+
+export type BalanceKey = 'push' | 'pull' | 'legs' | 'other'
+
+/**
+ * Working sets per movement pattern. Counted in sets rather than tonnage,
+ * because a leg press moves far more weight than a row and would swamp the
+ * comparison — sets are the unit training programs are actually written in.
+ */
+export function movementBalance(
+  sets: SetEntry[],
+  exercises: Exercise[]
+): Record<BalanceKey, number> {
+  const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]))
+  const totals: Record<BalanceKey, number> = { push: 0, pull: 0, legs: 0, other: 0 }
+
+  for (const set of sets) {
+    if (set.done !== 1 || set.setType === 'warmup') continue
+    totals[movementOf(byId.get(set.exerciseId))] += 1
+  }
+
+  return totals
+}
+
+export interface LoadRatio {
+  /** This week's tonnage. */
+  acute: number
+  /** Average weekly tonnage over the preceding four weeks. */
+  chronic: number
+  /** acute ÷ chronic. Null until there is enough history to mean anything. */
+  ratio: number | null
+  status: 'spike' | 'steady' | 'easing' | 'unknown'
+}
+
+/**
+ * This week's load against the recent baseline — the acute:chronic workload
+ * ratio used in sports science. A sudden jump is the best available warning
+ * sign for overuse injury; a sustained dip means you are detraining.
+ */
+export function loadRatio(sessions: Session[], sets: SetEntry[]): LoadRatio {
+  const points = weeklyVolume(sessions, sets, 5)
+  const acute = points.at(-1)?.volume ?? 0
+  const previous = points.slice(0, -1)
+  const weeksWithWork = previous.filter((p) => p.volume > 0)
+
+  if (weeksWithWork.length < 2) {
+    return { acute, chronic: 0, ratio: null, status: 'unknown' }
+  }
+
+  const chronic = previous.reduce((total, p) => total + p.volume, 0) / previous.length
+  if (chronic <= 0) return { acute, chronic: 0, ratio: null, status: 'unknown' }
+
+  const ratio = acute / chronic
+  return {
+    acute,
+    chronic,
+    ratio,
+    status: ratio > 1.5 ? 'spike' : ratio < 0.8 ? 'easing' : 'steady',
+  }
+}
+
+export interface RecordEvent {
+  exerciseId: string
+  date: number
+  weight: number
+  reps: number
+  e1rm: number
+}
+
+/**
+ * Every set that beat the best estimated 1RM for its exercise at the time, newest
+ * first — the log of moments the training actually worked.
+ */
+export function recordTimeline(sets: SetEntry[], limit = 20): RecordEvent[] {
+  const chronological = sets
+    .filter((s) => s.done === 1 && s.setType !== 'warmup' && s.completedAt)
+    .sort((a, b) => (a.completedAt ?? 0) - (b.completedAt ?? 0))
+
+  const best = new Map<string, number>()
+  const events: RecordEvent[] = []
+
+  for (const set of chronological) {
+    const value = e1rm(set.weight, set.reps)
+    if (value > (best.get(set.exerciseId) ?? 0)) {
+      best.set(set.exerciseId, value)
+      events.push({
+        exerciseId: set.exerciseId,
+        date: set.completedAt ?? 0,
+        weight: set.weight,
+        reps: set.reps,
+        e1rm: value,
+      })
+    }
+  }
+
+  return events.reverse().slice(0, limit)
+}
+
+export interface PeriodComparison {
+  sessions: { current: number; previous: number }
+  volume: { current: number; previous: number }
+  perSession: { current: number; previous: number }
+}
+
+/** The last four weeks against the four before them. */
+export function comparePeriods(sessions: Session[], sets: SetEntry[]): PeriodComparison {
+  const now = Date.now()
+  const fourWeeks = subWeeks(new Date(now), 4).getTime()
+  const eightWeeks = subWeeks(new Date(now), 8).getTime()
+
+  const summarise = (from: number, to: number) => {
+    const inRange = sessions.filter(
+      (s) => s.status === 'done' && s.startedAt >= from && s.startedAt < to
+    )
+    const ids = new Set(inRange.map((s) => s.id))
+    const volume = volumeOf(sets.filter((s) => ids.has(s.sessionId) && s.done === 1))
+    return { count: inRange.length, volume }
+  }
+
+  const current = summarise(fourWeeks, now + 1)
+  const previous = summarise(eightWeeks, fourWeeks)
+
+  return {
+    sessions: { current: current.count, previous: previous.count },
+    volume: { current: current.volume, previous: previous.volume },
+    perSession: {
+      current: current.count > 0 ? current.volume / current.count : 0,
+      previous: previous.count > 0 ? previous.volume / previous.count : 0,
+    },
+  }
+}
+
+// ─── Program progress ─────────────────────────────────────────────────────────
+
+export interface ProgramProgress {
+  /** 1-based, clamped to the block length. */
+  week: number
+  totalWeeks: number
+  complete: boolean
+  /** Day indices completed in the current week. */
+  doneThisWeek: number[]
+  nextDayIndex: number
+  adherence: { done: number; planned: number }
+}
+
+export function programProgress(program: Program, sessions: Session[]): ProgramProgress {
+  const startedAt = program.startedAt ?? Date.now()
+  const elapsedWeeks = Math.floor(differenceInCalendarWeeks(new Date(), new Date(startedAt), WEEK_OPTIONS))
+  const rawWeek = elapsedWeeks + 1
+  const complete = rawWeek > program.weeks
+  const week = Math.min(Math.max(1, rawWeek), program.weeks)
+
+  const fromProgram = sessions.filter((s) => s.programId === program.id && s.status === 'done')
+  const doneThisWeek = fromProgram
+    .filter((s) => s.programWeek === week)
+    .map((s) => s.programDayIndex ?? -1)
+    .filter((index) => index >= 0)
+
+  // The first scheduled day not yet completed this week; wraps to day 0 once the
+  // week is fully logged, ready for the next one.
+  const nextDayIndex =
+    program.days.findIndex((_, index) => !doneThisWeek.includes(index)) === -1
+      ? 0
+      : program.days.findIndex((_, index) => !doneThisWeek.includes(index))
+
+  const weeksElapsed = Math.min(Math.max(1, rawWeek), program.weeks)
+  return {
+    week,
+    totalWeeks: program.weeks,
+    complete,
+    doneThisWeek,
+    nextDayIndex,
+    adherence: {
+      done: fromProgram.length,
+      planned: program.days.length * weeksElapsed,
+    },
+  }
 }
 
 function groupBy<T, K>(items: T[], key: (item: T) => K): Map<K, T[]> {

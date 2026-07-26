@@ -115,6 +115,12 @@ export default function Workout() {
                 onSetCompleted={(restSeconds) => restSeconds > 0 && timer.start(restSeconds)}
                 isFirst={index === 0}
                 isLast={index === sessionExercises.length - 1}
+                // Rest is taken at the end of a superset, not between its parts.
+                supersetContinues={Boolean(
+                  sessionExercise.supersetGroup &&
+                    sessionExercises[index + 1]?.supersetGroup === sessionExercise.supersetGroup
+                )}
+                trackRpe={profile.trackRpe === 1}
               />
             ))}
 

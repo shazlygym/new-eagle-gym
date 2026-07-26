@@ -7,16 +7,32 @@ Arabic (RTL) and English, switchable at runtime.
 
 ## What it does
 
-- **Log workouts** — start empty or from a routine, log weight × reps per set,
-  mark warm-ups, add notes. Rest timer starts automatically when you tick a set.
-- **Routines** — saved exercise lists with target sets/reps/rest, startable in one
-  tap. Three starter routines (Push / Pull / Legs) are created with each profile.
-- **Exercise library** — ~70 bilingual built-in exercises across eight muscle
-  groups, plus your own custom ones (addable mid-workout).
-- **History** — month calendar of trained days and a full session log.
-- **Progress** — weekly tonnage, estimated 1RM per exercise, personal records.
-- **Body** — weight, body fat and circumference measurements with a trend chart.
-- **Backup** — export/import the whole database as JSON.
+**Logging**
+- Start empty, from a routine, from a program, or by repeating your last workout.
+- Per-set types: working, warm-up, drop set, to failure. Only warm-ups are
+  excluded from volume and records.
+- Auto-generated warm-up ramp to your working weight.
+- Supersets — link exercises so rest is taken once at the end of the group.
+- Optional RPE (reps in reserve) column.
+- Plate calculator: what to load per side, seeded from the set you're on.
+- Rest timer that survives the phone being pocketed.
+- Tap any exercise mid-workout to see every past session for it.
+
+**Planning**
+- **Routines** — saved exercise lists with target sets/reps/rest.
+- **Programs** — multi-week blocks that schedule routines across training days,
+  track which week you're in, show the next day on Home, and report adherence.
+- **Progression suggestions** — double progression: hold the weight until every
+  working set hits the target, then add the smallest jump. Two stalled sessions
+  in a row suggests a deload instead.
+
+**Review**
+- History with a month calendar; past workouts are fully editable.
+- Progress: weekly tonnage, estimated 1RM per exercise, personal records,
+  volume by muscle group, push/pull/legs balance, acute:chronic training load,
+  a record timeline, and a four-week period comparison.
+- Body weight, body fat and circumference measurements with a trend chart.
+- Export/import the whole database as JSON.
 
 ## Architecture
 
@@ -27,7 +43,8 @@ IndexedDB on the device.
 src/
   db/          Dexie schema, repository (all reads/writes), derived queries, seed data
   i18n/        ar/en dictionaries + useT hook
-  lib/         formatting, rest timer, audio, active-profile hook
+  lib/         formatting, rest timer, audio, plate maths, warm-up ramp,
+               progression rules, set types, search normalisation
   components/  shared UI
   pages/       one file per screen
 ```
@@ -43,6 +60,11 @@ Two rules keep it maintainable:
 
 Weights are always stored in **kilograms** and measurements in **centimetres**;
 the kg/lb setting is display-only. Otherwise toggling units would rewrite history.
+
+The schema is versioned. v2 added programs, superset grouping and set types,
+migrating existing `isWarmup` flags in place — an install with months of logged
+training upgrades without losing a set. Backups carry a version too, and a v1
+file is brought forward on import.
 
 ### "Multi-user" without a server
 

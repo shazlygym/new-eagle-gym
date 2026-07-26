@@ -5,7 +5,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import InstallHint from '../components/InstallHint'
 import StatCard from '../components/StatCard'
+import TodayPlanCard from '../components/TodayPlanCard'
 import {
+  getActiveProgram,
   getActiveSession,
   listCompletedSetsSince,
   listRoutines,
@@ -14,11 +16,7 @@ import {
   repeatSession,
   startSession,
 } from '../db/repository'
-import {
-  sessionsThisWeek,
-  volumeThisWeek,
-  weekStreak,
-} from '../db/queries'
+import { programProgress, sessionsThisWeek, volumeThisWeek, weekStreak } from '../db/queries'
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
 import { formatShortDay, formatTimeAgo, formatVolume, unitLabel, volumeValue } from '../lib/format'
@@ -34,6 +32,10 @@ export default function Home() {
   const sessions = useLiveQuery(() => (profileId ? listSessions(profileId) : []), [profileId]) ?? []
   const active = useLiveQuery(
     () => (profileId ? getActiveSession(profileId) : undefined),
+    [profileId]
+  )
+  const program = useLiveQuery(
+    () => (profileId ? getActiveProgram(profileId) : undefined),
     [profileId]
   )
 
@@ -68,6 +70,22 @@ export default function Home() {
     const existing = await getActiveSession(profile.id)
     // Never orphan a workout in progress — resume it rather than starting a second.
     const sessionId = existing?.id ?? (await startSession(profile.id, routineId))
+    navigate(`/workout/${sessionId}`)
+  }
+
+  const startProgramDay = async (dayIndex: number) => {
+    if (!program) return
+    const day = program.days[dayIndex]
+    if (!day) return
+    unlockAudio()
+    const existing = await getActiveSession(profile.id)
+    const sessionId =
+      existing?.id ??
+      (await startSession(profile.id, day.routineId, {
+        id: program.id,
+        week: programProgress(program, sessions).week,
+        dayIndex,
+      }))
     navigate(`/workout/${sessionId}`)
   }
 
@@ -107,6 +125,16 @@ export default function Home() {
             </div>
             <span className="shrink-0 text-sm font-bold">{t('home.resume')}</span>
           </button>
+        </section>
+      )}
+
+      {program && (
+        <section className="px-5 pt-4">
+          <TodayPlanCard
+            program={program}
+            progress={programProgress(program, sessions)}
+            onStartDay={startProgramDay}
+          />
         </section>
       )}
 

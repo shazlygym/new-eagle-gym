@@ -1,6 +1,13 @@
-import { SHARED, type Equipment, type Exercise, type MuscleGroup } from './schema'
+import { SHARED, type Equipment, type Exercise, type MuscleGroup, type Movement } from './schema'
 
-type Seed = [id: string, en: string, ar: string, group: MuscleGroup, equipment: Equipment]
+type Seed = [
+  id: string,
+  en: string,
+  ar: string,
+  group: MuscleGroup,
+  equipment: Equipment,
+  movement?: Movement,
+]
 
 // Stable ids (not random) so re-seeding is idempotent and a routine exported from
 // one device still resolves its exercises when imported on another.
@@ -42,18 +49,18 @@ const SEEDS: Seed[] = [
   ['upright-row', 'Upright Row', 'سحب عمودي', 'shoulders', 'barbell'],
 
   // ─── Arms ──────────────────────────────────────────────────────────────────
-  ['barbell-curl', 'Barbell Curl', 'مرجحة بالبار', 'arms', 'barbell'],
-  ['db-curl', 'Dumbbell Curl', 'مرجحة بالدمبل', 'arms', 'dumbbell'],
-  ['hammer-curl', 'Hammer Curl', 'مرجحة مطرقة', 'arms', 'dumbbell'],
-  ['preacher-curl', 'Preacher Curl', 'مرجحة على البانش', 'arms', 'barbell'],
-  ['concentration-curl', 'Concentration Curl', 'مرجحة تركيز', 'arms', 'dumbbell'],
-  ['cable-curl', 'Cable Curl', 'مرجحة بالكابل', 'arms', 'cable'],
-  ['triceps-pushdown', 'Triceps Pushdown', 'ترايسبس بالكابل', 'arms', 'cable'],
-  ['skull-crusher', 'Skull Crusher', 'ترايسبس مستلقي', 'arms', 'barbell'],
-  ['overhead-extension', 'Overhead Triceps Extension', 'تمديد ترايسبس خلف الرأس', 'arms', 'dumbbell'],
-  ['dips-triceps', 'Triceps Dips', 'متوازي للترايسبس', 'arms', 'bodyweight'],
-  ['close-grip-bench', 'Close-Grip Bench Press', 'ضغط بنش قبضة ضيقة', 'arms', 'barbell'],
-  ['wrist-curl', 'Wrist Curl', 'تمرين الساعد', 'arms', 'dumbbell'],
+  ['barbell-curl', 'Barbell Curl', 'مرجحة بالبار', 'arms', 'barbell', 'pull'],
+  ['db-curl', 'Dumbbell Curl', 'مرجحة بالدمبل', 'arms', 'dumbbell', 'pull'],
+  ['hammer-curl', 'Hammer Curl', 'مرجحة مطرقة', 'arms', 'dumbbell', 'pull'],
+  ['preacher-curl', 'Preacher Curl', 'مرجحة على البانش', 'arms', 'barbell', 'pull'],
+  ['concentration-curl', 'Concentration Curl', 'مرجحة تركيز', 'arms', 'dumbbell', 'pull'],
+  ['cable-curl', 'Cable Curl', 'مرجحة بالكابل', 'arms', 'cable', 'pull'],
+  ['triceps-pushdown', 'Triceps Pushdown', 'ترايسبس بالكابل', 'arms', 'cable', 'push'],
+  ['skull-crusher', 'Skull Crusher', 'ترايسبس مستلقي', 'arms', 'barbell', 'push'],
+  ['overhead-extension', 'Overhead Triceps Extension', 'تمديد ترايسبس خلف الرأس', 'arms', 'dumbbell', 'push'],
+  ['dips-triceps', 'Triceps Dips', 'متوازي للترايسبس', 'arms', 'bodyweight', 'push'],
+  ['close-grip-bench', 'Close-Grip Bench Press', 'ضغط بنش قبضة ضيقة', 'arms', 'barbell', 'push'],
+  ['wrist-curl', 'Wrist Curl', 'تمرين الساعد', 'arms', 'dumbbell', 'pull'],
 
   // ─── Legs ──────────────────────────────────────────────────────────────────
   ['back-squat', 'Barbell Back Squat', 'سكوات خلفي بالبار', 'legs', 'barbell'],
@@ -94,13 +101,14 @@ const SEEDS: Seed[] = [
 ]
 
 export const SEED_EXERCISES: Exercise[] = SEEDS.map(
-  ([id, nameEn, nameAr, muscleGroup, equipment]) => ({
+  ([id, nameEn, nameAr, muscleGroup, equipment, movement]) => ({
     id,
     profileId: SHARED,
     nameEn,
     nameAr,
     muscleGroup,
     equipment,
+    movement,
     isCustom: 0,
   })
 )

@@ -27,6 +27,7 @@ import {
   unitLabel,
   volumeValue,
 } from '../lib/format'
+import { SET_TYPE_BADGE } from '../lib/setTypes'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function SessionDetail() {
@@ -101,6 +102,8 @@ export default function SessionDetail() {
               onSetCompleted={() => {}} // no rest timer when editing after the fact
               isFirst={index === 0}
               isLast={index === sessionExercises.length - 1}
+              trackRpe={profile.trackRpe === 1}
+              readOnlyContext
             />
           ))}
 
@@ -139,7 +142,7 @@ export default function SessionDetail() {
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-dark-100"
                     >
                       <span className="tabular w-6 text-xs font-semibold text-dark-300">
-                        {row.isWarmup ? 'W' : row.setNumber}
+                        {SET_TYPE_BADGE[row.setType] ?? row.setNumber}
                       </span>
                       <span className="tabular flex-1">
                         {formatNumber(toDisplayWeight(row.weight, units))}{' '}

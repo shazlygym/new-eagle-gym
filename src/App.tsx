@@ -6,6 +6,8 @@ import Exercises from './pages/Exercises'
 import History from './pages/History'
 import Home from './pages/Home'
 import Onboarding from './pages/Onboarding'
+import ProgramEdit from './pages/ProgramEdit'
+import Programs from './pages/Programs'
 import RoutineEdit from './pages/RoutineEdit'
 import Routines from './pages/Routines'
 import SessionDetail from './pages/SessionDetail'
@@ -51,6 +53,9 @@ export default function App() {
           <Route path="/routines/new" element={<RoutineEdit />} />
           <Route path="/routines/:routineId" element={<RoutineEdit />} />
           <Route path="/exercises" element={<Exercises />} />
+          <Route path="/programs" element={<Programs />} />
+          <Route path="/programs/new" element={<ProgramEdit />} />
+          <Route path="/programs/:programId" element={<ProgramEdit />} />
           <Route path="/history" element={<History />} />
           <Route path="/history/:sessionId" element={<SessionDetail />} />
           <Route

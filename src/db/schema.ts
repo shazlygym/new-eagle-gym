@@ -28,11 +28,27 @@ export type MuscleGroup =
 
 export type Equipment = 'barbell' | 'dumbbell' | 'machine' | 'cable' | 'bodyweight' | 'other'
 
+/**
+ * Movement pattern, for push/pull balance. Most of it follows from the muscle
+ * group, but arms genuinely split — curls are pull, extensions are push — so
+ * the field can be set explicitly where the group would get it wrong.
+ */
+export type Movement = 'push' | 'pull' | 'legs' | 'other'
+
+/**
+ * Warm-ups are excluded from volume and personal records. Drop sets and sets
+ * taken to failure do count — they are working sets — but they are marked so
+ * the log reflects what actually happened.
+ */
+export type SetType = 'warmup' | 'working' | 'drop' | 'failure'
+
 export interface Profile {
   id: string
   name: string
   membershipNumber?: string
   units: Units
+  /** Adds a reps-in-reserve field to every set row. Off by default. */
+  trackRpe?: 0 | 1
   createdAt: number
 }
 
@@ -44,6 +60,7 @@ export interface Exercise {
   nameEn: string
   muscleGroup: MuscleGroup
   equipment: Equipment
+  movement?: Movement
   isCustom: 0 | 1
 }
 
@@ -52,6 +69,7 @@ export interface RoutineItem {
   targetSets: number
   targetReps: number
   restSeconds: number
+  supersetGroup?: string
 }
 
 export interface Routine {
@@ -74,6 +92,10 @@ export interface Session {
   endedAt?: number
   notes?: string
   status: 'active' | 'done'
+  /** Set when the session was started from a training program. */
+  programId?: string
+  programWeek?: number
+  programDayIndex?: number
 }
 
 /**
@@ -89,6 +111,11 @@ export interface SessionExercise {
   targetSets?: number
   targetReps?: number
   restSeconds: number
+  /**
+   * Exercises sharing a group id are performed back to back as a superset, so
+   * rest is taken once at the end of the group rather than after each exercise.
+   */
+  supersetGroup?: string
 }
 
 export interface SetEntry {
@@ -102,8 +129,9 @@ export interface SetEntry {
   /** Kilograms. */
   weight: number
   reps: number
+  /** Reps in reserve, 0–5. Optional: most people log it on hard sets only. */
   rpe?: number
-  isWarmup: 0 | 1
+  setType: SetType
   done: 0 | 1
   completedAt?: number
 }
@@ -127,10 +155,41 @@ export interface BodyStat {
   createdAt: number
 }
 
+/** One scheduled training day inside a program. */
+export interface ProgramDay {
+  routineId: string
+  labelAr: string
+  labelEn: string
+}
+
+/**
+ * A multi-week training block: which days you train, in what order, and how the
+ * load moves week to week. A routine says *what* to do; a program says *when*
+ * and *how much heavier than last week*.
+ */
+export interface Program {
+  id: string
+  profileId: string
+  nameAr: string
+  nameEn: string
+  weeks: number
+  days: ProgramDay[]
+  progression: {
+    kind: 'none' | 'linear'
+    /** Kilograms added to each exercise's working weight per completed week. */
+    incrementKg: number
+  }
+  /** Unset until the block is started. */
+  startedAt?: number
+  active: 0 | 1
+  createdAt: number
+}
+
 class EagleGymDB extends Dexie {
   profiles!: Table<Profile, string>
   exercises!: Table<Exercise, string>
   routines!: Table<Routine, string>
+  programs!: Table<Program, string>
   sessions!: Table<Session, string>
   sessionExercises!: Table<SessionExercise, string>
   sets!: Table<SetEntry, string>
@@ -148,6 +207,23 @@ class EagleGymDB extends Dexie {
       sets: 'id, sessionId, sessionExerciseId, [exerciseId+completedAt], [profileId+completedAt]',
       bodyStats: 'id, profileId, [profileId+date]',
     })
+
+    // v2 adds programs, superset grouping and richer set types. Existing
+    // installs are upgraded in place — a member who has been logging for months
+    // must not lose a single set to a schema change.
+    this.version(2)
+      .stores({
+        programs: 'id, profileId, [profileId+active]',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('sets')
+          .toCollection()
+          .modify((set: SetEntry & { isWarmup?: 0 | 1 }) => {
+            set.setType = set.isWarmup === 1 ? 'warmup' : 'working'
+            delete set.isWarmup
+          })
+      })
   }
 }
 
