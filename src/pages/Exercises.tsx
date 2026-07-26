@@ -1,150 +1,142 @@
-import { useEffect, useState } from 'react';
-import { Dumbbell, Plus, Play, Trash2, Search, Video } from 'lucide-react';
-import { Exercise } from '../types';
-import { workoutsApi } from '../api/workouts';
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Dumbbell, Plus, Search, Trash2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import ConfirmDialog from '../components/ConfirmDialog'
+import EmptyState from '../components/EmptyState'
+import NewExerciseSheet, { MUSCLE_GROUPS } from '../components/NewExerciseSheet'
+import PageHeader from '../components/PageHeader'
+import { createExercise, deleteExercise, listExercises } from '../db/repository'
+import type { MuscleGroup } from '../db/schema'
+import { exerciseName, useT } from '../i18n'
+import type { TranslationKey } from '../i18n/en'
+import { filterExercises } from '../lib/exerciseSearch'
+import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Exercises() {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [newEx, setNewEx] = useState({ name: '', muscleGroup: '', videoUrl: '' });
+  const { t, locale } = useT()
+  const { profile } = useActiveProfile()
+  const profileId = profile?.id
 
-  const fetchExercises = async () => {
-    try {
-      const data = await workoutsApi.getExercises();
-      setExercises(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [query, setQuery] = useState('')
+  const [group, setGroup] = useState<MuscleGroup | 'all'>('all')
+  const [formOpen, setFormOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
 
-  useEffect(() => { fetchExercises(); }, []);
+  const exercises = useLiveQuery(() => (profileId ? listExercises(profileId) : []), [profileId]) ?? []
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await workoutsApi.createExercise(newEx);
-      setShowModal(false);
-      setNewEx({ name: '', muscleGroup: '', videoUrl: '' });
-      fetchExercises();
-    } catch (err) {
-      console.error(err);
-      alert('خطأ في إضافة التمرين');
-    }
-  };
+  const results = useMemo(
+    () => filterExercises(exercises, { query, group, locale }),
+    [exercises, query, group, locale]
+  )
 
-  const filtered = exercises.filter(ex => 
-    ex.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    ex.muscleGroup?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (!profile) return null
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-black text-white">دليل التمارين</h1>
-          <p className="text-dark-300">إدارة قائمة التمارين والروابط التعليمية</p>
-        </div>
-        <button onClick={() => setShowModal(true)} className="btn-gold">
-          <Plus size={20} /> إضافة تمرين جديد
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title={t('exercises.title')}
+        onBack="history"
+        action={
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            aria-label={t('exercises.new')}
+            className="rounded-xl bg-dark-700 p-2 text-gold-500 active:bg-dark-600"
+          >
+            <Plus size={20} />
+          </button>
+        }
+      />
 
-      <div className="card mb-6">
+      <div className="sticky top-header z-20 space-y-3 bg-dark-900/95 px-4 py-3 backdrop-blur-xl">
         <div className="relative">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-400" size={20} />
+          <Search
+            size={16}
+            className="pointer-events-none absolute inset-y-0 start-3 my-auto text-dark-300"
+          />
           <input
-            type="text"
-            placeholder="البحث عن تمرين أو عضلة..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field pr-12"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('exercises.searchPlaceholder')}
+            className="field ps-9"
           />
         </div>
+
+        <div className="scroll-area -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          {(['all', ...MUSCLE_GROUPS] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setGroup(value)}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+                          ${group === value ? 'bg-gold-500 text-dark-900' : 'bg-dark-700 text-dark-200'}`}
+            >
+              {value === 'all' ? t('common.all') : t(`group.${value}` as TranslationKey)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="card h-32 animate-pulse bg-dark-800/50" />
-          ))
-        ) : filtered.length === 0 ? (
-          <div className="col-span-full text-center py-20 text-dark-400">لا يوجد تمارين تطابق بحثك</div>
+      <div className="px-4 pb-4">
+        {results.length === 0 ? (
+          <EmptyState icon={Dumbbell} title={t('exercises.none')} />
         ) : (
-          filtered.map(ex => (
-            <div key={ex.id} className="card group hover:border-gold-500/30 transition-all">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gold-500/10 text-gold-500 flex items-center justify-center">
-                  <Dumbbell size={24} />
+          <ul className="space-y-1.5">
+            {results.map((exercise) => (
+              <li key={exercise.id} className="card flex items-center gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-dark-50">
+                    {exerciseName(exercise, locale)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-dark-300">
+                    {t(`group.${exercise.muscleGroup}` as TranslationKey)} ·{' '}
+                    {t(`equipment.${exercise.equipment}` as TranslationKey)}
+                  </p>
                 </div>
-                {ex.videoUrl && (
-                  <a 
-                    href={ex.videoUrl} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
-                    title="مشاهدة الفيديو"
-                  >
-                    <Play size={16} fill="currentColor" />
-                  </a>
+
+                {exercise.isCustom === 1 && (
+                  <>
+                    <span className="shrink-0 rounded-full bg-gold-500/15 px-2 py-0.5 text-[10px] font-semibold text-gold-400">
+                      {t('exercises.custom')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPendingDelete(exercise.id)}
+                      aria-label={t('common.delete')}
+                      className="shrink-0 rounded-lg p-1.5 text-dark-300 active:bg-dark-600"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
                 )}
-              </div>
-              <h3 className="text-xl font-bold text-white mb-1">{ex.name}</h3>
-              <p className="text-dark-300 text-sm">{ex.muscleGroup || 'عضلة غير محددة'}</p>
-            </div>
-          ))
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm">
-          <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-scale-up">
-            <h2 className="text-2xl font-black text-white mb-6">إضافة تمرين جديد</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1">اسم التمرين</label>
-                <input
-                  required
-                  type="text"
-                  value={newEx.name}
-                  onChange={(e) => setNewEx({ ...newEx, name: e.target.value })}
-                  className="input-field"
-                  placeholder="مثال: بنش برس"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1">العضلة المستهدفة</label>
-                <input
-                  type="text"
-                  value={newEx.muscleGroup}
-                  onChange={(e) => setNewEx({ ...newEx, muscleGroup: e.target.value })}
-                  className="input-field"
-                  placeholder="مثال: صدر"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1 flex items-center gap-2">
-                  رابط فيديو تعليمي (YouTube) <Video size={14} className="text-red-500" />
-                </label>
-                <input
-                  type="url"
-                  value={newEx.videoUrl}
-                  onChange={(e) => setNewEx({ ...newEx, videoUrl: e.target.value })}
-                  className="input-field"
-                  placeholder="https://youtube.com/..."
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-ghost flex-1">إلغاء</button>
-                <button type="submit" className="btn-gold flex-1">إضافة</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <NewExerciseSheet
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onCreate={async (input) => {
+          await createExercise(profile.id, input)
+          setFormOpen(false)
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={t('exercises.deleteConfirm')}
+        body={t('common.confirmDelete')}
+        confirmLabel={t('common.delete')}
+        destructive
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) void deleteExercise(pendingDelete)
+          setPendingDelete(null)
+        }}
+      />
     </div>
-  );
+  )
 }
