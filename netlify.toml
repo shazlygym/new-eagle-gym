@@ -1,0 +1,44 @@
+# Deploy config for Netlify / Cloudflare Pages.
+#
+# The cache headers matter more than they look: if the service worker or the
+# HTML shell is cached by the CDN, a deployed update stays invisible on an
+# already-installed phone until the browser happens to revalidate. Hashed assets
+# under /assets/ are safe to pin forever because their filename changes whenever
+# their contents do.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # The committed icons make `npm run icons` unnecessary at build time, so the
+  # Playwright browser download is pure waste here.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# SPA fallback so deep links like /history/<id> resolve to the app shell.
+# public/_redirects covers this too; kept here so the config is readable in one place.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

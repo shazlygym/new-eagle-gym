@@ -119,11 +119,28 @@ offline behaviour and install prompts.
 
 ## Deployment
 
-Any static host. `Dockerfile` builds the bundle and serves `dist/` with nginx;
-`nginx.conf` sets SPA fallback, `no-cache` on `index.html`/`sw.js` so updates
-land, and long-lived immutable caching for hashed assets.
+**HTTPS is required.** Service workers — and therefore offline support and a
+real Home Screen install — do not work over plain HTTP (localhost excepted).
 
-**HTTPS is required** — service workers and Add to Home Screen do not work over
-plain HTTP (localhost excepted).
+### Netlify / Cloudflare Pages (simplest)
 
-Install on iPhone: open the site in Safari → Share → *Add to Home Screen*.
+`netlify.toml` has the build command, publish directory and cache headers, so
+importing the repo is the whole setup. Both read the same file.
+
+1. Import `shazlygym/new-eagle-gym` at netlify.com → *Add new site → Import an
+   existing project*.
+2. Pick the branch to deploy. Settings are read from `netlify.toml`.
+3. You get an HTTPS URL such as `eagle-gym.netlify.app`.
+
+### Docker / your own server
+
+`Dockerfile` builds the bundle and serves `dist/` with nginx; `nginx.conf` sets
+the SPA fallback and the same cache rules. Put it behind a TLS terminator.
+
+### Install on the iPhone
+
+Open the HTTPS URL in **Safari** (not Chrome — only Safari can install to the
+Home Screen on iOS) → Share → **Add to Home Screen**.
+
+Data lives on the device it was logged on. Moving to a new phone means
+**Settings → Export backup** on the old one and importing on the new one.
