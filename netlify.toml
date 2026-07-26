@@ -12,9 +12,6 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # The committed icons make `npm run icons` unnecessary at build time, so the
-  # Playwright browser download is pure waste here.
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
 
 [[headers]]
   for = "/sw.js"

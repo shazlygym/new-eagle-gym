@@ -122,15 +122,26 @@ offline behaviour and install prompts.
 **HTTPS is required.** Service workers — and therefore offline support and a
 real Home Screen install — do not work over plain HTTP (localhost excepted).
 
-### Netlify / Cloudflare Pages (simplest)
+### Vercel
 
-`netlify.toml` has the build command, publish directory and cache headers, so
-importing the repo is the whole setup. Both read the same file.
+`vercel.json` carries the build settings, the SPA rewrite and the cache headers,
+so importing the repo is the whole setup.
 
-1. Import `shazlygym/new-eagle-gym` at netlify.com → *Add new site → Import an
-   existing project*.
-2. Pick the branch to deploy. Settings are read from `netlify.toml`.
-3. You get an HTTPS URL such as `eagle-gym.netlify.app`.
+1. Import `shazlygym/new-eagle-gym` at vercel.com → *Add New → Project*.
+2. Deploy. Everything is read from `vercel.json` — no fields to fill in.
+3. You get an HTTPS URL such as `new-eagle-gym.vercel.app`.
+
+### Netlify / Cloudflare Pages
+
+`netlify.toml` is the equivalent config; both hosts read it. Import the repo the
+same way.
+
+### Why the cache headers matter
+
+Without `no-cache` on `sw.js` and `index.html`, a CDN keeps serving the old
+service worker and a deployed update stays invisible on a phone that already has
+the app installed. Everything under `/assets/` is content-hashed by Vite — the
+filename changes whenever the bytes do — so it is pinned for a year instead.
 
 ### Docker / your own server
 
