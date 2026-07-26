@@ -7,6 +7,7 @@ import {
   Flame,
   History,
   Link2,
+  Play,
   Plus,
   Trash2,
   TrendingUp,
@@ -138,7 +139,7 @@ export default function WorkoutExerciseCard({
     // so merging their borders would just look broken. A violet edge and a chip
     // carry the grouping instead.
     <article className={`card overflow-hidden ${inSuperset ? 'border-violet-500/40' : ''}`}>
-      <header className="flex items-center gap-2 border-b border-dark-500/50 px-4 py-3">
+      <header className="flex items-center gap-2 border-b border-ink-500/50 px-4 py-3">
         {/* The name is a button: tapping it answers "what did I lift last time?"
             without leaving the workout. */}
         <button
@@ -146,11 +147,11 @@ export default function WorkoutExerciseCard({
           onClick={() => setHistoryOpen(true)}
           className="min-w-0 flex-1 text-start active:opacity-60"
         >
-          <h3 className="truncate font-semibold text-dark-50">
+          <h3 className="truncate font-semibold text-ink-50">
             {exerciseName(exercise, locale)}
-            <History size={13} className="ms-1.5 inline shrink-0 align-baseline text-dark-300" />
+            <History size={13} className="ms-1.5 inline shrink-0 align-baseline text-ink-300" />
           </h3>
-          <p className="flex items-center gap-1.5 text-xs text-dark-300">
+          <p className="flex items-center gap-1.5 text-xs text-ink-300">
             {inSuperset && (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">
                 <Link2 size={10} />
@@ -168,11 +169,22 @@ export default function WorkoutExerciseCard({
           </p>
         </button>
 
+        {exercise?.videoUrl && (
+          <a
+            href={exercise.videoUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label={t('exercises.watch')}
+            className="rounded-lg p-1.5 text-red-400 active:bg-ink-600"
+          >
+            <Play size={17} fill="currentColor" />
+          </a>
+        )}
         <button
           type="button"
           onClick={() => setPlatesOpen(true)}
           aria-label={t('plates.title')}
-          className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600"
+          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
         >
           <Calculator size={17} />
         </button>
@@ -181,7 +193,7 @@ export default function WorkoutExerciseCard({
           disabled={isFirst}
           onClick={() => reorderSessionExercise(sessionExercise.id, -1)}
           aria-label={t('workout.moveUp')}
-          className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600 disabled:opacity-25"
+          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
         >
           <ChevronUp size={18} />
         </button>
@@ -190,7 +202,7 @@ export default function WorkoutExerciseCard({
           disabled={isLast}
           onClick={() => reorderSessionExercise(sessionExercise.id, 1)}
           aria-label={t('workout.moveDown')}
-          className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600 disabled:opacity-25"
+          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
         >
           <ChevronDown size={18} />
         </button>
@@ -198,7 +210,7 @@ export default function WorkoutExerciseCard({
           type="button"
           onClick={() => setConfirmRemove(true)}
           aria-label={t('workout.removeExercise')}
-          className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600"
+          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
         >
           <Trash2 size={17} />
         </button>
@@ -216,18 +228,18 @@ export default function WorkoutExerciseCard({
         <button
           type="button"
           onClick={applySuggestion}
-          className="flex w-full items-center gap-2 border-b border-dark-500/40 bg-gold-500/5
-                     px-4 py-2.5 text-start active:bg-gold-500/10"
+          className="flex w-full items-center gap-2 border-b border-ink-500/40 bg-brand-500/5
+                     px-4 py-2.5 text-start active:bg-brand-500/10"
         >
-          <TrendingUp size={14} className="shrink-0 text-gold-500" />
-          <span className="min-w-0 flex-1 text-xs text-dark-200">
+          <TrendingUp size={14} className="shrink-0 text-brand-500" />
+          <span className="min-w-0 flex-1 text-xs text-ink-200">
             {t(
               suggestion.reason === 'hit-target'
                 ? 'workout.reasonHitTarget'
                 : 'workout.reasonRepeatedMiss'
             )}
           </span>
-          <span className="tabular shrink-0 text-xs font-bold text-gold-500">
+          <span className="tabular shrink-0 text-xs font-bold text-brand-500">
             {formatNumber(toDisplayWeight(suggestion.weight, units))} {unitLabel(units, locale)}
           </span>
         </button>
@@ -235,7 +247,7 @@ export default function WorkoutExerciseCard({
 
       <div className="px-3 py-2">
         <div
-          className={`grid ${gridClass} items-center gap-2 px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-dark-300`}
+          className={`grid ${gridClass} items-center gap-2 px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-ink-300`}
         >
           <span className="text-center">#</span>
           <span>{t('workout.previous')}</span>
@@ -272,7 +284,7 @@ export default function WorkoutExerciseCard({
                   {badge ?? entry.setNumber}
                 </button>
 
-                <span className="tabular truncate text-xs text-dark-300">
+                <span className="tabular truncate text-xs text-ink-300">
                   {!prior
                     ? t('common.empty')
                     : isTimed
@@ -320,8 +332,8 @@ export default function WorkoutExerciseCard({
                     className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors
                                 ${
                                   entry.done
-                                    ? 'bg-green-500 text-dark-900'
-                                    : 'bg-dark-600 text-dark-300 active:bg-dark-500'
+                                    ? 'bg-green-500 text-ink-950'
+                                    : 'bg-ink-600 text-ink-300 active:bg-ink-500'
                                 }`}
                   >
                     <Check size={18} strokeWidth={3} />
@@ -336,8 +348,8 @@ export default function WorkoutExerciseCard({
           <button
             type="button"
             onClick={() => addSet(sessionExercise.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-dark-600
-                       py-2.5 text-xs font-semibold text-dark-100 active:bg-dark-500"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-ink-600
+                       py-2.5 text-xs font-semibold text-ink-100 active:bg-ink-500"
           >
             <Plus size={15} />
             {t('workout.addSet')}
@@ -348,7 +360,7 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={addWarmup}
               aria-label={t('workout.addWarmup')}
-              className="rounded-xl bg-dark-600 px-3 text-sky-300 active:bg-dark-500"
+              className="rounded-xl bg-ink-600 px-3 text-sky-300 active:bg-ink-500"
             >
               <Flame size={15} />
             </button>
@@ -359,8 +371,8 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={() => toggleSuperset(sessionExercise.id)}
               aria-label={inSuperset ? t('workout.breakSuperset') : t('workout.makeSuperset')}
-              className={`rounded-xl px-3 active:bg-dark-500 ${
-                inSuperset ? 'bg-violet-500/20 text-violet-300' : 'bg-dark-600 text-dark-300'
+              className={`rounded-xl px-3 active:bg-ink-500 ${
+                inSuperset ? 'bg-violet-500/20 text-violet-300' : 'bg-ink-600 text-ink-300'
               }`}
             >
               <Link2 size={15} />
@@ -372,7 +384,7 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={() => deleteSet(ordered[ordered.length - 1].id)}
               aria-label={t('common.delete')}
-              className="rounded-xl bg-dark-600 px-3 text-dark-300 active:bg-dark-500"
+              className="rounded-xl bg-ink-600 px-3 text-ink-300 active:bg-ink-500"
             >
               <Trash2 size={15} />
             </button>

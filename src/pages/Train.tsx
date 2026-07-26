@@ -64,7 +64,7 @@ export default function Train() {
 
       <div className="space-y-3 px-4 py-4">
         {active && progress && !progress.complete && (
-          <section className="card overflow-hidden border-gold-500/25">
+          <section className="card overflow-hidden border-brand-500/25">
             <div className="flex items-center gap-3 p-4">
               <ProgressRing
                 value={
@@ -74,13 +74,13 @@ export default function Train() {
                 size={50}
               />
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-gold-500">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-500">
                   {t('train.activeProgram')}
                 </p>
-                <p className="truncate font-semibold text-dark-50">
+                <p className="truncate font-semibold text-ink-50">
                   {routineName(active, locale)}
                 </p>
-                <p className="text-xs text-dark-300">
+                <p className="text-xs text-ink-300">
                   {t('programs.weekOf', { week: progress.week, total: progress.totalWeeks })}
                 </p>
               </div>
@@ -90,15 +90,15 @@ export default function Train() {
               <button
                 type="button"
                 onClick={() => startDay(progress.nextDayIndex)}
-                className="flex w-full items-center gap-3 border-t border-dark-500/50 bg-gold-500/10
-                           px-4 py-3 text-start active:bg-gold-500/20"
+                className="flex w-full items-center gap-3 border-t border-ink-500/50 bg-brand-500/10
+                           px-4 py-3 text-start active:bg-brand-500/20"
               >
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-dark-50">
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink-50">
                   {locale === 'ar'
                     ? active.days[progress.nextDayIndex].labelAr
                     : active.days[progress.nextDayIndex].labelEn}
                 </span>
-                <Play size={18} className="shrink-0 text-gold-500" fill="currentColor" />
+                <Play size={18} className="shrink-0 text-brand-500" fill="currentColor" />
               </button>
             )}
           </section>
@@ -144,16 +144,16 @@ function HubLink({
   count: number
 }) {
   return (
-    <Link to={to} className="card flex items-center gap-3.5 p-4 active:bg-dark-600">
-      <div className="rounded-xl bg-dark-600 p-3 text-gold-500">
+    <Link to={to} className="card flex items-center gap-3.5 p-4 active:bg-ink-600">
+      <div className="rounded-xl bg-ink-600 p-3 text-brand-500">
         <Icon size={20} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-dark-50">{title}</p>
-        <p className="mt-0.5 truncate text-xs text-dark-300">{hint}</p>
+        <p className="font-semibold text-ink-50">{title}</p>
+        <p className="mt-0.5 truncate text-xs text-ink-300">{hint}</p>
       </div>
-      <span className="tabular shrink-0 text-sm font-semibold text-dark-200">{count}</span>
-      <ChevronRight size={18} className="rtl-flip shrink-0 text-dark-300" />
+      <span className="tabular shrink-0 text-sm font-semibold text-ink-200">{count}</span>
+      <ChevronRight size={18} className="rtl-flip shrink-0 text-ink-300" />
     </Link>
   )
 }

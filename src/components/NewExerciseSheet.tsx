@@ -31,12 +31,15 @@ export interface NewExerciseInput {
   muscleGroup: MuscleGroup
   equipment: Equipment
   tracking: Tracking
+  videoUrl?: string
 }
 
 interface Props {
   open: boolean
   onClose: () => void
   onCreate: (input: NewExerciseInput) => Promise<void>
+  /** Present when editing rather than creating. */
+  initial?: NewExerciseInput
 }
 
 /**
@@ -44,13 +47,16 @@ interface Props {
  * exercise the app doesn't know about happens mid-session, at the rack, and
  * shouldn't mean abandoning the workout to go and add it.
  */
-export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
+export default function NewExerciseSheet({ open, onClose, onCreate, initial }: Props) {
   const { t } = useT()
-  const [nameEn, setNameEn] = useState('')
-  const [nameAr, setNameAr] = useState('')
-  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('chest')
-  const [equipment, setEquipment] = useState<Equipment>('barbell')
-  const [tracking, setTracking] = useState<Tracking>('reps')
+  // Mounted fresh each time it opens (see the callers), so seeding state from
+  // `initial` here is enough to make this both a create and an edit form.
+  const [nameEn, setNameEn] = useState(initial?.nameEn ?? '')
+  const [nameAr, setNameAr] = useState(initial?.nameAr ?? '')
+  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>(initial?.muscleGroup ?? 'chest')
+  const [equipment, setEquipment] = useState<Equipment>(initial?.equipment ?? 'barbell')
+  const [tracking, setTracking] = useState<Tracking>(initial?.tracking ?? 'reps')
+  const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? '')
   const [error, setError] = useState<string | null>(null)
 
   const submit = async () => {
@@ -66,17 +72,19 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
       muscleGroup,
       equipment,
       tracking,
+      videoUrl: videoUrl.trim() || undefined,
     })
     setNameEn('')
     setNameAr('')
+    setVideoUrl('')
     setError(null)
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title={t('exercises.new')}>
+    <Sheet open={open} onClose={onClose} title={initial ? t('exercises.edit') : t('exercises.new')} tall>
       <div className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="ex-ar">
+          <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="ex-ar">
             {t('exercises.nameAr')}
           </label>
           <input
@@ -92,7 +100,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="ex-en">
+          <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="ex-en">
             {t('exercises.nameEn')}
           </label>
           <input
@@ -108,7 +116,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
         </div>
 
         <div>
-          <span className="mb-1.5 block text-xs font-medium text-dark-200">
+          <span className="mb-1.5 block text-xs font-medium text-ink-200">
             {t('exercises.group')}
           </span>
           <div className="flex flex-wrap gap-2">
@@ -118,7 +126,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
                 type="button"
                 onClick={() => setMuscleGroup(value)}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
-                            ${muscleGroup === value ? 'bg-gold-500 text-dark-900' : 'bg-dark-700 text-dark-200'}`}
+                            ${muscleGroup === value ? 'bg-brand-500 text-white' : 'bg-ink-700 text-ink-200'}`}
               >
                 {t(`group.${value}` as TranslationKey)}
               </button>
@@ -127,7 +135,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
         </div>
 
         <div>
-          <span className="mb-1.5 block text-xs font-medium text-dark-200">
+          <span className="mb-1.5 block text-xs font-medium text-ink-200">
             {t('exercises.equipment')}
           </span>
           <div className="flex flex-wrap gap-2">
@@ -137,7 +145,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
                 type="button"
                 onClick={() => setEquipment(value)}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
-                            ${equipment === value ? 'bg-gold-500 text-dark-900' : 'bg-dark-700 text-dark-200'}`}
+                            ${equipment === value ? 'bg-brand-500 text-white' : 'bg-ink-700 text-ink-200'}`}
               >
                 {t(`equipment.${value}` as TranslationKey)}
               </button>
@@ -146,7 +154,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
         </div>
 
         <div>
-          <span className="mb-1.5 block text-xs font-medium text-dark-200">
+          <span className="mb-1.5 block text-xs font-medium text-ink-200">
             {t('exercises.tracking')}
           </span>
           <SegmentedControl<Tracking>
@@ -157,15 +165,32 @@ export default function NewExerciseSheet({ open, onClose, onCreate }: Props) {
               { value: 'duration', label: t('exercises.trackingDuration') },
             ]}
           />
-          <p className="mt-1.5 text-xs leading-relaxed text-dark-300">
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
             {t('exercises.trackingHint')}
           </p>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="ex-video">
+            {t('exercises.video')} <span className="text-ink-400">({t('common.optional')})</span>
+          </label>
+          <input
+            id="ex-video"
+            type="url"
+            inputMode="url"
+            value={videoUrl}
+            onChange={(event) => setVideoUrl(event.target.value)}
+            placeholder="https://youtube.com/watch?v=..."
+            dir="ltr"
+            className="field"
+          />
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-300">{t('exercises.videoHint')}</p>
         </div>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 
         <button type="button" onClick={submit} className="btn-primary w-full">
-          {t('exercises.create')}
+          {initial ? t('common.save') : t('exercises.create')}
         </button>
       </div>
     </Sheet>

@@ -49,13 +49,13 @@ export default function NumberField({
 
   return (
     <div className={className}>
-      {label && <label className="mb-1 block text-xs font-medium text-dark-200">{label}</label>}
+      {label && <label className="mb-1 block text-xs font-medium text-ink-200">{label}</label>}
       <div className="flex items-stretch gap-1">
         {steppers && (
           <button
             type="button"
             onClick={() => nudge(-step)}
-            className="rounded-xl bg-dark-700 px-3 text-dark-100 active:bg-dark-600"
+            className="rounded-xl bg-ink-700 px-3 text-ink-100 active:bg-ink-600"
             aria-label="decrease"
           >
             <Minus size={16} />
@@ -79,7 +79,7 @@ export default function NumberField({
             className="tabular field w-full text-center font-semibold"
           />
           {suffix && (
-            <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-xs text-dark-300">
+            <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-xs text-ink-300">
               {suffix}
             </span>
           )}
@@ -89,7 +89,7 @@ export default function NumberField({
           <button
             type="button"
             onClick={() => nudge(step)}
-            className="rounded-xl bg-dark-700 px-3 text-dark-100 active:bg-dark-600"
+            className="rounded-xl bg-ink-700 px-3 text-ink-100 active:bg-ink-600"
             aria-label="increase"
           >
             <Plus size={16} />

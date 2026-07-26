@@ -52,7 +52,7 @@ export default function Programs() {
           <Link
             to="/programs/new"
             aria-label={t('programs.new')}
-            className="rounded-xl bg-dark-700 p-2 text-gold-500 active:bg-dark-600"
+            className="rounded-xl bg-ink-700 p-2 text-brand-500 active:bg-ink-600"
           >
             <Plus size={20} />
           </Link>
@@ -95,16 +95,16 @@ export default function Programs() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold text-dark-50">
+                        <p className="truncate font-semibold text-ink-50">
                           {routineName(program, locale)}
                         </p>
                         {isActive && (
-                          <span className="shrink-0 rounded-full bg-gold-500/15 px-2 py-0.5 text-[10px] font-semibold text-gold-400">
+                          <span className="shrink-0 rounded-full bg-brand-500/15 px-2 py-0.5 text-[10px] font-semibold text-brand-400">
                             {t('programs.active')}
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs text-dark-300">
+                      <p className="mt-0.5 text-xs text-ink-300">
                         {isActive && !progress.complete
                           ? t('programs.weekOf', {
                               week: progress.week,
@@ -113,7 +113,7 @@ export default function Programs() {
                           : t('programs.dayCount', { count: program.days.length })}
                       </p>
                       {isActive && (
-                        <p className="mt-0.5 text-xs text-dark-300">
+                        <p className="mt-0.5 text-xs text-ink-300">
                           {t('programs.adherenceHint', {
                             done: progress.adherence.done,
                             planned: progress.adherence.planned,
@@ -125,7 +125,7 @@ export default function Programs() {
                     <Link
                       to={`/programs/${program.id}`}
                       aria-label={t('common.edit')}
-                      className="shrink-0 rounded-xl bg-dark-600 p-2.5 text-dark-100 active:bg-dark-500"
+                      className="shrink-0 rounded-xl bg-ink-600 p-2.5 text-ink-100 active:bg-ink-500"
                     >
                       <Pencil size={16} />
                     </Link>
@@ -133,7 +133,7 @@ export default function Programs() {
 
                   {/* The week's days, with the ones already logged ticked off. */}
                   {isActive && !progress.complete && (
-                    <ul className="space-y-1.5 border-t border-dark-500/50 p-3">
+                    <ul className="space-y-1.5 border-t border-ink-500/50 p-3">
                       {program.days.map((day, index) => {
                         const done = progress.doneThisWeek.includes(index)
                         const routine = routines.find((r) => r.id === day.routineId)
@@ -145,31 +145,31 @@ export default function Programs() {
                               type="button"
                               onClick={() => beginDay(program, index, progress.week)}
                               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start
-                                          active:bg-dark-500 ${
-                                            isNext ? 'bg-gold-500/10' : 'bg-dark-600'
+                                          active:bg-ink-500 ${
+                                            isNext ? 'bg-brand-500/10' : 'bg-ink-600'
                                           }`}
                             >
                               <span
                                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold
                                             ${
                                               done
-                                                ? 'bg-green-500 text-dark-900'
-                                                : 'bg-dark-500 text-dark-200'
+                                                ? 'bg-green-500 text-ink-950'
+                                                : 'bg-ink-500 text-ink-200'
                                             }`}
                               >
                                 {done ? <Check size={13} strokeWidth={3} /> : index + 1}
                               </span>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-dark-50">
+                                <p className="truncate text-sm font-medium text-ink-50">
                                   {locale === 'ar' ? day.labelAr : day.labelEn}
                                 </p>
                                 {routine && (
-                                  <p className="truncate text-xs text-dark-300">
+                                  <p className="truncate text-xs text-ink-300">
                                     {routineName(routine, locale)}
                                   </p>
                                 )}
                               </div>
-                              {!done && <Play size={15} className="shrink-0 text-gold-500" />}
+                              {!done && <Play size={15} className="shrink-0 text-brand-500" />}
                             </button>
                           </li>
                         )
@@ -178,9 +178,9 @@ export default function Programs() {
                   )}
 
                   {isActive && progress.complete && (
-                    <div className="border-t border-dark-500/50 p-4">
-                      <p className="text-sm font-semibold text-gold-500">{t('programs.complete')}</p>
-                      <p className="mt-1 text-xs text-dark-300">
+                    <div className="border-t border-ink-500/50 p-4">
+                      <p className="text-sm font-semibold text-brand-500">{t('programs.complete')}</p>
+                      <p className="mt-1 text-xs text-ink-300">
                         {t('programs.completeHint', { weeks: program.weeks })}
                       </p>
                       <button
@@ -194,12 +194,12 @@ export default function Programs() {
                     </div>
                   )}
 
-                  <div className="border-t border-dark-500/50 p-3">
+                  <div className="border-t border-ink-500/50 p-3">
                     {isActive ? (
                       <button
                         type="button"
                         onClick={() => deactivateProgram(program.id)}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-dark-600 py-2.5 text-sm font-medium text-dark-100 active:bg-dark-500"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink-600 py-2.5 text-sm font-medium text-ink-100 active:bg-ink-500"
                       >
                         <Square size={14} />
                         {t('programs.stop')}
@@ -208,7 +208,7 @@ export default function Programs() {
                       <button
                         type="button"
                         onClick={() => activateProgram(profile.id, program.id)}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold-500 py-2.5 text-sm font-semibold text-dark-900 active:scale-[0.98] transition-transform"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 py-2.5 text-sm font-semibold text-white active:scale-[0.98] transition-transform"
                       >
                         <Play size={14} fill="currentColor" />
                         {t('programs.activate')}

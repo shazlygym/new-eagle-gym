@@ -41,11 +41,11 @@ export default function ExercisePicker({
   return (
     <>
       <Sheet open={open} onClose={onClose} title={t('workout.addExercise')} tall>
-        <div className="sticky top-0 -mx-5 -mt-2 bg-dark-800 px-5 pb-3 pt-2">
+        <div className="sticky top-0 -mx-5 -mt-2 bg-ink-800 px-5 pb-3 pt-2">
           <div className="relative">
             <Search
               size={16}
-              className="pointer-events-none absolute inset-y-0 start-3 my-auto text-dark-300"
+              className="pointer-events-none absolute inset-y-0 start-3 my-auto text-ink-300"
             />
             <input
               type="search"
@@ -65,8 +65,8 @@ export default function ExercisePicker({
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
                             ${
                               group === value
-                                ? 'bg-gold-500 text-dark-900'
-                                : 'bg-dark-700 text-dark-200'
+                                ? 'bg-brand-500 text-white'
+                                : 'bg-ink-700 text-ink-200'
                             }`}
               >
                 {value === 'all' ? t('common.all') : t(`group.${value}` as TranslationKey)}
@@ -79,14 +79,23 @@ export default function ExercisePicker({
           type="button"
           onClick={() => setCreating(true)}
           className="mb-2 flex w-full items-center gap-3 rounded-xl border border-dashed
-                     border-dark-400 px-4 py-3 text-sm font-medium text-gold-500 active:bg-dark-700"
+                     border-ink-400 px-4 py-3 text-sm font-medium text-brand-500 active:bg-ink-700"
         >
           <Plus size={18} />
           {t('exercises.new')}
         </button>
 
         {results.length === 0 ? (
-          <p className="py-10 text-center text-sm text-dark-300">{t('exercises.none')}</p>
+          <div className="py-10 text-center">
+            <p className="text-sm font-medium text-ink-100">
+              {exercises.length === 0 ? t('exercises.pickerEmpty') : t('exercises.none')}
+            </p>
+            {exercises.length === 0 && (
+              <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-300">
+                {t('exercises.pickerEmptyHint')}
+              </p>
+            )}
+          </div>
         ) : (
           <ul className="space-y-1.5">
             {results.map((exercise) => (
@@ -95,21 +104,21 @@ export default function ExercisePicker({
                   type="button"
                   onClick={() => onPick(exercise.id)}
                   className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start
-                              active:bg-dark-600 ${
-                                selected.has(exercise.id) ? 'bg-dark-600' : 'bg-dark-700'
+                              active:bg-ink-600 ${
+                                selected.has(exercise.id) ? 'bg-ink-600' : 'bg-ink-700'
                               }`}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-dark-50">
+                    <p className="truncate text-sm font-medium text-ink-50">
                       {exerciseName(exercise, locale)}
                     </p>
-                    <p className="mt-0.5 text-xs text-dark-300">
+                    <p className="mt-0.5 text-xs text-ink-300">
                       {t(`group.${exercise.muscleGroup}` as TranslationKey)} ·{' '}
                       {t(`equipment.${exercise.equipment}` as TranslationKey)}
                     </p>
                   </div>
                   {selected.has(exercise.id) && (
-                    <span className="shrink-0 text-xs font-semibold text-gold-500">✓</span>
+                    <span className="shrink-0 text-xs font-semibold text-brand-500">✓</span>
                   )}
                 </button>
               </li>

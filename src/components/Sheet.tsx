@@ -48,21 +48,21 @@ export default function Sheet({ open, onClose, title, children, tall }: Props) {
         role="dialog"
         aria-modal="true"
         className={`relative flex animate-slide-up flex-col rounded-t-3xl border-t
-                    border-dark-500/60 bg-dark-800 pb-safe-b
+                    border-ink-500/60 bg-ink-800 pb-safe-b
                     ${tall ? 'h-[85dvh]' : 'max-h-[85dvh]'}`}
       >
         {/* Grabber — signals "drag me" even though dismissal is by tap. */}
         <div className="flex justify-center pt-3">
-          <div className="h-1 w-10 rounded-full bg-dark-400" />
+          <div className="h-1 w-10 rounded-full bg-ink-400" />
         </div>
 
         {title && (
           <div className="flex items-center gap-2 px-5 pb-2 pt-3">
-            <h2 className="flex-1 text-lg font-semibold text-dark-50">{title}</h2>
+            <h2 className="flex-1 text-lg font-semibold text-ink-50">{title}</h2>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-2 text-dark-200 active:bg-dark-700"
+              className="rounded-full p-2 text-ink-200 active:bg-ink-700"
               aria-label="close"
             >
               <X size={20} />

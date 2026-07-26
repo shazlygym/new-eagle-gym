@@ -1,4 +1,4 @@
-// Single source of truth for the app mark: a gold eagle with spread wings above
+// Single source of truth for the app mark: an eagle with spread wings above
 // a barbell, on the near-black brand background.
 //
 // The eagle is drawn as one half and mirrored, so the silhouette stays exactly
@@ -29,13 +29,13 @@ export function iconSvg({ inset = 1, rounded = false } = {}) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#F0D488"/>
-      <stop offset="45%" stop-color="#C9A84C"/>
-      <stop offset="100%" stop-color="#A8801F"/>
+      <stop offset="0%" stop-color="#93C5FD"/>
+      <stop offset="50%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
     </linearGradient>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#242424"/>
-      <stop offset="100%" stop-color="#0b0b0b"/>
+      <stop offset="0%" stop-color="#16203A"/>
+      <stop offset="100%" stop-color="#070B14"/>
     </linearGradient>
   </defs>
 

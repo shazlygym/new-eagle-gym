@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronRight, Ruler, TrendingUp } from 'lucide-react'
+import { CalendarDays, ChevronRight, Ruler, TrendingUp } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -94,7 +94,8 @@ export default function Progress() {
           title={t('progress.noData')}
           body={t('progress.noDataHint')}
         />
-        <div className="px-4">
+        <div className="space-y-3 px-4">
+          <HistoryLink />
           <BodyLink />
         </div>
       </div>
@@ -106,6 +107,7 @@ export default function Progress() {
       <PageHeader title={t('progress.title')} large />
 
       <div className="space-y-4 px-4 py-4">
+        <HistoryLink />
         <BodyLink />
 
         <ChartCard title={t('progress.weeklyVolume')} subtitle={unitLabel(units, locale)}>
@@ -153,14 +155,14 @@ export default function Progress() {
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="shrink-0 rounded-lg bg-dark-600 px-3 py-1.5 text-xs font-medium text-dark-100 active:bg-dark-500"
+              className="shrink-0 rounded-lg bg-ink-600 px-3 py-1.5 text-xs font-medium text-ink-100 active:bg-ink-500"
             >
               {t('progress.selectExercise')}
             </button>
           }
         >
           {exerciseData.length < 2 ? (
-            <p className="py-10 text-center text-sm text-dark-300">{t('progress.noData')}</p>
+            <p className="py-10 text-center text-sm text-ink-300">{t('progress.noData')}</p>
           ) : (
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={exerciseData} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
@@ -210,22 +212,22 @@ export default function Progress() {
             {rankedRecords.map((record) => (
               <li key={record.exerciseId} className="card flex items-center gap-3 p-4">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-dark-50">
+                  <p className="truncate text-sm font-medium text-ink-50">
                     {exerciseName(
                       exercises.find((e) => e.id === record.exerciseId),
                       locale
                     )}
                   </p>
-                  <p className="mt-0.5 text-xs text-dark-300">
+                  <p className="mt-0.5 text-xs text-ink-300">
                     {t('progress.lastDone')} · {formatShortDay(record.lastPerformedAt, locale)}
                   </p>
                 </div>
                 <div className="shrink-0 text-end">
-                  <p className="tabular text-sm font-bold text-gold-500">
+                  <p className="tabular text-sm font-bold text-brand-500">
                     {formatNumber(toDisplayWeight(record.bestWeight, units))}{' '}
                     {unitLabel(units, locale)} × {record.bestWeightReps}
                   </p>
-                  <p className="tabular mt-0.5 text-xs text-dark-300">
+                  <p className="tabular mt-0.5 text-xs text-ink-300">
                     {t('progress.e1rm')} {formatNumber(toDisplayWeight(record.bestE1rm, units))}
                   </p>
                 </div>
@@ -246,17 +248,17 @@ export default function Progress() {
                   setPickerOpen(false)
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start
-                            active:bg-dark-600 ${
-                              record.exerciseId === activeExerciseId ? 'bg-dark-600' : 'bg-dark-700'
+                            active:bg-ink-600 ${
+                              record.exerciseId === activeExerciseId ? 'bg-ink-600' : 'bg-ink-700'
                             }`}
               >
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-dark-50">
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-50">
                   {exerciseName(
                     exercises.find((e) => e.id === record.exerciseId),
                     locale
                   )}
                 </span>
-                <span className="shrink-0 text-xs text-dark-300">
+                <span className="shrink-0 text-xs text-ink-300">
                   {t('progress.totalSets', { count: record.totalSets })}
                 </span>
               </button>
@@ -268,18 +270,34 @@ export default function Progress() {
   )
 }
 
+function HistoryLink() {
+  const { t } = useT()
+  return (
+    <Link to="/history" className="card flex items-center gap-3 p-4 active:bg-ink-600">
+      <div className="rounded-xl bg-ink-600 p-2.5 text-brand-400">
+        <CalendarDays size={18} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-ink-50">{t('history.title')}</p>
+        <p className="text-xs text-ink-300">{t('history.emptyHint')}</p>
+      </div>
+      <ChevronRight size={18} className="rtl-flip shrink-0 text-ink-300" />
+    </Link>
+  )
+}
+
 function BodyLink() {
   const { t } = useT()
   return (
-    <Link to="/body" className="card flex items-center gap-3 p-4 active:bg-dark-600">
-      <div className="rounded-xl bg-dark-600 p-2.5 text-gold-500">
+    <Link to="/body" className="card flex items-center gap-3 p-4 active:bg-ink-600">
+      <div className="rounded-xl bg-ink-600 p-2.5 text-brand-500">
         <Ruler size={18} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-dark-50">{t('body.title')}</p>
-        <p className="text-xs text-dark-300">{t('body.log')}</p>
+        <p className="font-medium text-ink-50">{t('body.title')}</p>
+        <p className="text-xs text-ink-300">{t('body.log')}</p>
       </div>
-      <ChevronRight size={18} className="rtl-flip shrink-0 text-dark-300" />
+      <ChevronRight size={18} className="rtl-flip shrink-0 text-ink-300" />
     </Link>
   )
 }

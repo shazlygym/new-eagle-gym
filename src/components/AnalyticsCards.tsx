@@ -22,27 +22,27 @@ export function MuscleVolumeCard({
   return (
     <ChartCard title={t('analytics.byMuscle')} subtitle={unitLabel(units, locale)}>
       {data.length === 0 ? (
-        <p className="py-8 text-center text-sm text-dark-300">{t('progress.noData')}</p>
+        <p className="py-8 text-center text-sm text-ink-300">{t('progress.noData')}</p>
       ) : (
         <ul className="space-y-2.5">
           {data.map((row) => (
             <li key={row.muscleGroup}>
               <div className="mb-1 flex items-baseline gap-2">
-                <span className="min-w-0 flex-1 truncate text-xs font-medium text-dark-100">
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink-100">
                   {t(`group.${row.muscleGroup}` as TranslationKey)}
                 </span>
-                <span className="tabular shrink-0 text-xs text-dark-300">
+                <span className="tabular shrink-0 text-xs text-ink-300">
                   {t('progress.totalSets', { count: row.sets })}
                 </span>
-                <span className="tabular shrink-0 text-xs font-semibold text-gold-500">
+                <span className="tabular shrink-0 text-xs font-semibold text-brand-500">
                   {volumeValue(row.volume, units, { compact: true })}
                 </span>
               </div>
               {/* A bar per group, scaled to the largest — the shape is the point,
                   not the absolute number, which the label already gives. */}
-              <div className="h-2 overflow-hidden rounded-full bg-dark-600">
+              <div className="h-2 overflow-hidden rounded-full bg-ink-600">
                 <div
-                  className="h-full rounded-full bg-gold-500 transition-[width] duration-500"
+                  className="h-full rounded-full bg-brand-500 transition-[width] duration-500"
                   style={{ width: `${(row.volume / max) * 100}%` }}
                 />
               </div>
@@ -62,10 +62,10 @@ const BALANCE_LABEL: Record<BalanceKey, TranslationKey> = {
 }
 
 const BALANCE_COLOR: Record<BalanceKey, string> = {
-  push: 'bg-gold-500',
+  push: 'bg-brand-500',
   pull: 'bg-sky-500',
   legs: 'bg-violet-500',
-  other: 'bg-dark-400',
+  other: 'bg-ink-400',
 }
 
 export function BalanceCard({ data }: { data: Record<BalanceKey, number> }) {
@@ -75,7 +75,7 @@ export function BalanceCard({ data }: { data: Record<BalanceKey, number> }) {
   return (
     <ChartCard title={t('analytics.balance')} subtitle={t('common.sets')}>
       {total === 0 ? (
-        <p className="py-8 text-center text-sm text-dark-300">{t('progress.noData')}</p>
+        <p className="py-8 text-center text-sm text-ink-300">{t('progress.noData')}</p>
       ) : (
         <>
           {/* One stacked bar, because the comparison between segments is the
@@ -96,16 +96,16 @@ export function BalanceCard({ data }: { data: Record<BalanceKey, number> }) {
             {(Object.keys(data) as BalanceKey[]).map((key) => (
               <li key={key} className="flex items-center gap-2 text-xs">
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-sm ${BALANCE_COLOR[key]}`} />
-                <span className="flex-1 text-dark-100">{t(BALANCE_LABEL[key])}</span>
-                <span className="tabular text-dark-300">{data[key]}</span>
-                <span className="tabular w-10 text-end font-semibold text-dark-50">
+                <span className="flex-1 text-ink-100">{t(BALANCE_LABEL[key])}</span>
+                <span className="tabular text-ink-300">{data[key]}</span>
+                <span className="tabular w-10 text-end font-semibold text-ink-50">
                   {total > 0 ? Math.round((data[key] / total) * 100) : 0}%
                 </span>
               </li>
             ))}
           </ul>
 
-          <p className="mt-3 text-xs leading-relaxed text-dark-300">{t('analytics.balanceHint')}</p>
+          <p className="mt-3 text-xs leading-relaxed text-ink-300">{t('analytics.balanceHint')}</p>
         </>
       )}
     </ChartCard>
@@ -116,7 +116,7 @@ const STATUS_STYLE: Record<LoadRatio['status'], string> = {
   spike: 'text-amber-400',
   steady: 'text-green-400',
   easing: 'text-sky-400',
-  unknown: 'text-dark-300',
+  unknown: 'text-ink-300',
 }
 
 const STATUS_LABEL: Record<LoadRatio['status'], TranslationKey> = {
@@ -137,13 +137,13 @@ export function LoadRatioCard({ data, units }: { data: LoadRatio; units: Units }
           <p className={`text-lg font-bold ${STATUS_STYLE[data.status]}`}>
             {t(STATUS_LABEL[data.status])}
           </p>
-          <p className="tabular mt-0.5 text-xs text-dark-300">
+          <p className="tabular mt-0.5 text-xs text-ink-300">
             {volumeValue(data.acute, units, { compact: true })} {unitLabel(units, locale)}
             {data.ratio !== null && ` · ${t('analytics.loadRatio')} ${data.ratio.toFixed(2)}`}
           </p>
         </div>
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-dark-300">{t('analytics.loadHint')}</p>
+      <p className="mt-3 text-xs leading-relaxed text-ink-300">{t('analytics.loadHint')}</p>
     </ChartCard>
   )
 }
@@ -180,14 +180,14 @@ export function ComparisonCard({
       <ul className="space-y-3">
         {rows.map((row) => (
           <li key={row.label} className="flex items-center gap-3">
-            <span className="min-w-0 flex-1 truncate text-xs text-dark-200">{row.label}</span>
-            <span className="tabular shrink-0 text-sm font-semibold text-dark-50">
+            <span className="min-w-0 flex-1 truncate text-xs text-ink-200">{row.label}</span>
+            <span className="tabular shrink-0 text-sm font-semibold text-ink-50">
               {row.current}
             </span>
             <span
               className={`tabular w-14 shrink-0 text-end text-xs font-semibold ${
                 row.delta === null || row.delta === 0
-                  ? 'text-dark-300'
+                  ? 'text-ink-300'
                   : row.delta > 0
                     ? 'text-green-400'
                     : 'text-red-400'
@@ -219,21 +219,21 @@ export function RecordTimelineCard({
   return (
     <ChartCard title={t('analytics.prTimeline')}>
       {events.length === 0 ? (
-        <p className="py-8 text-center text-sm text-dark-300">{t('analytics.noPrs')}</p>
+        <p className="py-8 text-center text-sm text-ink-300">{t('analytics.noPrs')}</p>
       ) : (
         <ul className="space-y-3">
           {events.map((event, index) => (
             <li key={`${event.exerciseId}-${event.date}-${index}`} className="flex gap-3">
               <div className="flex flex-col items-center">
-                <Trophy size={14} className="shrink-0 text-gold-500" />
+                <Trophy size={14} className="shrink-0 text-brand-500" />
                 {/* Connector, omitted on the last row so the line doesn't dangle. */}
-                {index < events.length - 1 && <span className="mt-1 w-px flex-1 bg-dark-500" />}
+                {index < events.length - 1 && <span className="mt-1 w-px flex-1 bg-ink-500" />}
               </div>
               <div className="min-w-0 flex-1 pb-1">
-                <p className="truncate text-sm font-medium text-dark-50">
+                <p className="truncate text-sm font-medium text-ink-50">
                   {exerciseName(byId.get(event.exerciseId), locale)}
                 </p>
-                <p className="tabular mt-0.5 text-xs text-dark-300">
+                <p className="tabular mt-0.5 text-xs text-ink-300">
                   {formatNumber(toDisplayWeight(event.weight, units))} {unitLabel(units, locale)} ×{' '}
                   {event.reps} · {formatShortDay(event.date, locale)}
                 </p>

@@ -5,10 +5,10 @@ import type { ReactNode } from 'react'
 // ramp; text stays on ink tokens so identity is never carried by coloured type.
 
 export const CHART = {
-  series: '#C9A84C',
-  grid: '#2a2a2a',
-  axis: '#6e6e6e',
-  surface: '#1a1a1a',
+  series: '#3B82F6',
+  grid: '#2A3A5F',
+  axis: '#7C8CB0',
+  surface: '#16203A',
 } as const
 
 export function ChartCard({
@@ -26,8 +26,8 @@ export function ChartCard({
     <section className="card p-4">
       <div className="mb-4 flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-dark-50">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-xs text-dark-300">{subtitle}</p>}
+          <h2 className="text-sm font-semibold text-ink-50">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-xs text-ink-300">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -50,9 +50,9 @@ export function ChartTooltip({
   if (!active || !payload?.length) return null
 
   return (
-    <div className="rounded-xl border border-dark-500 bg-dark-800/95 px-3 py-2 shadow-xl backdrop-blur">
-      <p className="text-[11px] text-dark-300">{label}</p>
-      <p className="tabular text-sm font-semibold text-dark-50">
+    <div className="rounded-xl border border-ink-500 bg-ink-800/95 px-3 py-2 shadow-xl backdrop-blur">
+      <p className="text-[11px] text-ink-300">{label}</p>
+      <p className="tabular text-sm font-semibold text-ink-50">
         {payload[0]?.value}
         {suffix ? ` ${suffix}` : ''}
       </p>

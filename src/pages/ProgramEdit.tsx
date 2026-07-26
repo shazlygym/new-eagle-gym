@@ -85,7 +85,7 @@ export default function ProgramEdit() {
           <button
             type="button"
             onClick={save}
-            className="rounded-xl bg-gold-500 px-4 py-2 text-sm font-semibold text-dark-900 active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
           >
             {t('common.save')}
           </button>
@@ -95,7 +95,7 @@ export default function ProgramEdit() {
       <div className="space-y-4 px-4 py-4">
         <div className="card space-y-4 p-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="p-ar">
+            <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="p-ar">
               {t('programs.nameAr')}
             </label>
             <input
@@ -110,7 +110,7 @@ export default function ProgramEdit() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="p-en">
+            <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="p-en">
               {t('programs.nameEn')}
             </label>
             <input
@@ -134,7 +134,7 @@ export default function ProgramEdit() {
             {days.map((day, index) => (
               <li key={index} className="card p-4">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-dark-600 text-[11px] font-bold text-dark-200">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink-600 text-[11px] font-bold text-ink-200">
                     {index + 1}
                   </span>
                   <input
@@ -155,7 +155,7 @@ export default function ProgramEdit() {
                     disabled={index === 0}
                     onClick={() => move(index, -1)}
                     aria-label={t('workout.moveUp')}
-                    className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600 disabled:opacity-25"
+                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
                   >
                     <ChevronUp size={18} />
                   </button>
@@ -164,7 +164,7 @@ export default function ProgramEdit() {
                     disabled={index === days.length - 1}
                     onClick={() => move(index, 1)}
                     aria-label={t('workout.moveDown')}
-                    className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600 disabled:opacity-25"
+                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
                   >
                     <ChevronDown size={18} />
                   </button>
@@ -172,7 +172,7 @@ export default function ProgramEdit() {
                     type="button"
                     onClick={() => setDays(days.filter((_, i) => i !== index))}
                     aria-label={t('common.delete')}
-                    className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600"
+                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
                   >
                     <Trash2 size={17} />
                   </button>
@@ -181,8 +181,8 @@ export default function ProgramEdit() {
                 <button
                   type="button"
                   onClick={() => setPicking(index)}
-                  className={`mt-3 w-full rounded-xl px-4 py-2.5 text-start text-sm active:bg-dark-500
-                              ${day.routineId ? 'bg-dark-600 text-dark-50' : 'bg-dark-600 text-dark-300'}`}
+                  className={`mt-3 w-full rounded-xl px-4 py-2.5 text-start text-sm active:bg-ink-500
+                              ${day.routineId ? 'bg-ink-600 text-ink-50' : 'bg-ink-600 text-ink-300'}`}
                 >
                   {routines.find((r) => r.id === day.routineId)
                     ? routineName(routines.find((r) => r.id === day.routineId)!, locale)
@@ -199,8 +199,8 @@ export default function ProgramEdit() {
               setDays([...days, { routineId: '', labelAr: '', labelEn: '' }])
             }}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border
-                       border-dashed border-dark-400 py-3.5 text-sm font-medium
-                       text-gold-500 active:bg-dark-700"
+                       border-dashed border-ink-400 py-3.5 text-sm font-medium
+                       text-brand-500 active:bg-ink-700"
           >
             <Plus size={18} />
             {t('programs.addDay')}
@@ -225,7 +225,7 @@ export default function ProgramEdit() {
               step={1.25}
             />
           )}
-          <p className="text-xs leading-relaxed text-dark-300">{t('programs.progressionHint')}</p>
+          <p className="text-xs leading-relaxed text-ink-300">{t('programs.progressionHint')}</p>
         </section>
 
         {error && <p className="px-1 text-xs text-red-400">{error}</p>}
@@ -248,7 +248,7 @@ export default function ProgramEdit() {
         tall
       >
         {routines.length === 0 ? (
-          <p className="py-10 text-center text-sm text-dark-300">{t('routines.empty')}</p>
+          <p className="py-10 text-center text-sm text-ink-300">{t('routines.empty')}</p>
         ) : (
           <ul className="space-y-1.5">
             {routines.map((routine) => (
@@ -267,7 +267,7 @@ export default function ProgramEdit() {
                     })
                     setPicking(null)
                   }}
-                  className="w-full rounded-xl bg-dark-700 px-4 py-3 text-start text-sm font-medium text-dark-50 active:bg-dark-600"
+                  className="w-full rounded-xl bg-ink-700 px-4 py-3 text-start text-sm font-medium text-ink-50 active:bg-ink-600"
                 >
                   {routineName(routine, locale)}
                 </button>

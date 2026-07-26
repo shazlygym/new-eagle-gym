@@ -41,7 +41,7 @@ export default function PageHeader({ title, subtitle, onBack, action, large }: P
         className={`sticky top-0 z-30 pt-safe-t transition-colors duration-200
                     ${
                       compactVisible
-                        ? 'border-b border-dark-500/50 bg-dark-900/85 backdrop-blur-xl'
+                        ? 'border-b border-ink-500/50 bg-ink-950/85 backdrop-blur-xl'
                         : 'border-b border-transparent bg-transparent'
                     }`}
       >
@@ -50,7 +50,7 @@ export default function PageHeader({ title, subtitle, onBack, action, large }: P
             <button
               type="button"
               onClick={handleBack}
-              className="-ms-2 rounded-full p-2 text-dark-100 active:bg-dark-700"
+              className="-ms-2 rounded-full p-2 text-ink-100 active:bg-ink-700"
               aria-label="back"
             >
               <ChevronLeft size={24} className="rtl-flip" />
@@ -59,12 +59,12 @@ export default function PageHeader({ title, subtitle, onBack, action, large }: P
 
           <div className="min-w-0 flex-1">
             <h1
-              className={`truncate text-lg font-semibold text-dark-50 transition-opacity duration-200
+              className={`truncate text-lg font-semibold text-ink-50 transition-opacity duration-200
                           ${large && !scrolled ? 'opacity-0' : 'opacity-100'}`}
             >
               {title}
             </h1>
-            {subtitle && !large && <p className="truncate text-xs text-dark-200">{subtitle}</p>}
+            {subtitle && !large && <p className="truncate text-xs text-ink-200">{subtitle}</p>}
           </div>
 
           {action}
@@ -74,7 +74,7 @@ export default function PageHeader({ title, subtitle, onBack, action, large }: P
       {large && (
         <div className="px-5 pb-1 pt-1">
           <h2 className="display-title truncate">{title}</h2>
-          {subtitle && <p className="mt-1 text-sm text-dark-300">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-sm text-ink-300">{subtitle}</p>}
         </div>
       )}
     </>

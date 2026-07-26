@@ -42,22 +42,22 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-dark-900 px-6 pb-10 pt-safe-t">
+    <div className="flex min-h-dvh flex-col bg-ink-950 px-6 pb-10 pt-safe-t">
       <div className="flex flex-1 flex-col justify-center py-10">
         <img
           src="/icons/icon-192.png"
           alt=""
-          className="mb-6 h-20 w-20 self-center rounded-2xl shadow-gold"
+          className="mb-6 h-20 w-20 self-center rounded-2xl shadow-brand"
         />
 
-        <h1 className="text-center text-2xl font-bold text-dark-50">{t('onboarding.welcome')}</h1>
-        <p className="mx-auto mt-3 max-w-sm text-center text-sm leading-relaxed text-dark-200">
+        <h1 className="text-center text-2xl font-bold text-ink-50">{t('onboarding.welcome')}</h1>
+        <p className="mx-auto mt-3 max-w-sm text-center text-sm leading-relaxed text-ink-200">
           {t('onboarding.intro')}
         </p>
 
         <div className="mt-8 space-y-5">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="name">
+            <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="name">
               {t('onboarding.name')}
             </label>
             <input
@@ -76,9 +76,9 @@ export default function Onboarding() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="membership">
+            <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="membership">
               {t('onboarding.membership')}{' '}
-              <span className="text-dark-300">({t('common.optional')})</span>
+              <span className="text-ink-300">({t('common.optional')})</span>
             </label>
             <input
               id="membership"
@@ -92,7 +92,7 @@ export default function Onboarding() {
           </div>
 
           <div>
-            <span className="mb-1.5 block text-xs font-medium text-dark-200">
+            <span className="mb-1.5 block text-xs font-medium text-ink-200">
               {t('onboarding.language')}
             </span>
             <SegmentedControl<Locale>
@@ -106,7 +106,7 @@ export default function Onboarding() {
           </div>
 
           <div>
-            <span className="mb-1.5 block text-xs font-medium text-dark-200">
+            <span className="mb-1.5 block text-xs font-medium text-ink-200">
               {t('onboarding.units')}
             </span>
             <SegmentedControl<Units>

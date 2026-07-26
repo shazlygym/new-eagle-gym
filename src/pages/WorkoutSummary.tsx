@@ -19,21 +19,21 @@ export default function WorkoutSummary() {
   const allSets =
     useLiveQuery(() => (profile ? listCompletedSets(profile.id) : []), [profile?.id]) ?? []
 
-  if (session === undefined) return <div className="min-h-dvh bg-dark-900" />
+  if (session === undefined) return <div className="min-h-dvh bg-ink-950" />
   if (!session || !profile) return <Navigate to="/" replace />
 
   const stats = sessionStats(session, sets)
   const records = newRecordsIn(sets, allSets)
 
   return (
-    <div className="flex min-h-dvh flex-col bg-dark-900 px-5 pb-10 pt-safe-t">
+    <div className="flex min-h-dvh flex-col bg-ink-950 px-5 pb-10 pt-safe-t">
       <div className="flex-1 py-10">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 w-fit rounded-2xl bg-gold-500/15 p-4 text-gold-500">
+          <div className="mx-auto mb-4 w-fit rounded-2xl bg-brand-500/15 p-4 text-brand-500">
             <Trophy size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-dark-50">{t('summary.title')}</h1>
-          <p className="mt-1 text-sm text-dark-300">
+          <h1 className="text-2xl font-bold text-ink-50">{t('summary.title')}</h1>
+          <p className="mt-1 text-sm text-ink-300">
             {(locale === 'ar' ? session.titleAr : session.titleEn) || t('workout.untitled')}
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function WorkoutSummary() {
 
         {records.length > 0 && (
           <section className="mt-8">
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gold-500">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-500">
               <Trophy size={15} />
               {t('summary.newRecords')}
             </h2>
@@ -96,11 +96,11 @@ function RecordRow({
   const exercise = useLiveQuery(() => getExercise(exerciseId), [exerciseId])
 
   return (
-    <li className="card flex items-center gap-3 border-gold-500/25 p-4">
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-dark-50">
+    <li className="card flex items-center gap-3 border-brand-500/25 p-4">
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-50">
         {exerciseName(exercise, locale)}
       </span>
-      <span className="tabular shrink-0 text-sm font-bold text-gold-500">
+      <span className="tabular shrink-0 text-sm font-bold text-brand-500">
         {formatWeight(weight, units, locale)} × {reps}
       </span>
     </li>

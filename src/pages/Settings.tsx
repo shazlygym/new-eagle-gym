@@ -117,7 +117,7 @@ export default function Settings() {
         <Section title={t('settings.profile')}>
           <div className="card space-y-4 p-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="p-name">
+              <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="p-name">
                 {t('settings.profileName')}
               </label>
               <input
@@ -132,7 +132,7 @@ export default function Settings() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="p-member">
+              <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="p-member">
                 {t('settings.membership')}
               </label>
               <input
@@ -149,7 +149,7 @@ export default function Settings() {
             </div>
 
             <div>
-              <span className="mb-1.5 block text-xs font-medium text-dark-200">
+              <span className="mb-1.5 block text-xs font-medium text-ink-200">
                 {t('settings.units')}
               </span>
               <SegmentedControl<Units>
@@ -163,7 +163,7 @@ export default function Settings() {
             </div>
 
             <div>
-              <span className="mb-1.5 block text-xs font-medium text-dark-200">
+              <span className="mb-1.5 block text-xs font-medium text-ink-200">
                 {t('settings.language')}
               </span>
               <SegmentedControl<Locale>
@@ -183,13 +183,13 @@ export default function Settings() {
                 onChange={(event) =>
                   updateProfile(profile.id, { trackRpe: event.target.checked ? 1 : 0 })
                 }
-                className="mt-0.5 h-5 w-5 shrink-0 accent-gold-500"
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-500"
               />
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-dark-50">
+                <span className="block text-sm font-medium text-ink-50">
                   {t('settings.trackRpe')}
                 </span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-dark-300">
+                <span className="mt-0.5 block text-xs leading-relaxed text-ink-300">
                   {t('settings.trackRpeHint')}
                 </span>
               </span>
@@ -205,13 +205,13 @@ export default function Settings() {
                   <button
                     type="button"
                     onClick={() => setActiveProfileId(entry.id)}
-                    className="card flex w-full items-center gap-3 p-4 text-start active:bg-dark-600"
+                    className="card flex w-full items-center gap-3 p-4 text-start active:bg-ink-600"
                   >
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-dark-50">
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-50">
                       {entry.name}
                     </span>
                     {entry.id === profile.id && (
-                      <Check size={18} className="shrink-0 text-gold-500" />
+                      <Check size={18} className="shrink-0 text-brand-500" />
                     )}
                   </button>
                 </li>
@@ -224,23 +224,23 @@ export default function Settings() {
           <div className="space-y-1.5">
             <Link
               to="/onboarding"
-              className="card flex items-center gap-3 p-4 text-sm font-medium text-dark-50 active:bg-dark-600"
+              className="card flex items-center gap-3 p-4 text-sm font-medium text-ink-50 active:bg-ink-600"
             >
-              <UserPlus size={18} className="shrink-0 text-gold-500" />
+              <UserPlus size={18} className="shrink-0 text-brand-500" />
               {t('settings.newProfile')}
             </Link>
 
-            <button type="button" onClick={runExport} className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-dark-50 active:bg-dark-600">
-              <Download size={18} className="shrink-0 text-gold-500" />
+            <button type="button" onClick={runExport} className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-ink-50 active:bg-ink-600">
+              <Download size={18} className="shrink-0 text-brand-500" />
               {t('settings.export')}
             </button>
 
             <button
               type="button"
               onClick={() => fileInput.current?.click()}
-              className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-dark-50 active:bg-dark-600"
+              className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-ink-50 active:bg-ink-600"
             >
-              <Upload size={18} className="shrink-0 text-gold-500" />
+              <Upload size={18} className="shrink-0 text-brand-500" />
               {t('settings.import')}
             </button>
             <input
@@ -253,10 +253,10 @@ export default function Settings() {
 
             {storage && (
               <div className="card space-y-2 p-4 text-sm">
-                <div className="flex items-center gap-3 text-dark-100">
-                  <HardDrive size={18} className="shrink-0 text-dark-300" />
+                <div className="flex items-center gap-3 text-ink-100">
+                  <HardDrive size={18} className="shrink-0 text-ink-300" />
                   <span className="flex-1">{t('settings.storage')}</span>
-                  <span className="tabular text-dark-200">{formatBytes(storage.usage)}</span>
+                  <span className="tabular text-ink-200">{formatBytes(storage.usage)}</span>
                 </div>
                 <div
                   className={`flex items-center gap-3 text-xs ${
@@ -278,7 +278,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setConfirmClear(true)}
-              className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-red-400 active:bg-dark-600"
+              className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-red-400 active:bg-ink-600"
             >
               <Trash2 size={18} className="shrink-0" />
               {t('settings.clearData')}
@@ -288,7 +288,7 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => setConfirmDeleteProfile(true)}
-                className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-red-400 active:bg-dark-600"
+                className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-red-400 active:bg-ink-600"
               >
                 <Trash2 size={18} className="shrink-0" />
                 {t('settings.deleteProfile')}
@@ -298,10 +298,10 @@ export default function Settings() {
         </Section>
 
         <Section title={t('settings.about')}>
-          <div className="card space-y-1 p-4 text-sm text-dark-200">
-            <p className="font-semibold text-dark-50">{t('app.name')}</p>
+          <div className="card space-y-1 p-4 text-sm text-ink-200">
+            <p className="font-semibold text-ink-50">{t('app.name')}</p>
             <p className="text-xs">{t('app.tagline')}</p>
-            <p className="text-xs text-dark-300">
+            <p className="text-xs text-ink-300">
               {t('settings.version')} 1.0.0 · {t('settings.offlineReady')}
             </p>
           </div>
@@ -309,7 +309,7 @@ export default function Settings() {
       </div>
 
       {toast && (
-        <div className="fixed inset-x-4 bottom-24 z-50 animate-fade-in rounded-xl bg-dark-600 px-4 py-3 text-center text-sm text-dark-50 shadow-xl">
+        <div className="fixed inset-x-4 bottom-24 z-50 animate-fade-in rounded-xl bg-ink-600 px-4 py-3 text-center text-sm text-ink-50 shadow-xl">
           {toast}
         </div>
       )}
@@ -319,7 +319,7 @@ export default function Settings() {
         onClose={() => setPendingImport(null)}
         title={t('settings.import')}
       >
-        <p className="mb-4 text-sm text-dark-200">{t('settings.importPrompt')}</p>
+        <p className="mb-4 text-sm text-ink-200">{t('settings.importPrompt')}</p>
         <div className="space-y-2">
           <button type="button" onClick={() => applyImport('merge')} className="btn-primary w-full">
             {t('settings.importMerge')}
@@ -372,7 +372,7 @@ function Section({
   return (
     <section>
       <h2 className="section-title mb-2 px-1">{title}</h2>
-      {hint && <p className="mb-2 px-1 text-xs leading-relaxed text-dark-300">{hint}</p>}
+      {hint && <p className="mb-2 px-1 text-xs leading-relaxed text-ink-300">{hint}</p>}
       {children}
     </section>
   )

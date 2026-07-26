@@ -39,26 +39,26 @@ export default function ConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         className="relative w-full max-w-xs animate-fade-in overflow-hidden rounded-2xl
-                   bg-dark-700 text-center shadow-2xl"
+                   bg-ink-700 text-center shadow-2xl"
       >
         <div className="px-5 py-5">
-          <h2 className="text-base font-semibold text-dark-50">{title}</h2>
-          {body && <p className="mt-1.5 text-sm leading-relaxed text-dark-200">{body}</p>}
+          <h2 className="text-base font-semibold text-ink-50">{title}</h2>
+          {body && <p className="mt-1.5 text-sm leading-relaxed text-ink-200">{body}</p>}
         </div>
 
-        <div className="grid grid-cols-2 border-t border-dark-500/60 divide-x divide-dark-500/60 rtl:divide-x-reverse">
+        <div className="grid grid-cols-2 border-t border-ink-500/60 divide-x divide-ink-500/60 rtl:divide-x-reverse">
           <button
             type="button"
             onClick={onCancel}
-            className="py-3.5 text-sm font-medium text-dark-100 active:bg-dark-600"
+            className="py-3.5 text-sm font-medium text-ink-100 active:bg-ink-600"
           >
             {t('common.cancel')}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`py-3.5 text-sm font-semibold active:bg-dark-600
-                        ${destructive ? 'text-red-400' : 'text-gold-500'}`}
+            className={`py-3.5 text-sm font-semibold active:bg-ink-600
+                        ${destructive ? 'text-red-400' : 'text-brand-500'}`}
           >
             {confirmLabel ?? t('common.done')}
           </button>

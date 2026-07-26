@@ -83,7 +83,7 @@ export default function RoutineEdit() {
           <button
             type="button"
             onClick={save}
-            className="rounded-xl bg-gold-500 px-4 py-2 text-sm font-semibold text-dark-900 active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
           >
             {t('common.save')}
           </button>
@@ -93,7 +93,7 @@ export default function RoutineEdit() {
       <div className="space-y-4 px-4 py-4">
         <div className="card space-y-4 p-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="name-ar">
+            <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="name-ar">
               {t('routines.nameAr')}
             </label>
             <input
@@ -108,7 +108,7 @@ export default function RoutineEdit() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-dark-200" htmlFor="name-en">
+            <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="name-en">
               {t('routines.nameEn')}
             </label>
             <input
@@ -134,7 +134,7 @@ export default function RoutineEdit() {
             {items.map((item, index) => (
               <li key={`${item.exerciseId}-${index}`} className="card p-4">
                 <div className="flex items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-dark-50">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-50">
                     {exerciseName(
                       exercises.find((e) => e.id === item.exerciseId),
                       locale
@@ -145,7 +145,7 @@ export default function RoutineEdit() {
                     disabled={index === 0}
                     onClick={() => move(index, -1)}
                     aria-label={t('workout.moveUp')}
-                    className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600 disabled:opacity-25"
+                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
                   >
                     <ChevronUp size={18} />
                   </button>
@@ -154,7 +154,7 @@ export default function RoutineEdit() {
                     disabled={index === items.length - 1}
                     onClick={() => move(index, 1)}
                     aria-label={t('workout.moveDown')}
-                    className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600 disabled:opacity-25"
+                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
                   >
                     <ChevronDown size={18} />
                   </button>
@@ -162,7 +162,7 @@ export default function RoutineEdit() {
                     type="button"
                     onClick={() => setItems(items.filter((_, i) => i !== index))}
                     aria-label={t('common.delete')}
-                    className="rounded-lg p-1.5 text-dark-300 active:bg-dark-600"
+                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
                   >
                     <Trash2 size={17} />
                   </button>
@@ -194,8 +194,8 @@ export default function RoutineEdit() {
             type="button"
             onClick={() => setPickerOpen(true)}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border
-                       border-dashed border-dark-400 py-3.5 text-sm font-medium
-                       text-gold-500 active:bg-dark-700"
+                       border-dashed border-ink-400 py-3.5 text-sm font-medium
+                       text-brand-500 active:bg-ink-700"
           >
             <Plus size={18} />
             {t('routines.addExercise')}
