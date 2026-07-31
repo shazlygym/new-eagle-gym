@@ -80,6 +80,12 @@ export interface Profile {
   nutritionGoal?: NutritionGoal
   /** Workouts per week the member is aiming for. Unset hides the goal ring. */
   weeklyWorkoutTarget?: number
+  /**
+   * Rest given to an exercise added mid-workout. A routine's own rest still
+   * wins, and any card can be changed on the spot — this is only the starting
+   * value, so someone who always rests two minutes says it once.
+   */
+  defaultRestSeconds?: number
   createdAt: number
 }
 

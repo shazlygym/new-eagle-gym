@@ -17,6 +17,8 @@ import {
   getSession,
   listSessionExercises,
   listSetsForSession,
+  setSessionExerciseRest,
+  setSessionRest,
   updateSession,
 } from '../db/repository'
 import { useT } from '../i18n'
@@ -55,7 +57,11 @@ export default function Workout() {
 
   const addExercise = async (exerciseId: string) => {
     setPickerOpen(false)
-    const sessionExerciseId = await addExerciseToSession(sessionId, exerciseId)
+    const sessionExerciseId = await addExerciseToSession(
+      sessionId,
+      exerciseId,
+      profile.defaultRestSeconds ?? 90
+    )
     // Every exercise starts with one empty set — otherwise the card lands as a
     // header with nothing to type into.
     await addSet(sessionExerciseId)
@@ -135,6 +141,14 @@ export default function Workout() {
                 units={units}
                 profileId={profile.id}
                 onSetCompleted={(restSeconds) => restSeconds > 0 && timer.start(restSeconds)}
+                // Takes effect from the next set. Rewriting the countdown that
+                // is already running would either cut a rest short or hand back
+                // time already spent; the bar's own ±15/+30 is for that.
+                onRestChange={(seconds, applyToAll) =>
+                  applyToAll
+                    ? setSessionRest(sessionId, seconds)
+                    : setSessionExerciseRest(sessionExercise.id, seconds)
+                }
                 onPr={setPr}
                 isFirst={index === 0}
                 isLast={index === sessionExercises.length - 1}

@@ -210,6 +210,29 @@ export default function Settings() {
               </p>
             </div>
 
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="p-rest">
+                {t('settings.defaultRest')}
+              </label>
+              <input
+                id="p-rest"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={600}
+                step={15}
+                defaultValue={profile.defaultRestSeconds ?? 90}
+                onBlur={(event) => {
+                  const value = Math.max(0, Math.min(600, Math.round(Number(event.target.value))))
+                  updateProfile(profile.id, { defaultRestSeconds: value })
+                }}
+                className="field"
+              />
+              <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
+                {t('settings.defaultRestHint')}
+              </p>
+            </div>
+
             <label className="flex cursor-pointer items-start gap-3 pt-1">
               <input
                 type="checkbox"

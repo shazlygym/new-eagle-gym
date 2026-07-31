@@ -450,6 +450,13 @@ export const en = {
   'workout.prTitle': 'New personal record!',
   'workout.lessTime': '−15s',
 
+  'workout.restLength': 'Rest between sets',
+  'workout.restHint':
+    'The countdown starts on its own the moment you tick a set off, and keeps running with the phone in your pocket.',
+  'workout.restSeconds': 'Seconds',
+  'workout.restOff': 'No timer',
+  'workout.restApplyAll': 'Use this for every exercise in this workout',
+
   'summary.share': 'Share as image',
 
   'home.weeklyGoal': 'Weekly goal',
@@ -464,6 +471,9 @@ export const en = {
   'settings.weeklyTarget': 'Weekly workout goal',
   'settings.weeklyTargetHint':
     'Workouts per week you are aiming for. Shows a goal ring on Home; leave it at 0 to turn it off.',
+  'settings.defaultRest': 'Default rest (seconds)',
+  'settings.defaultRestHint':
+    'Rest given to an exercise you add mid-workout. A routine keeps its own rest, and any exercise can be changed from its card. 0 turns the timer off.',
   'settings.lastBackup': 'Last backup {time}',
   'settings.lastBackupNever': 'No backup yet',
   'settings.importUnsupported':

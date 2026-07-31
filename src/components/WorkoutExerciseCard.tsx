@@ -9,6 +9,7 @@ import {
   Link2,
   Play,
   Plus,
+  Timer,
   Trash2,
   TrendingUp,
 } from 'lucide-react'
@@ -40,6 +41,7 @@ import DurationTimer from './DurationTimer'
 import ExerciseHistorySheet from './ExerciseHistorySheet'
 import NumberField from './NumberField'
 import PlateCalculatorSheet from './PlateCalculatorSheet'
+import RestSheet from './RestSheet'
 
 interface Props {
   sessionExercise: SessionExercise
@@ -48,6 +50,8 @@ interface Props {
   profileId: string
   /** Called when a set is ticked, so the page can kick off the rest timer. */
   onSetCompleted: (restSeconds: number) => void
+  /** Called when the member changes how long the rest countdown should run. */
+  onRestChange?: (seconds: number, applyToAll: boolean) => void
   /** Called when a completed set beats every previous session — a live PR. */
   onPr?: (event: { exerciseName: string; display: string }) => void
   isFirst: boolean
@@ -65,6 +69,7 @@ export default function WorkoutExerciseCard({
   units,
   profileId,
   onSetCompleted,
+  onRestChange,
   onPr,
   isFirst,
   isLast,
@@ -76,6 +81,7 @@ export default function WorkoutExerciseCard({
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [platesOpen, setPlatesOpen] = useState(false)
+  const [restOpen, setRestOpen] = useState(false)
   // The best value already celebrated this session, so a heavier set later in
   // the same workout celebrates again but re-ticking the same set doesn't.
   const celebrated = useRef(0)
@@ -399,6 +405,24 @@ export default function WorkoutExerciseCard({
             {t('workout.addSet')}
           </button>
 
+          {/* The rest length lives on the card, not just in the routine editor:
+              it is the number people want to change while standing at the rack,
+              and it shows its current value so there is nothing to remember. */}
+          {!readOnlyContext && onRestChange && (
+            <button
+              type="button"
+              onClick={() => setRestOpen(true)}
+              aria-label={t('workout.restLength')}
+              className="tabular flex items-center gap-1.5 rounded-xl bg-ink-600 px-3 py-2.5
+                         text-xs font-semibold text-ink-100 active:bg-ink-500"
+            >
+              <Timer size={15} className="text-brand-400" />
+              {sessionExercise.restSeconds > 0
+                ? formatClock(sessionExercise.restSeconds)
+                : t('workout.restOff')}
+            </button>
+          )}
+
           {!readOnlyContext && !isTimed && (
             <button
               type="button"
@@ -460,6 +484,18 @@ export default function WorkoutExerciseCard({
           profileId={profileId}
           exerciseId={sessionExercise.exerciseId}
           units={units}
+        />
+      )}
+
+      {onRestChange && (
+        <RestSheet
+          open={restOpen}
+          seconds={sessionExercise.restSeconds}
+          onClose={() => setRestOpen(false)}
+          onSave={(seconds, applyToAll) => {
+            onRestChange(seconds, applyToAll)
+            setRestOpen(false)
+          }}
         />
       )}
 

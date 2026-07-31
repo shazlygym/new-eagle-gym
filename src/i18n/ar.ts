@@ -449,6 +449,13 @@ export const ar: Record<TranslationKey, string> = {
   'workout.prTitle': 'رقم قياسي جديد!',
   'workout.lessTime': '−15ث',
 
+  'workout.restLength': 'الراحة بين المجاميع',
+  'workout.restHint':
+    'التايمر بيشتغل لوحده أول ما تعلّم على المجموعة، وبيفضل ماشي والموبايل في جيبك.',
+  'workout.restSeconds': 'ثواني',
+  'workout.restOff': 'بدون تايمر',
+  'workout.restApplyAll': 'استخدمها في كل تمارين النهاردة',
+
   'summary.share': 'شارك كصورة',
 
   'home.weeklyGoal': 'هدف الأسبوع',
@@ -463,6 +470,9 @@ export const ar: Record<TranslationKey, string> = {
   'settings.weeklyTarget': 'هدف التمرين الأسبوعي',
   'settings.weeklyTargetHint':
     'عدد التمارين اللي ناوي عليها في الأسبوع. بيظهر كحلقة هدف في الرئيسية؛ سيبه 0 لو مش عايزه.',
+  'settings.defaultRest': 'الراحة الافتراضية (ثانية)',
+  'settings.defaultRestHint':
+    'الراحة اللي تتحط على أي تمرين تضيفه وسط التمرينة. البرنامج بيحتفظ براحته، وأي تمرين تقدر تغيّره من الكارت بتاعه. 0 يقفل التايمر.',
   'settings.lastBackup': 'آخر نسخة احتياطية {time}',
   'settings.lastBackupNever': 'لا توجد نسخة احتياطية بعد',
   'settings.importUnsupported': 'النسخة دي من إصدار أحدث من التطبيق. حدّث التطبيق وجرّب تاني.',

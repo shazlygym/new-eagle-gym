@@ -491,6 +491,26 @@ export async function removeSessionExercise(id: string): Promise<void> {
   })
 }
 
+/**
+ * Rest for one exercise, changed mid-workout. Stored on the session's own copy
+ * rather than the routine, so raising it because today is heavy doesn't rewrite
+ * the plan for next week.
+ */
+export async function setSessionExerciseRest(id: string, restSeconds: number): Promise<void> {
+  await db.sessionExercises.update(id, { restSeconds: Math.max(0, Math.round(restSeconds)) })
+}
+
+/** The same rest across the whole workout — usually what "change it" means. */
+export async function setSessionRest(sessionId: string, restSeconds: number): Promise<void> {
+  const value = Math.max(0, Math.round(restSeconds))
+  await db.transaction('rw', db.sessionExercises, async () => {
+    const entries = await listSessionExercises(sessionId)
+    await Promise.all(
+      entries.map((entry) => db.sessionExercises.update(entry.id, { restSeconds: value }))
+    )
+  })
+}
+
 export async function reorderSessionExercise(id: string, direction: -1 | 1): Promise<void> {
   await db.transaction('rw', db.sessionExercises, async () => {
     const entry = await db.sessionExercises.get(id)
