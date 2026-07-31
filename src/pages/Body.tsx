@@ -15,6 +15,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import EmptyState from '../components/EmptyState'
 import NumberField from '../components/NumberField'
 import PageHeader from '../components/PageHeader'
+import PhotoSection from '../components/PhotoSection'
 import Sheet from '../components/Sheet'
 import { bodyWeightSeries } from '../db/queries'
 import type { BodyStat } from '../db/schema'
@@ -104,6 +105,8 @@ export default function Body() {
             </ResponsiveContainer>
           </ChartCard>
         )}
+
+        <PhotoSection profileId={profile.id} />
 
         {stats.length === 0 ? (
           <EmptyState icon={Ruler} title={t('body.empty')} body={t('body.emptyHint')} />

@@ -28,13 +28,21 @@ export default function TabBar() {
               // on every nested route.
               end={to === '/'}
               className={({ isActive }) =>
-                `flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium
+                `flex h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-medium
                  transition-colors ${isActive ? 'text-brand-500' : 'text-ink-200'}`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={22} strokeWidth={isActive ? 2.4 : 1.8} />
+                  {/* iOS-style pill behind the active icon; the transition makes
+                      switching tabs read as movement rather than a repaint. */}
+                  <span
+                    className={`flex h-7 w-12 items-center justify-center rounded-full
+                                transition-colors duration-200
+                                ${isActive ? 'bg-brand-500/15' : 'bg-transparent'}`}
+                  >
+                    <Icon size={21} strokeWidth={isActive ? 2.4 : 1.8} />
+                  </span>
                   <span>{t(label)}</span>
                 </>
               )}

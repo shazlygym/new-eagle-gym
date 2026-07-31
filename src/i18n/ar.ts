@@ -390,6 +390,32 @@ export const ar: Record<TranslationKey, string> = {
   'nutrition.setTargetsHint': 'قول للتطبيق سعراتك وماكروزك اليومية عشان يقارن بيها.',
   'nutrition.itemsCount': 'أصناف: {count}',
   'nutrition.weekChart': 'سعرات هذا الأسبوع',
+  'nutrition.dailyAverage': 'متوسط {kcal} في اليوم',
+  'nutrition.frequent': 'بتاكله كتير',
+  'nutrition.calculate': 'احسبلي أهدافي',
+  'nutrition.calculateHint': 'من وزنك وطولك وسنك وحركتك في اليوم.',
+  'nutrition.calcMissing': 'دخّل السن والطول والوزن عشان يطلعلك اقتراح.',
+  'nutrition.manualTargets': 'أو حطّها بنفسك',
+  'nutrition.useThese': 'استخدم الأرقام دي',
+  'nutrition.maintenance': 'الثبات {kcal}',
+  'nutrition.bmr': 'الراحة {kcal}',
+  'nutrition.kcalUnit': 'سعر',
+  'nutrition.sex': 'النوع',
+  'nutrition.male': 'ذكر',
+  'nutrition.female': 'أنثى',
+  'nutrition.age': 'السن',
+  'nutrition.height': 'الطول',
+  'nutrition.activity': 'حركتك في اليوم',
+  'nutrition.goal': 'الهدف',
+
+  'activity.sedentary': 'شغل مكتبي',
+  'activity.light': 'حركة خفيفة',
+  'activity.moderate': 'نشيط',
+  'activity.high': 'نشيط جدًا',
+
+  'goal.cut': 'تنشيف',
+  'goal.maintain': 'ثبات',
+  'goal.bulk': 'تضخيم',
 
   'foodCat.egyptian': 'أكلات مصرية',
   'foodCat.protein': 'بروتين',
@@ -417,4 +443,36 @@ export const ar: Record<TranslationKey, string> = {
   'install.body':
     'اضغط زر المشاركة في سفاري، ثم "إضافة إلى الشاشة الرئيسية" — سيفتح التطبيق بملء الشاشة وتصبح بياناتك أكثر أماناً.',
   'install.dismiss': 'حسناً',
+
+  'common.later': 'لاحقاً',
+
+  'workout.prTitle': 'رقم قياسي جديد!',
+  'workout.lessTime': '−15ث',
+
+  'summary.share': 'شارك كصورة',
+
+  'home.weeklyGoal': 'هدف الأسبوع',
+  'home.goalMet': 'هدف الأسبوع اكتمل!',
+  'home.goalMetHint': 'خلّصت كل تمارين الأسبوع اللي خططتها. قوي.',
+  'home.goalHint': 'فاضل {count} تمرين الأسبوع ده عشان توصل لهدفك.',
+  'home.inactiveNudge': 'بقالك {days} يوم من آخر تمرين — وقت الرجوع.',
+  'home.backupNudge': 'اعمل نسخة احتياطية',
+  'home.backupNudgeHint':
+    'كل بياناتك على الموبايل ده بس. صدّر نسخة احتياطية عشان ضياع الموبايل ميبقاش ضياع تمرينك.',
+
+  'settings.weeklyTarget': 'هدف التمرين الأسبوعي',
+  'settings.weeklyTargetHint':
+    'عدد التمارين اللي ناوي عليها في الأسبوع. بيظهر كحلقة هدف في الرئيسية؛ سيبه 0 لو مش عايزه.',
+  'settings.lastBackup': 'آخر نسخة احتياطية {time}',
+  'settings.lastBackupNever': 'لا توجد نسخة احتياطية بعد',
+  'settings.importUnsupported': 'النسخة دي من إصدار أحدث من التطبيق. حدّث التطبيق وجرّب تاني.',
+
+  'routines.duplicate': 'نسخ الروتين',
+
+  'body.photos': 'صور التقدم',
+  'body.addPhoto': 'أضف صورة',
+  'body.photosHint': 'صورة واحدة كل شهر بتقول أكتر من الميزان بكتير.',
+  'body.photoSaving': 'جارٍ الحفظ…',
+  'body.compare': 'قارن',
+  'body.deletePhotoConfirm': 'حذف هذه الصورة؟',
 }

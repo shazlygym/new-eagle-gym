@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import EmptyState from '../components/EmptyState'
 import ExercisePicker from '../components/ExercisePicker'
 import PageHeader from '../components/PageHeader'
+import PrCelebration, { type PrEvent } from '../components/PrCelebration'
 import RestTimerBar from '../components/RestTimerBar'
 import WorkoutExerciseCard from '../components/WorkoutExerciseCard'
 import {
@@ -20,7 +21,7 @@ import {
 } from '../db/repository'
 import { useT } from '../i18n'
 import { formatClock } from '../lib/format'
-import { useElapsed } from '../lib/useClock'
+import { useElapsed, useExerciseTimerStore } from '../lib/useClock'
 import { useActiveProfile } from '../lib/useActiveProfile'
 import { useRestTimer } from '../lib/useRestTimer'
 
@@ -34,8 +35,11 @@ export default function Workout() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [confirmFinish, setConfirmFinish] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [pr, setPr] = useState<PrEvent | null>(null)
 
-  const session = useLiveQuery(() => getSession(sessionId), [sessionId])
+  // Resolved to null on a miss: useLiveQuery yields undefined while loading, so
+  // without the ?? a bad URL would render the blank loading div forever.
+  const session = useLiveQuery(async () => (await getSession(sessionId)) ?? null, [sessionId])
   const sessionExercises = useLiveQuery(() => listSessionExercises(sessionId), [sessionId]) ?? []
   const sets = useLiveQuery(() => listSetsForSession(sessionId), [sessionId]) ?? []
 
@@ -44,7 +48,7 @@ export default function Workout() {
   const elapsed = useElapsed(session?.startedAt)
 
   if (session === undefined) return <div className="min-h-dvh bg-ink-950" />
-  if (session === null || !session || !profile) return <Navigate to="/" replace />
+  if (!session || !profile) return <Navigate to="/" replace />
 
   const title = (locale === 'ar' ? session.titleAr : session.titleEn) || t('workout.untitled')
   const completedCount = sets.filter((s) => s.done === 1).length
@@ -57,9 +61,19 @@ export default function Workout() {
     await addSet(sessionExerciseId)
   }
 
+  // A duration timer still running when the session ends would persist as an
+  // orphan and disable every Start button in the next workout.
+  const cancelOwnedExerciseTimer = () => {
+    const exerciseTimer = useExerciseTimerStore.getState()
+    if (sessionExercises.some((entry) => entry.id === exerciseTimer.sessionExerciseId)) {
+      exerciseTimer.cancel()
+    }
+  }
+
   const finish = async () => {
     setConfirmFinish(false)
     timer.stop()
+    cancelOwnedExerciseTimer()
     await finishSession(sessionId)
     navigate(`/workout/${sessionId}/summary`, { replace: true })
   }
@@ -67,6 +81,7 @@ export default function Workout() {
   const discard = async () => {
     setConfirmDiscard(false)
     timer.stop()
+    cancelOwnedExerciseTimer()
     await deleteSession(sessionId)
     navigate('/', { replace: true })
   }
@@ -120,6 +135,7 @@ export default function Workout() {
                 units={units}
                 profileId={profile.id}
                 onSetCompleted={(restSeconds) => restSeconds > 0 && timer.start(restSeconds)}
+                onPr={setPr}
                 isFirst={index === 0}
                 isLast={index === sessionExercises.length - 1}
                 // Rest is taken at the end of a superset, not between its parts.
@@ -168,6 +184,8 @@ export default function Workout() {
       </div>
 
       <RestTimerBar timer={timer} />
+
+      <PrCelebration event={pr} onDone={() => setPr(null)} />
 
       <ExercisePicker
         open={pickerOpen}

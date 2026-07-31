@@ -10,9 +10,15 @@ interface AppState {
   locale: Locale
   activeProfileId: string | null
   installHintDismissed: boolean
+  /** When the user last exported a backup from this device. Null = never. */
+  lastBackupAt: number | null
+  /** Set when the backup nudge is dismissed, so it stays quiet for a while. */
+  backupNudgeSnoozedAt: number | null
   setLocale: (locale: Locale) => void
   setActiveProfileId: (id: string | null) => void
   dismissInstallHint: () => void
+  markBackupDone: () => void
+  snoozeBackupNudge: () => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -21,9 +27,13 @@ export const useAppStore = create<AppState>()(
       locale: 'ar',
       activeProfileId: null,
       installHintDismissed: false,
+      lastBackupAt: null,
+      backupNudgeSnoozedAt: null,
       setLocale: (locale) => set({ locale }),
       setActiveProfileId: (activeProfileId) => set({ activeProfileId }),
       dismissInstallHint: () => set({ installHintDismissed: true }),
+      markBackupDone: () => set({ lastBackupAt: Date.now(), backupNudgeSnoozedAt: null }),
+      snoozeBackupNudge: () => set({ backupNudgeSnoozedAt: Date.now() }),
     }),
     { name: 'eagle-gym-prefs' }
   )

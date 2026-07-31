@@ -1,10 +1,21 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { startOfWeek } from 'date-fns'
-import { CalendarDays, Dumbbell, Flame, Play, Plus, RotateCcw, Weight } from 'lucide-react'
+import {
+  CalendarDays,
+  CalendarClock,
+  Dumbbell,
+  Flame,
+  Play,
+  Plus,
+  RotateCcw,
+  ShieldAlert,
+  Weight,
+} from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import InstallHint from '../components/InstallHint'
 import PageHeader from '../components/PageHeader'
+import ProgressRing from '../components/ProgressRing'
 import Reveal from '../components/Reveal'
 import StatCard from '../components/StatCard'
 import TodayPlanCard from '../components/TodayPlanCard'
@@ -19,11 +30,12 @@ import {
   repeatSession,
   startSession,
 } from '../db/repository'
-import { programProgress, sessionsThisWeek, volumeThisWeek, weekStreak } from '../db/queries'
+import { programProgress, sessionsThisWeek, volumeOf, volumeThisWeek, weekStreak } from '../db/queries'
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
 import { formatShortDay, formatTimeAgo, formatVolume, unitLabel, volumeValue } from '../lib/format'
 import { useActiveProfile } from '../lib/useActiveProfile'
+import { useAppStore } from '../stores/appStore'
 
 export default function Home() {
   const { t, locale } = useT()
@@ -62,9 +74,30 @@ export default function Home() {
       [recentIds.join(',')]
     ) ?? []
 
+  const lastBackupAt = useAppStore((state) => state.lastBackupAt)
+  const backupNudgeSnoozedAt = useAppStore((state) => state.backupNudgeSnoozedAt)
+  const snoozeBackupNudge = useAppStore((state) => state.snoozeBackupNudge)
+
   if (!profile) return null
 
   const streak = weekStreak(sessions)
+  const doneThisWeek = sessionsThisWeek(sessions)
+  const weeklyTarget = profile.weeklyWorkoutTarget ?? 0
+
+  // Gentle, not nagging: only after a real gap, and never while a workout is
+  // actually in progress.
+  const daysSinceLast = recent[0]
+    ? Math.floor((Date.now() - recent[0].startedAt) / 86_400_000)
+    : 0
+  const showInactiveNudge = !active && recent.length > 0 && daysSinceLast >= 4
+
+  // Data lives on this phone only. Once there is something worth losing, nudge
+  // until a backup exists — then again when the last one is three weeks old.
+  const completedCount = sessions.filter((s) => s.status === 'done').length
+  const backupStale = !lastBackupAt || Date.now() - lastBackupAt > 21 * 86_400_000
+  const backupSnoozed =
+    backupNudgeSnoozedAt !== null && Date.now() - backupNudgeSnoozedAt < 14 * 86_400_000
+  const showBackupNudge = completedCount >= 5 && backupStale && !backupSnoozed
 
   const begin = async (routineId?: string) => {
     // Started from a tap, so this is a valid moment to unlock audio for the
@@ -143,7 +176,7 @@ export default function Home() {
         <StatCard
           icon={CalendarDays}
           label={t('home.thisWeek')}
-          value={String(sessionsThisWeek(sessions))}
+          value={weeklyTarget > 0 ? `${doneThisWeek}/${weeklyTarget}` : String(doneThisWeek)}
           hint={t('home.workouts')}
         />
         <StatCard
@@ -156,7 +189,70 @@ export default function Home() {
         />
       </Reveal>
 
-      <Reveal index={3} className="px-5 pt-3">
+      {weeklyTarget > 0 && (
+        <Reveal index={3} className="px-5 pt-3">
+          <div
+            className={`card flex items-center gap-4 p-4 ${
+              doneThisWeek >= weeklyTarget ? 'border-green-500/40' : ''
+            }`}
+          >
+            <ProgressRing
+              value={doneThisWeek / weeklyTarget}
+              label={`${doneThisWeek}/${weeklyTarget}`}
+              size={52}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-ink-50">
+                {doneThisWeek >= weeklyTarget ? t('home.goalMet') : t('home.weeklyGoal')}
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-ink-300">
+                {doneThisWeek >= weeklyTarget
+                  ? t('home.goalMetHint')
+                  : t('home.goalHint', { count: weeklyTarget - doneThisWeek })}
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      {showInactiveNudge && (
+        <Reveal index={3} className="px-5 pt-3">
+          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
+            <CalendarClock size={20} className="shrink-0 text-amber-400" />
+            <p className="min-w-0 flex-1 text-sm text-ink-100">
+              {t('home.inactiveNudge', { days: daysSinceLast })}
+            </p>
+          </div>
+        </Reveal>
+      )}
+
+      {showBackupNudge && (
+        <Reveal index={3} className="px-5 pt-3">
+          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
+            <ShieldAlert size={20} className="shrink-0 text-amber-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-ink-50">{t('home.backupNudge')}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-ink-300">
+                {t('home.backupNudgeHint')}
+              </p>
+              <div className="mt-2 flex gap-4">
+                <Link to="/settings" className="text-xs font-semibold text-brand-500">
+                  {t('settings.export')}
+                </Link>
+                <button
+                  type="button"
+                  onClick={snoozeBackupNudge}
+                  className="text-xs font-medium text-ink-300"
+                >
+                  {t('common.later')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      <Reveal index={4} className="px-5 pt-3">
         <WeightCard />
       </Reveal>
 
@@ -265,10 +361,12 @@ export default function Home() {
                     </p>
                   </div>
                   <span className="tabular shrink-0 text-sm font-semibold text-brand-500">
+                    {/* volumeOf, not a raw sum — warm-ups and timed work must
+                        not read as tonnage here when they don't anywhere else. */}
                     {formatVolume(
-                      recentSets
-                        .filter((s) => s.sessionId === session.id && s.done === 1)
-                        .reduce((total, s) => total + s.weight * s.reps, 0),
+                      volumeOf(
+                        recentSets.filter((s) => s.sessionId === session.id && s.done === 1)
+                      ),
                       units,
                       locale,
                       { compact: true }

@@ -1,9 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ListPlus, Pencil, Play, Plus } from 'lucide-react'
+import { Copy, ListPlus, Pencil, Play, Plus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
-import { getActiveSession, listRoutines, startSession } from '../db/repository'
+import { duplicateRoutine, getActiveSession, listRoutines, startSession } from '../db/repository'
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
 import { useActiveProfile } from '../lib/useActiveProfile'
@@ -68,6 +68,16 @@ export default function Routines() {
                     </p>
                   </div>
 
+                  <button
+                    type="button"
+                    // Suffixes are record data, not UI copy — each name field
+                    // gets its own language regardless of the current locale.
+                    onClick={() => duplicateRoutine(routine.id, { ar: '(نسخة)', en: '(copy)' })}
+                    aria-label={t('routines.duplicate')}
+                    className="rounded-xl bg-ink-600 p-2.5 text-ink-100 active:bg-ink-500"
+                  >
+                    <Copy size={16} />
+                  </button>
                   <Link
                     to={`/routines/${routine.id}`}
                     aria-label={t('common.edit')}

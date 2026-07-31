@@ -43,7 +43,8 @@ export default function SessionDetail() {
   const [editing, setEditing] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  const session = useLiveQuery(() => getSession(sessionId), [sessionId])
+  // Null on a miss so a bad URL redirects instead of loading forever.
+  const session = useLiveQuery(async () => (await getSession(sessionId)) ?? null, [sessionId])
   const sessionExercises = useLiveQuery(() => listSessionExercises(sessionId), [sessionId]) ?? []
   const sets = useLiveQuery(() => listSetsForSession(sessionId), [sessionId]) ?? []
   const exercises =

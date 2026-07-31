@@ -12,12 +12,14 @@ import {
   Trash2,
   TrendingUp,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { e1rm } from '../db/queries'
 import {
   addSet,
   addWarmupSets,
   deleteSet,
   getExercise,
+  listSetsForExercise,
   logDurationSet,
   recentSessionsForExercise,
   removeSessionExercise,
@@ -31,6 +33,7 @@ import { exerciseName, useT } from '../i18n'
 import { formatClock, formatNumber, toDisplayWeight, toStoredWeight, unitLabel } from '../lib/format'
 import { suggestNextLoad } from '../lib/progression'
 import { SET_TYPE_BADGE, SET_TYPE_LABEL, SET_TYPE_STYLE, nextSetType } from '../lib/setTypes'
+import { useExerciseTimerStore } from '../lib/useClock'
 import { warmupSets } from '../lib/warmup'
 import ConfirmDialog from './ConfirmDialog'
 import DurationTimer from './DurationTimer'
@@ -45,6 +48,8 @@ interface Props {
   profileId: string
   /** Called when a set is ticked, so the page can kick off the rest timer. */
   onSetCompleted: (restSeconds: number) => void
+  /** Called when a completed set beats every previous session — a live PR. */
+  onPr?: (event: { exerciseName: string; display: string }) => void
   isFirst: boolean
   isLast: boolean
   /** True when the next exercise is in the same superset group as this one. */
@@ -60,6 +65,7 @@ export default function WorkoutExerciseCard({
   units,
   profileId,
   onSetCompleted,
+  onPr,
   isFirst,
   isLast,
   supersetContinues,
@@ -70,6 +76,9 @@ export default function WorkoutExerciseCard({
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [platesOpen, setPlatesOpen] = useState(false)
+  // The best value already celebrated this session, so a heavier set later in
+  // the same workout celebrates again but re-ticking the same set doesn't.
+  const celebrated = useRef(0)
 
   const exercise = useLiveQuery(
     () => getExercise(sessionExercise.exerciseId),
@@ -100,10 +109,34 @@ export default function WorkoutExerciseCard({
 
   const toggleDone = async (entry: SetEntry) => {
     const nowDone = entry.done === 0
+    // A small physical tick on Android; Safari has no vibration API.
+    if (nowDone) navigator.vibrate?.(30)
     await setSetDone(entry.id, nowDone)
     // Inside a superset you move straight to the next exercise, so rest only
     // starts once the group is finished.
     if (nowDone && !supersetContinues) onSetCompleted(sessionExercise.restSeconds)
+    if (nowDone && entry.setType !== 'warmup') void celebrateIfRecord(entry)
+  }
+
+  /**
+   * A live PR: this set's estimated 1RM beats every previous session. Only
+   * checked against real history — the first time an exercise is ever done,
+   * everything would be a "record", which celebrates nothing.
+   */
+  const celebrateIfRecord = async (entry: SetEntry) => {
+    if (!onPr || readOnlyContext || isTimed) return
+    if (entry.weight <= 0 || entry.reps <= 0) return
+    const history = await listSetsForExercise(profileId, sessionExercise.exerciseId)
+    const prior = history.filter((s) => s.sessionId !== sessionExercise.sessionId)
+    if (prior.length === 0) return
+    const priorBest = Math.max(...prior.map((s) => e1rm(s.weight, s.reps)))
+    const value = e1rm(entry.weight, entry.reps)
+    if (value <= priorBest || value <= celebrated.current) return
+    celebrated.current = value
+    onPr({
+      exerciseName: exerciseName(exercise, locale),
+      display: `${formatNumber(toDisplayWeight(entry.weight, units))} ${unitLabel(units, locale)} × ${entry.reps}`,
+    })
   }
 
   const applySuggestion = async () => {
@@ -132,6 +165,17 @@ export default function WorkoutExerciseCard({
     if (seconds <= 0) return
     await logDurationSet(sessionExercise.id, seconds)
     if (!supersetContinues) onSetCompleted(sessionExercise.restSeconds)
+
+    // Longest-hold PR — duration work has no e1rm to compare.
+    if (onPr && !readOnlyContext) {
+      const history = await listSetsForExercise(profileId, sessionExercise.exerciseId)
+      const prior = history.filter((s) => s.sessionId !== sessionExercise.sessionId)
+      const priorBest = Math.max(0, ...prior.map((s) => s.durationSeconds ?? 0))
+      if (prior.length > 0 && seconds > priorBest && seconds > celebrated.current) {
+        celebrated.current = seconds
+        onPr({ exerciseName: exerciseName(exercise, locale), display: formatClock(seconds) })
+      }
+    }
   }
 
   return (
@@ -401,6 +445,10 @@ export default function WorkoutExerciseCard({
         onCancel={() => setConfirmRemove(false)}
         onConfirm={() => {
           setConfirmRemove(false)
+          // A running duration timer owned by this exercise would otherwise
+          // survive as an orphan and lock out every other Start button.
+          const timer = useExerciseTimerStore.getState()
+          if (timer.sessionExerciseId === sessionExercise.id) timer.cancel()
           void removeSessionExercise(sessionExercise.id)
         }}
       />

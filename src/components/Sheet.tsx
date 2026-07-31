@@ -41,7 +41,7 @@ export default function Sheet({ open, onClose, title, children, tall }: Props) {
         type="button"
         aria-label="close"
         onClick={onClose}
-        className="absolute inset-0 animate-fade-in bg-black/60"
+        className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-[2px]"
       />
 
       <div

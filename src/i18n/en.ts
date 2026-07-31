@@ -391,6 +391,32 @@ export const en = {
   'nutrition.setTargetsHint': 'Tell the app your daily calories and macros to track against.',
   'nutrition.itemsCount': 'Items: {count}',
   'nutrition.weekChart': 'Calories this week',
+  'nutrition.dailyAverage': '{kcal} a day on average',
+  'nutrition.frequent': 'Often',
+  'nutrition.calculate': 'Work my targets out for me',
+  'nutrition.calculateHint': 'From your weight, height, age and how you train.',
+  'nutrition.calcMissing': 'Fill in age, height and weight to see a suggestion.',
+  'nutrition.manualTargets': 'Or set them yourself',
+  'nutrition.useThese': 'Use these numbers',
+  'nutrition.maintenance': 'Maintenance {kcal}',
+  'nutrition.bmr': 'Resting {kcal}',
+  'nutrition.kcalUnit': 'kcal',
+  'nutrition.sex': 'Sex',
+  'nutrition.male': 'Male',
+  'nutrition.female': 'Female',
+  'nutrition.age': 'Age',
+  'nutrition.height': 'Height',
+  'nutrition.activity': 'Daily activity',
+  'nutrition.goal': 'Goal',
+
+  'activity.sedentary': 'Desk job',
+  'activity.light': 'Lightly active',
+  'activity.moderate': 'Active',
+  'activity.high': 'Very active',
+
+  'goal.cut': 'Lose fat',
+  'goal.maintain': 'Maintain',
+  'goal.bulk': 'Build muscle',
 
   'foodCat.egyptian': 'Egyptian dishes',
   'foodCat.protein': 'Protein',
@@ -418,6 +444,39 @@ export const en = {
   'install.body':
     'Tap Share in Safari, then "Add to Home Screen" — the app then opens full screen and keeps your data safer.',
   'install.dismiss': 'Got it',
+
+  'common.later': 'Later',
+
+  'workout.prTitle': 'New personal record!',
+  'workout.lessTime': '−15s',
+
+  'summary.share': 'Share as image',
+
+  'home.weeklyGoal': 'Weekly goal',
+  'home.goalMet': 'Weekly goal complete!',
+  'home.goalMetHint': 'Every planned workout this week is done. Strong.',
+  'home.goalHint': '{count} more this week to hit your goal.',
+  'home.inactiveNudge': "It's been {days} days since your last workout — time to get back.",
+  'home.backupNudge': 'Back up your data',
+  'home.backupNudgeHint':
+    'Everything lives on this phone only. Export a backup so a lost phone never means lost training.',
+
+  'settings.weeklyTarget': 'Weekly workout goal',
+  'settings.weeklyTargetHint':
+    'Workouts per week you are aiming for. Shows a goal ring on Home; leave it at 0 to turn it off.',
+  'settings.lastBackup': 'Last backup {time}',
+  'settings.lastBackupNever': 'No backup yet',
+  'settings.importUnsupported':
+    'This backup is from a newer version of the app. Update the app, then try again.',
+
+  'routines.duplicate': 'Duplicate routine',
+
+  'body.photos': 'Progress photos',
+  'body.addPhoto': 'Add a photo',
+  'body.photosHint': 'One photo a month says more than the scale ever will.',
+  'body.photoSaving': 'Saving…',
+  'body.compare': 'Compare',
+  'body.deletePhotoConfirm': 'Delete this photo?',
 } as const
 
 export type TranslationKey = keyof typeof en

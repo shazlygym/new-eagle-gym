@@ -15,19 +15,42 @@ Arabic (RTL) and English, switchable at runtime.
 - Supersets — link exercises so rest is taken once at the end of the group.
 - Optional RPE (reps in reserve) column.
 - Plate calculator: what to load per side, seeded from the set you're on.
-- Rest timer that survives the phone being pocketed, plus a live workout
-  stopwatch in the header.
+- Rest timer that survives the phone being pocketed — adjustable ±15/30s from
+  the bar, and the chime still fires on return if the time ran out while the
+  phone was in your pocket. Plus a live workout stopwatch in the header.
 - Time-tracked exercises (planks, carries, cardio) get a start/stop timer
   instead of a reps field; stopping it logs the set.
-- Tap any exercise mid-workout to see every past session for it.
+- Tap any exercise mid-workout to see every past session for it — including an
+  estimated-1RM trend chart and per-session volume.
+- Break a personal record mid-set and the app celebrates it on the spot —
+  confetti, fanfare, and vibration where the platform has it.
 
 **Planning**
-- **Routines** — saved exercise lists with target sets/reps/rest.
+- **Routines** — saved exercise lists with target sets/reps/rest, duplicable in
+  one tap to build variations.
+- **Weekly goal** — set a workouts-per-week target and Home shows a goal ring;
+  a gentle nudge appears after a few idle days.
 - **Programs** — multi-week blocks that schedule routines across training days,
   track which week you're in, show the next day on Home, and report adherence.
 - **Progression suggestions** — double progression: hold the weight until every
   working set hits the target, then add the smallest jump. Two stalled sessions
   in a row suggests a deload instead.
+
+**Nutrition**
+- Food log split across breakfast, lunch, dinner and snacks, with the day's
+  calories, protein, carbs and fat totalled as you go.
+- A built-in Egyptian food table — koshari, foul, molokhia, taameya, baladi
+  bread — with macros per 100 g and the household measures people actually
+  think in (a plate, a loaf, a spoon, a skewer), so nobody has to weigh a meal.
+  Anything missing can be added as your own food straight off a package label.
+- Daily targets, either typed in or **worked out for you**: Mifflin–St Jeor from
+  your sex, age, height and weight, scaled by activity and by whether you're
+  cutting, maintaining or building — then split into protein, carbs and fat.
+- Rings and bars for calories and each macro, a seven-day calorie strip, and a
+  per-item portion editor.
+- Saved meals: log a combination once, then repeat it in a single tap.
+- The picker orders itself by what you actually eat, so the list gets shorter
+  the longer you use it.
 
 **Review**
 - History with a month calendar; past workouts are fully editable.
@@ -35,22 +58,29 @@ Arabic (RTL) and English, switchable at runtime.
   volume by muscle group, push/pull/legs balance, acute:chronic training load,
   a record timeline, and a four-week period comparison.
 - Body weight, body fat and circumference measurements with a trend chart.
-- Export/import the whole database as JSON.
+- Progress photos — captured downscaled, stored on-device, with a before/after
+  compare view. Photos ride along in backups.
+- Share a finished workout as an image (duration, sets, tonnage, new records),
+  rendered in the app's own look for both Arabic and English.
+- Export/import the whole database as JSON. Home nudges when the last backup
+  is getting old; Settings shows when it was taken.
 
 ## Architecture
 
 No backend. The app is a static bundle plus a service worker; all data lives in
 IndexedDB on the device.
 
-Navigation: **Home · Train · History · Progress · Settings**, where Train is the
-hub for programs, routines and the exercise library.
+Navigation: **Home · Train · Nutrition · Progress · Settings**, where Train is
+the hub for programs, routines and the exercise library. History has no tab of
+its own — it is reached from Home and from Progress.
 
 ```
 src/
   db/          Dexie schema, repository (all reads/writes), derived queries, seed data
   i18n/        ar/en dictionaries + useT hook
   lib/         formatting, rest timer, audio, plate maths, warm-up ramp,
-               progression rules, set types, search normalisation
+               progression rules, calorie/macro maths, image compression,
+               share-card rendering, set types, search normalisation
   components/  shared UI
   pages/       one file per screen
 ```
@@ -71,14 +101,24 @@ Timed work is measured in `durationSeconds` and never in reps. Tonnage skips
 those sets entirely: a 60-second weighted carry has no rep count, and inventing
 one turns a single carry into thousands of phantom kilograms.
 
+Food macros are stored **per 100 g** (per 100 ml for drinks), and a logged item
+snapshots its name and its scaled macros rather than pointing at the food table.
+Correcting a food's numbers — or deleting it — therefore never rewrites what you
+ate last month. The built-in table is rewritten on every launch, so corrections
+shipped in a new version reach phones that already have the app installed.
+
 All clocks — rest timer, workout stopwatch, exercise timer — store the instant
 they started or end, never a counter. iOS suspends JavaScript the moment the app
 is backgrounded, so a ticking counter freezes in your pocket and lies.
 
 The schema is versioned. v2 added programs, superset grouping and set types,
 migrating existing `isWarmup` flags in place — an install with months of logged
-training upgrades without losing a set. Backups carry a version too, and a v1
-file is brought forward on import.
+training upgrades without losing a set. v3 added the nutrition tables and
+retired the built-in exercise library with a per-profile claim-or-drop
+migration, and v4 added progress photos. Backups carry a version too: old files are brought forward on import
+(including re-applying the claim-or-drop rule to their library rows), and a
+file from a future version is refused with a clear message instead of being
+half-imported.
 
 ### "Multi-user" without a server
 
@@ -133,8 +173,10 @@ so importing the repo is the whole setup.
 
 ### Netlify / Cloudflare Pages
 
-`netlify.toml` is the equivalent config; both hosts read it. Import the repo the
-same way.
+`netlify.toml` is the equivalent config for Netlify. Cloudflare Pages ignores
+it — it reads `public/_headers` and `public/_redirects` from the build output
+instead, and both are in the repo, carrying the same cache rules. Import the
+repo the same way.
 
 ### Why the cache headers matter
 

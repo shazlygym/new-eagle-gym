@@ -27,9 +27,14 @@ export const useRestTimerStore = create<RestTimerState>()(
       extend: (seconds) => {
         const { endsAt, totalSeconds } = get()
         if (!endsAt) return
-        // Extend from now if it already elapsed, so "+30s" always means 30 more.
+        // Extend from now if it already elapsed, so "+30s" always means 30
+        // more. Negative adjustments are clamped: "−15s" near zero just ends
+        // the rest now instead of producing a timer that finished in the past.
         const base = Math.max(endsAt, Date.now())
-        set({ endsAt: base + seconds * 1000, totalSeconds: totalSeconds + seconds })
+        set({
+          endsAt: Math.max(base + seconds * 1000, Date.now()),
+          totalSeconds: Math.max(1, totalSeconds + seconds),
+        })
       },
       stop: () => set({ endsAt: null, totalSeconds: 0 }),
     }),
@@ -38,6 +43,17 @@ export const useRestTimerStore = create<RestTimerState>()(
     { name: 'eagle-gym-rest-timer' }
   )
 )
+
+/** Which deadline already chimed — one cue per countdown, however it fires. */
+let chimedEndsAt: number | null = null
+
+function chimeOnce(endsAt: number): void {
+  if (chimedEndsAt === endsAt) return
+  chimedEndsAt = endsAt
+  playRestChime()
+  // Android only — Safari has no vibration API, which is why the cue is audio.
+  navigator.vibrate?.(200)
+}
 
 export interface RestTimer {
   active: boolean
@@ -70,14 +86,28 @@ export function useRestTimer(): RestTimer {
 
   const remaining = endsAt ? Math.max(0, (endsAt - Date.now()) / 1000) : 0
 
-  // Chime once, on the transition to zero. Guarded by a module-level marker
-  // rather than component state so remounting the bar can't re-trigger it.
+  // Chime once, on the transition to zero. The deadline marker means neither a
+  // remount nor a visibility flap can re-trigger it for the same countdown.
   useEffect(() => {
     if (!endsAt) return
     const delay = endsAt - Date.now()
     if (delay <= 0) return
-    const timeout = window.setTimeout(() => playRestChime(), delay)
-    return () => window.clearTimeout(timeout)
+    const timeout = window.setTimeout(() => chimeOnce(endsAt), delay)
+
+    // iOS suspends JavaScript in the background, so a timer that expired while
+    // the phone was pocketed never fired its timeout. Cue on return instead —
+    // but only if the deadline passed recently enough to still be useful.
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      const overdueMs = Date.now() - endsAt
+      if (overdueMs >= 0 && overdueMs < 30_000) chimeOnce(endsAt)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      window.clearTimeout(timeout)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [endsAt])
 
   return {

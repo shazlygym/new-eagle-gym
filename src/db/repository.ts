@@ -1,11 +1,13 @@
-import { format } from 'date-fns'
+import { format, subDays } from 'date-fns'
 import {
+  claimSharedExercises,
   db,
   newId,
   SHARED,
   type BodyStat,
   type Exercise,
   type Profile,
+  type ProgressPhoto,
   type Routine,
   type RoutineItem,
   type Food,
@@ -85,6 +87,7 @@ export async function deleteProfile(id: string): Promise<void> {
       db.foods,
       db.mealEntries,
       db.savedMeals,
+      db.photos,
     ],
     async () => {
       const sessionIds = (await db.sessions.where('profileId').equals(id).primaryKeys()) as string[]
@@ -99,6 +102,7 @@ export async function deleteProfile(id: string): Promise<void> {
       await db.foods.where('profileId').equals(id).delete()
       await db.mealEntries.where('profileId').equals(id).delete()
       await db.savedMeals.where('profileId').equals(id).delete()
+      await db.photos.where('profileId').equals(id).delete()
       await db.profiles.delete(id)
     }
   )
@@ -161,6 +165,28 @@ export async function saveRoutine(
     createdAt: existing?.createdAt ?? Date.now(),
   })
   return id
+}
+
+/**
+ * A copy is the cheapest way to build a variation — tweak two exercises in the
+ * copy instead of wrecking the routine that already works. The suffix comes
+ * from the caller because the repository doesn't know the display language.
+ */
+export async function duplicateRoutine(
+  id: string,
+  suffix: { ar: string; en: string }
+): Promise<string | undefined> {
+  const source = await db.routines.get(id)
+  if (!source) return undefined
+  const copy: Routine = {
+    ...source,
+    id: newId(),
+    nameAr: `${source.nameAr} ${suffix.ar}`.trim(),
+    nameEn: `${source.nameEn} ${suffix.en}`.trim(),
+    createdAt: Date.now(),
+  }
+  await db.routines.add(copy)
+  return copy.id
 }
 
 /**
@@ -429,6 +455,10 @@ export async function deleteSession(id: string): Promise<void> {
 }
 
 // ─── Session exercises ────────────────────────────────────────────────────────
+
+export function getSessionExercise(id: string): Promise<SessionExercise | undefined> {
+  return db.sessionExercises.get(id)
+}
 
 export function listSessionExercises(sessionId: string): Promise<SessionExercise[]> {
   return db.sessionExercises
@@ -784,15 +814,60 @@ export async function deleteBodyStat(id: string): Promise<void> {
   await db.bodyStats.delete(id)
 }
 
+// ─── Progress photos ──────────────────────────────────────────────────────────
+
+/** Oldest first, matching the body-stat convention. */
+export async function listPhotos(profileId: string): Promise<ProgressPhoto[]> {
+  const rows = await db.photos
+    .where('[profileId+date]')
+    .between([profileId, ''], [profileId, '￿'])
+    .toArray()
+  return rows.sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt)
+}
+
+export async function addPhoto(
+  profileId: string,
+  input: { date: string; blob: Blob; note?: string }
+): Promise<ProgressPhoto> {
+  const photo: ProgressPhoto = {
+    id: newId(),
+    profileId,
+    date: input.date,
+    blob: input.blob,
+    note: input.note?.trim() || undefined,
+    createdAt: Date.now(),
+  }
+  await db.photos.add(photo)
+  return photo
+}
+
+export async function deletePhoto(id: string): Promise<void> {
+  await db.photos.delete(id)
+}
+
 // ─── Backup ───────────────────────────────────────────────────────────────────
 //
 // Safari can evict IndexedDB for sites that go unused, and there is no server
 // copy of any of this. Export is the only safety net the user has.
 
+/** A photo flattened for JSON — Blobs don't survive JSON.stringify. */
+export interface BackupPhoto {
+  id: string
+  profileId: string
+  date: string
+  note?: string
+  createdAt: number
+  mime: string
+  dataBase64: string
+}
+
 export interface Backup {
   app: 'eagle-gym'
-  /** 1 predates set types and programs, 2 predates nutrition. All are accepted. */
-  version: 1 | 2 | 3
+  /**
+   * 1 predates set types and programs, 2 predates nutrition, 3 predates
+   * progress photos. All are accepted.
+   */
+  version: 1 | 2 | 3 | 4
   exportedAt: string
   profiles: Profile[]
   exercises: Exercise[]
@@ -805,6 +880,25 @@ export interface Backup {
   sessionExercises: SessionExercise[]
   sets: SetEntry[]
   bodyStats: BodyStat[]
+  photos?: BackupPhoto[]
+}
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer())
+  let binary = ''
+  // Chunked: spreading a whole photo into one fromCharCode call overflows the
+  // argument limit.
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000))
+  }
+  return btoa(binary)
+}
+
+function base64ToBlob(dataBase64: string, mime: string): Blob {
+  const binary = atob(dataBase64)
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index)
+  return new Blob([bytes], { type: mime })
 }
 
 export async function exportBackup(): Promise<Backup> {
@@ -820,6 +914,7 @@ export async function exportBackup(): Promise<Backup> {
     sessionExercises,
     sets,
     bodyStats,
+    photoRows,
   ] = await Promise.all([
     db.profiles.toArray(),
     // Exercises are all the member's own now, so every one of them is carried.
@@ -834,11 +929,20 @@ export async function exportBackup(): Promise<Backup> {
     db.sessionExercises.toArray(),
     db.sets.toArray(),
     db.bodyStats.toArray(),
+    db.photos.toArray(),
   ])
+
+  const photos: BackupPhoto[] = await Promise.all(
+    photoRows.map(async ({ blob, ...rest }) => ({
+      ...rest,
+      mime: blob.type || 'image/jpeg',
+      dataBase64: await blobToBase64(blob),
+    }))
+  )
 
   return {
     app: 'eagle-gym',
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     profiles,
     exercises,
@@ -851,6 +955,7 @@ export async function exportBackup(): Promise<Backup> {
     sessionExercises,
     sets,
     bodyStats,
+    photos,
   }
 }
 
@@ -863,6 +968,10 @@ export function parseBackup(raw: string): Backup {
   }
   const backup = parsed as Partial<Backup>
   if (backup?.app !== 'eagle-gym' || !Array.isArray(backup.profiles)) throw new Error('not-a-backup')
+
+  // A file from a future app version may carry tables and shapes this build
+  // can't interpret; importing it blind would half-work and corrupt quietly.
+  if (![1, 2, 3, 4].includes(backup.version as number)) throw new Error('unsupported-version')
 
   // A v1 file predates set types. Bring its sets forward rather than importing
   // rows the rest of the app can't interpret.
@@ -878,6 +987,57 @@ export function parseBackup(raw: string): Backup {
 }
 
 export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): Promise<void> {
+  // Old backups still carry the retired built-in library as SHARED rows;
+  // importing those as-is would resurrect it for every profile. Apply the same
+  // per-profile claim-or-drop rule the v3 schema migration uses, on the file's
+  // own data, before anything is written.
+  let exercises = backup.exercises ?? []
+  let sets = backup.sets ?? []
+  let sessionExercises = backup.sessionExercises ?? []
+  let routines = backup.routines ?? []
+  if (exercises.some((exercise) => exercise.profileId === SHARED)) {
+    const { claimed, remap } = claimSharedExercises({
+      exercises,
+      sets,
+      routines,
+      sessions: backup.sessions ?? [],
+      sessionExercises,
+    })
+    // Every SHARED row is either in `claimed` (with clones for extra profiles)
+    // or was dropped, so the survivors are simply everyone's own plus claimed.
+    exercises = exercises.filter((exercise) => exercise.profileId !== SHARED).concat(claimed)
+
+    if (remap.size > 0) {
+      const sessionProfile = new Map((backup.sessions ?? []).map((s) => [s.id, s.profileId]))
+      const mappedId = (profileId: string | undefined, exerciseId: string) =>
+        profileId ? remap.get(profileId)?.get(exerciseId) : undefined
+      sets = sets.map((set) => {
+        const next = mappedId(set.profileId, set.exerciseId)
+        return next ? { ...set, exerciseId: next } : set
+      })
+      sessionExercises = sessionExercises.map((entry) => {
+        const next = mappedId(sessionProfile.get(entry.sessionId), entry.exerciseId)
+        return next ? { ...entry, exerciseId: next } : entry
+      })
+      routines = routines.map((routine) => {
+        const ids = remap.get(routine.profileId)
+        if (!ids || !routine.items.some((item) => ids.has(item.exerciseId))) return routine
+        return {
+          ...routine,
+          items: routine.items.map((item) => ({
+            ...item,
+            exerciseId: ids.get(item.exerciseId) ?? item.exerciseId,
+          })),
+        }
+      })
+    }
+  }
+
+  const photos: ProgressPhoto[] = (backup.photos ?? []).map(({ mime, dataBase64, ...rest }) => ({
+    ...rest,
+    blob: base64ToBlob(dataBase64, mime),
+  }))
+
   await db.transaction(
     'rw',
     [
@@ -892,6 +1052,7 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
       db.sessionExercises,
       db.sets,
       db.bodyStats,
+      db.photos,
     ],
     async () => {
       if (mode === 'replace') {
@@ -907,6 +1068,7 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
           db.sessionExercises.clear(),
           db.sets.clear(),
           db.bodyStats.clear(),
+          db.photos.clear(),
         ])
       }
 
@@ -915,16 +1077,17 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
       await db.foods.bulkPut(SEED_FOODS)
       await Promise.all([
         db.profiles.bulkPut(backup.profiles ?? []),
-        db.exercises.bulkPut(backup.exercises ?? []),
-        db.routines.bulkPut(backup.routines ?? []),
+        db.exercises.bulkPut(exercises),
+        db.routines.bulkPut(routines),
         db.programs.bulkPut(backup.programs ?? []),
         db.foods.bulkPut(backup.foods ?? []),
         db.mealEntries.bulkPut(backup.mealEntries ?? []),
         db.savedMeals.bulkPut(backup.savedMeals ?? []),
         db.sessions.bulkPut(backup.sessions ?? []),
-        db.sessionExercises.bulkPut(backup.sessionExercises ?? []),
-        db.sets.bulkPut(backup.sets ?? []),
+        db.sessionExercises.bulkPut(sessionExercises),
+        db.sets.bulkPut(sets),
         db.bodyStats.bulkPut(backup.bodyStats ?? []),
+        db.photos.bulkPut(photos),
       ])
     }
   )
@@ -933,7 +1096,7 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
 export async function clearProfileData(profileId: string): Promise<void> {
   await db.transaction(
     'rw',
-    [db.sessions, db.sessionExercises, db.sets, db.bodyStats, db.mealEntries],
+    [db.sessions, db.sessionExercises, db.sets, db.bodyStats, db.mealEntries, db.photos],
     async () => {
       const sessionIds = (await db.sessions
         .where('profileId')
@@ -944,6 +1107,7 @@ export async function clearProfileData(profileId: string): Promise<void> {
       await db.sessions.where('profileId').equals(profileId).delete()
       await db.bodyStats.where('profileId').equals(profileId).delete()
       await db.mealEntries.where('profileId').equals(profileId).delete()
+      await db.photos.where('profileId').equals(profileId).delete()
     }
   )
 }
@@ -991,6 +1155,35 @@ export function listMealEntriesBetween(
   to: string
 ): Promise<MealEntry[]> {
   return db.mealEntries.where('[profileId+date]').between([profileId, from], [profileId, to], true, true).toArray()
+}
+
+/**
+ * Food ids this profile has been logging lately, most-eaten first. It is what
+ * orders the picker: after a week of use the top of that list is this member's
+ * actual diet, which beats an alphabetical list of two hundred dishes.
+ */
+export async function recentFoodIds(profileId: string, days = 30, limit = 15): Promise<string[]> {
+  const entries = await listMealEntriesBetween(
+    profileId,
+    format(subDays(new Date(), days), 'yyyy-MM-dd'),
+    today()
+  )
+
+  const rank = new Map<string, { count: number; last: number }>()
+  for (const entry of entries) {
+    const current = rank.get(entry.foodId)
+    if (current) {
+      current.count += 1
+      current.last = Math.max(current.last, entry.createdAt)
+    } else {
+      rank.set(entry.foodId, { count: 1, last: entry.createdAt })
+    }
+  }
+
+  return [...rank.entries()]
+    .sort((a, b) => b[1].count - a[1].count || b[1].last - a[1].last)
+    .slice(0, limit)
+    .map(([foodId]) => foodId)
 }
 
 /**

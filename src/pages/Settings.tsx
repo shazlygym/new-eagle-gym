@@ -27,7 +27,7 @@ import {
 } from '../db/repository'
 import type { Locale, Units } from '../db/schema'
 import { useT } from '../i18n'
-import { formatBytes } from '../lib/format'
+import { formatBytes, formatTimeAgo } from '../lib/format'
 import { useActiveProfile } from '../lib/useActiveProfile'
 import { useAppStore } from '../stores/appStore'
 
@@ -37,6 +37,8 @@ export default function Settings() {
   const locale = useAppStore((state) => state.locale)
   const setLocale = useAppStore((state) => state.setLocale)
   const setActiveProfileId = useAppStore((state) => state.setActiveProfileId)
+  const lastBackupAt = useAppStore((state) => state.lastBackupAt)
+  const markBackupDone = useAppStore((state) => state.markBackupDone)
 
   const fileInput = useRef<HTMLInputElement>(null)
   const [pendingImport, setPendingImport] = useState<Backup | null>(null)
@@ -74,6 +76,7 @@ export default function Settings() {
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: filename })
+        markBackupDone()
         return
       } catch {
         // Cancelled or unsupported at runtime — fall through to the link.
@@ -86,6 +89,7 @@ export default function Settings() {
     anchor.download = filename
     anchor.click()
     URL.revokeObjectURL(url)
+    markBackupDone()
   }
 
   const onFileChosen = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,8 +99,14 @@ export default function Settings() {
 
     try {
       setPendingImport(parseBackup(await file.text()))
-    } catch {
-      setToast(t('settings.importFailed'))
+    } catch (error) {
+      // A file from a future app version is a different problem than a file
+      // that isn't ours — tell the user which one they have.
+      setToast(
+        error instanceof Error && error.message === 'unsupported-version'
+          ? t('settings.importUnsupported')
+          : t('settings.importFailed')
+      )
     }
   }
 
@@ -176,6 +186,30 @@ export default function Settings() {
               />
             </div>
 
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="p-goal">
+                {t('settings.weeklyTarget')}
+              </label>
+              <input
+                id="p-goal"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={14}
+                defaultValue={profile.weeklyWorkoutTarget ?? ''}
+                onBlur={(event) => {
+                  const value = Math.max(0, Math.min(14, Math.round(Number(event.target.value))))
+                  updateProfile(profile.id, {
+                    weeklyWorkoutTarget: value > 0 ? value : undefined,
+                  })
+                }}
+                className="field"
+              />
+              <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
+                {t('settings.weeklyTargetHint')}
+              </p>
+            </div>
+
             <label className="flex cursor-pointer items-start gap-3 pt-1">
               <input
                 type="checkbox"
@@ -232,7 +266,14 @@ export default function Settings() {
 
             <button type="button" onClick={runExport} className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-ink-50 active:bg-ink-600">
               <Download size={18} className="shrink-0 text-brand-500" />
-              {t('settings.export')}
+              <span className="min-w-0 flex-1">
+                {t('settings.export')}
+                <span className="mt-0.5 block text-xs font-normal text-ink-300">
+                  {lastBackupAt
+                    ? t('settings.lastBackup', { time: formatTimeAgo(lastBackupAt, locale) })
+                    : t('settings.lastBackupNever')}
+                </span>
+              </span>
             </button>
 
             <button

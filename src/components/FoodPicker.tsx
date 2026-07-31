@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { createFood, listFoods, scaleFood } from '../db/repository'
+import { createFood, listFoods, recentFoodIds, scaleFood } from '../db/repository'
 import { FOOD_CATEGORIES } from '../db/foods'
 import type { Food, FoodCategory } from '../db/schema'
 import { useT } from '../i18n'
@@ -31,6 +31,13 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
   const [creating, setCreating] = useState(false)
 
   const foods = useLiveQuery(() => listFoods(profileId), [profileId]) ?? []
+  const recent = useLiveQuery(() => recentFoodIds(profileId), [profileId])
+
+  const recentRank = useMemo(() => {
+    const rank = new Map<string, number>()
+    ;(recent ?? []).forEach((id, index) => rank.set(id, index))
+    return rank
+  }, [recent])
 
   const results = useMemo(() => {
     const needle = normalizeSearch(query)
@@ -43,12 +50,16 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
           normalizeSearch(food.nameEn).includes(needle)
       )
       .sort((a, b) => {
-        // Custom foods first — they are the ones this member added on purpose.
+        // What this member actually eats comes first, in the order they eat it.
+        const rankA = recentRank.get(a.id) ?? Infinity
+        const rankB = recentRank.get(b.id) ?? Infinity
+        if (rankA !== rankB) return rankA - rankB
+        // Then their own foods — added on purpose, so worth surfacing.
         if (a.isCustom !== b.isCustom) return b.isCustom - a.isCustom
         return foodName(a, locale).localeCompare(foodName(b, locale), locale)
       })
       .slice(0, 80)
-  }, [foods, query, category, locale])
+  }, [foods, query, category, locale, recentRank])
 
   return (
     <>
@@ -117,11 +128,15 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
                       {t('nutrition.per100')}
                     </p>
                   </div>
-                  {food.isCustom === 1 && (
+                  {food.isCustom === 1 ? (
                     <span className="shrink-0 rounded-full bg-brand-500/15 px-2 py-0.5 text-[10px] font-semibold text-brand-400">
                       {t('exercises.custom')}
                     </span>
-                  )}
+                  ) : recentRank.has(food.id) ? (
+                    <span className="shrink-0 rounded-full bg-ink-500/60 px-2 py-0.5 text-[10px] font-semibold text-ink-200">
+                      {t('nutrition.frequent')}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             ))}

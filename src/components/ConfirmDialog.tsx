@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useT } from '../i18n'
 
 interface Props {
@@ -24,6 +25,15 @@ export default function ConfirmDialog({
   onCancel,
 }: Props) {
   const { t } = useT()
+
+  // Escape cancels, same as tapping the backdrop — matches Sheet.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onCancel()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onCancel])
+
   if (!open) return null
 
   return (

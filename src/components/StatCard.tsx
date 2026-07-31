@@ -16,7 +16,7 @@ export default function StatCard({ icon: Icon, label, value, hint }: Props) {
             and the value have to be allowed to clip rather than wrap. */}
         <span className="truncate text-[11px] font-medium leading-tight">{label}</span>
       </div>
-      <p className="tabular mt-1.5 truncate text-xl font-bold leading-tight text-ink-50">
+      <p className="tabular font-numeric mt-1.5 truncate text-xl font-bold leading-tight text-ink-50">
         {value}
       </p>
       {hint && <p className="mt-0.5 truncate text-[11px] text-ink-300">{hint}</p>}

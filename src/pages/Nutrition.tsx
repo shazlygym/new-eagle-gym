@@ -1,21 +1,25 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { addDays, format, parseISO } from 'date-fns'
 import { BookmarkPlus, ChevronLeft, ChevronRight, Plus, Target, Trash2, UtensilsCrossed } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FoodPicker from '../components/FoodPicker'
 import MacroRings, { type Totals } from '../components/MacroRings'
 import PageHeader from '../components/PageHeader'
 import Reveal from '../components/Reveal'
 import Sheet from '../components/Sheet'
+import TargetsSheet from '../components/TargetsSheet'
+import WeekCalories from '../components/WeekCalories'
 import {
   deleteMealEntry,
+  listBodyStats,
   listMealEntries,
   listSavedMeals,
   logMealEntry,
   logSavedMeal,
   saveSlotAsMeal,
   today,
+  updateMealEntry,
   updateProfile,
 } from '../db/repository'
 import type { MealEntry, MealSlot } from '../db/schema'
@@ -44,12 +48,20 @@ export default function Nutrition() {
   const [savingSlot, setSavingSlot] = useState<MealSlot | null>(null)
   const [mealsOpen, setMealsOpen] = useState<MealSlot | null>(null)
   const [targetsOpen, setTargetsOpen] = useState(false)
+  const [editing, setEditing] = useState<MealEntry | null>(null)
 
   const entries = useLiveQuery(
     () => (profileId ? listMealEntries(profileId, date) : []),
     [profileId, date]
   ) ?? []
   const savedMeals = useLiveQuery(() => (profileId ? listSavedMeals(profileId) : []), [profileId]) ?? []
+  // The calculator asks for a body weight; the member has usually logged one
+  // already, so it arrives pre-filled.
+  const latestWeightKg = useLiveQuery(async () => {
+    if (!profileId) return undefined
+    const stats = await listBodyStats(profileId)
+    return [...stats].reverse().find((stat) => stat.weight)?.weight
+  }, [profileId])
 
   if (!profile) return null
 
@@ -120,12 +132,21 @@ export default function Nutrition() {
           />
         </Reveal>
 
+        <Reveal index={1}>
+          <WeekCalories
+            profileId={profile.id}
+            date={date}
+            kcalTarget={profile.kcalTarget}
+            onPickDate={setDate}
+          />
+        </Reveal>
+
         {SLOTS.map((slot, index) => {
           const slotEntries = entries.filter((entry) => entry.slot === slot)
           const slotKcal = slotEntries.reduce((sum, entry) => sum + entry.kcal, 0)
 
           return (
-            <Reveal key={slot} index={index + 1}>
+            <Reveal key={slot} index={index + 2}>
               <section className="card overflow-hidden">
                 <header className="flex items-center gap-2 border-b border-ink-500/40 px-4 py-3">
                   <h2 className="min-w-0 flex-1 truncate font-semibold text-ink-50">
@@ -152,7 +173,14 @@ export default function Nutrition() {
                   <ul className="divide-y divide-ink-500/30">
                     {slotEntries.map((entry) => (
                       <li key={entry.id} className="flex items-center gap-3 px-4 py-2.5">
-                        <div className="min-w-0 flex-1">
+                        {/* Tapping the row edits the portion — the usual
+                            correction is "it was more like 250 g", and deleting
+                            and re-logging to say that is four taps too many. */}
+                        <button
+                          type="button"
+                          onClick={() => setEditing(entry)}
+                          className="min-w-0 flex-1 text-start"
+                        >
                           <p className="truncate text-sm text-ink-50">
                             {locale === 'ar' ? entry.nameAr : entry.nameEn}
                           </p>
@@ -162,7 +190,7 @@ export default function Nutrition() {
                             </span>{' '}
                             · {entry.protein}P {entry.carbs}C {entry.fat}F
                           </p>
-                        </div>
+                        </button>
                         <span className="tabular shrink-0 text-sm font-semibold text-ink-100">
                           {entry.kcal}
                         </span>
@@ -252,23 +280,21 @@ export default function Nutrition() {
 
       <TargetsSheet
         open={targetsOpen}
+        profile={profile}
+        latestWeightKg={latestWeightKg}
         onClose={() => setTargetsOpen(false)}
-        initial={{
-          kcal: profile.kcalTarget ?? 0,
-          protein: profile.proteinTarget ?? 0,
-          carbs: profile.carbsTarget ?? 0,
-          fat: profile.fatTarget ?? 0,
-        }}
-        onSave={async (values) => {
-          await updateProfile(profile.id, {
-            // Zero means "don't track this one", stored as undefined so the ring
-            // disappears rather than showing a 0 target.
-            kcalTarget: values.kcal || undefined,
-            proteinTarget: values.protein || undefined,
-            carbsTarget: values.carbs || undefined,
-            fatTarget: values.fat || undefined,
-          })
+        onSave={async (patch) => {
+          await updateProfile(profile.id, patch)
           setTargetsOpen(false)
+        }}
+      />
+
+      <EditEntrySheet
+        entry={editing}
+        onClose={() => setEditing(null)}
+        onSave={async (grams) => {
+          if (editing) await updateMealEntry(editing.id, grams)
+          setEditing(null)
         }}
       />
 
@@ -370,53 +396,81 @@ function SaveMealSheet({
   )
 }
 
-function TargetsSheet({
-  open,
-  initial,
+/**
+ * Correcting a portion after the fact. The macros are rescaled from the food's
+ * own per-100 g figures where it still exists, and from the entry's own numbers
+ * where it doesn't — see updateMealEntry.
+ */
+function EditEntrySheet({
+  entry,
   onClose,
   onSave,
 }: {
-  open: boolean
-  initial: Totals
+  entry: MealEntry | null
   onClose: () => void
-  onSave: (values: Totals) => Promise<void>
+  onSave: (grams: number) => Promise<void>
 }) {
-  const { t } = useT()
-  const [values, setValues] = useState(initial)
+  const { t, locale } = useT()
+  const [grams, setGrams] = useState(0)
+
+  // Keyed on the id alone: the entry object is replaced on every live-query
+  // refresh, and re-syncing on that would fight whatever is being typed.
+  const source = useRef(entry)
+  source.current = entry
+  const entryId = entry?.id
+
+  useEffect(() => {
+    const current = source.current
+    if (current) setGrams(current.grams)
+  }, [entryId])
+
+  if (!entry) return null
+
+  const scale = entry.grams > 0 ? grams / entry.grams : 0
+  const preview = {
+    kcal: Math.round(entry.kcal * scale),
+    protein: Math.round(entry.protein * scale * 10) / 10,
+    carbs: Math.round(entry.carbs * scale * 10) / 10,
+    fat: Math.round(entry.fat * scale * 10) / 10,
+  }
 
   return (
-    <Sheet open={open} onClose={onClose} title={t('nutrition.targets')}>
+    <Sheet open onClose={onClose} title={locale === 'ar' ? entry.nameAr : entry.nameEn}>
       <div className="space-y-4">
-        <p className="text-xs leading-relaxed text-ink-300">{t('nutrition.setTargetsHint')}</p>
         <NumberField
-          label={t('nutrition.calories')}
-          value={values.kcal}
-          onChange={(kcal) => setValues({ ...values, kcal })}
-          step={50}
+          label={t('nutrition.grams')}
+          value={grams}
+          onChange={setGrams}
+          step={10}
           steppers
         />
-        <div className="grid grid-cols-3 gap-3">
-          <NumberField
-            label={t('nutrition.protein')}
-            value={values.protein}
-            onChange={(protein) => setValues({ ...values, protein })}
-            step={5}
-          />
-          <NumberField
-            label={t('nutrition.carbs')}
-            value={values.carbs}
-            onChange={(carbs) => setValues({ ...values, carbs })}
-            step={5}
-          />
-          <NumberField
-            label={t('nutrition.fat')}
-            value={values.fat}
-            onChange={(fat) => setValues({ ...values, fat })}
-            step={5}
-          />
+
+        <div className="grid grid-cols-4 gap-2 rounded-xl bg-ink-800 p-3 text-center">
+          {[
+            { label: t('nutrition.calories'), value: preview.kcal, accent: true },
+            { label: t('nutrition.protein'), value: preview.protein },
+            { label: t('nutrition.carbs'), value: preview.carbs },
+            { label: t('nutrition.fat'), value: preview.fat },
+          ].map((macro) => (
+            <div key={macro.label} className="min-w-0">
+              <p className="truncate text-[10px] text-ink-300">{macro.label}</p>
+              <p
+                className={`tabular text-base font-bold ${
+                  macro.accent ? 'text-brand-400' : 'text-ink-50'
+                }`}
+              >
+                {macro.value}
+              </p>
+            </div>
+          ))}
         </div>
-        <p className="text-xs leading-relaxed text-ink-300">{t('nutrition.targetsHint')}</p>
-        <button type="button" onClick={() => onSave(values)} className="btn-primary w-full">
+
+        <button
+          type="button"
+          disabled={grams <= 0}
+          onClick={() => onSave(grams)}
+          className="btn-primary w-full"
+        >
           {t('common.save')}
         </button>
       </div>

@@ -16,6 +16,14 @@ export const SHARED = '*'
 export type Units = 'kg' | 'lb'
 export type Locale = 'ar' | 'en'
 
+/** Only ever used by the calorie formula, which is sex-specific. */
+export type Sex = 'male' | 'female'
+
+/** How much moves in a day outside of training. */
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'high'
+
+export type NutritionGoal = 'cut' | 'maintain' | 'bulk'
+
 export type MuscleGroup =
   | 'chest'
   | 'back'
@@ -60,6 +68,18 @@ export interface Profile {
   proteinTarget?: number
   carbsTarget?: number
   fatTarget?: number
+  /**
+   * What the calorie calculator needs. Kept on the profile rather than asked
+   * for every time, so re-running it after a few kilos is two taps.
+   * Stored as a birth year, not an age, so the number stays true next year.
+   */
+  sex?: Sex
+  heightCm?: number
+  birthYear?: number
+  activityLevel?: ActivityLevel
+  nutritionGoal?: NutritionGoal
+  /** Workouts per week the member is aiming for. Unset hides the goal ring. */
+  weeklyWorkoutTarget?: number
   createdAt: number
 }
 
@@ -275,6 +295,91 @@ export interface SavedMeal {
   createdAt: number
 }
 
+/**
+ * A progress photo. The image itself is stored as a Blob — IndexedDB handles
+ * binary natively, and a base64 string would be a third larger for nothing.
+ * Photos are downscaled at capture so a year of them stays in the tens of MB.
+ */
+export interface ProgressPhoto {
+  id: string
+  profileId: string
+  /** 'yyyy-MM-dd' — the day it was taken. */
+  date: string
+  blob: Blob
+  note?: string
+  createdAt: number
+}
+
+/**
+ * The v3 "claim or drop" rule for the retired built-in exercise library, done
+ * per profile: every profile that actually used a SHARED exercise gets its own
+ * copy (the first keeps the original id, so most references survive untouched),
+ * and exercises nobody used are dropped. Assigning everything to one arbitrary
+ * profile — the original v3 behaviour — made other profiles' exercises vanish
+ * from their pickers on a shared phone.
+ *
+ * Pure so the same rule serves both the schema migration and backup import
+ * (old backup files still carry SHARED rows).
+ */
+export function claimSharedExercises(input: {
+  exercises: Exercise[]
+  sets: SetEntry[]
+  routines: Routine[]
+  sessions: Session[]
+  sessionExercises: SessionExercise[]
+}): {
+  /** Claimed originals and per-profile clones, ready to write. */
+  claimed: Exercise[]
+  /** SHARED exercises nobody used. */
+  droppedIds: string[]
+  /** profileId → (shared exercise id → that profile's copy id). */
+  remap: Map<string, Map<string, string>>
+} {
+  const usedBy = new Map<string, Set<string>>()
+  const use = (exerciseId: string, profileId: string) => {
+    let users = usedBy.get(exerciseId)
+    if (!users) usedBy.set(exerciseId, (users = new Set()))
+    users.add(profileId)
+  }
+  for (const set of input.sets) use(set.exerciseId, set.profileId)
+  // A routine slot counts as use too — dropping its exercise would leave the
+  // routine pointing at nothing.
+  for (const routine of input.routines) {
+    for (const item of routine.items) use(item.exerciseId, routine.profileId)
+  }
+  // And so does a card in a logged workout, even one whose sets were all
+  // deleted: History renders the card, so a dropped exercise reads as a blank
+  // row rather than an absence.
+  const sessionProfile = new Map(input.sessions.map((session) => [session.id, session.profileId]))
+  for (const entry of input.sessionExercises) {
+    const profileId = sessionProfile.get(entry.sessionId)
+    if (profileId) use(entry.exerciseId, profileId)
+  }
+
+  const claimed: Exercise[] = []
+  const droppedIds: string[] = []
+  const remap = new Map<string, Map<string, string>>()
+
+  for (const exercise of input.exercises) {
+    if (exercise.profileId !== SHARED) continue
+    const users = [...(usedBy.get(exercise.id) ?? [])]
+    if (users.length === 0) {
+      droppedIds.push(exercise.id)
+      continue
+    }
+    claimed.push({ ...exercise, profileId: users[0], isCustom: 1 })
+    for (const profileId of users.slice(1)) {
+      const copyId = newId()
+      claimed.push({ ...exercise, id: copyId, profileId, isCustom: 1 })
+      let ids = remap.get(profileId)
+      if (!ids) remap.set(profileId, (ids = new Map()))
+      ids.set(exercise.id, copyId)
+    }
+  }
+
+  return { claimed, droppedIds, remap }
+}
+
 class EagleGymDB extends Dexie {
   profiles!: Table<Profile, string>
   exercises!: Table<Exercise, string>
@@ -287,6 +392,7 @@ class EagleGymDB extends Dexie {
   foods!: Table<Food, string>
   mealEntries!: Table<MealEntry, string>
   savedMeals!: Table<SavedMeal, string>
+  photos!: Table<ProgressPhoto, string>
 
   constructor() {
     super('eagle-gym')
@@ -319,7 +425,9 @@ class EagleGymDB extends Dexie {
       })
 
     // v3 adds nutrition, and retires the built-in exercise library — members
-    // build their own list now.
+    // build their own list now. Seeded exercises that were actually used become
+    // the member's own — per profile, so nobody's history goes unreadable on a
+    // shared phone. The rest simply go away.
     this.version(3)
       .stores({
         foods: 'id, profileId, category, [profileId+category]',
@@ -327,26 +435,68 @@ class EagleGymDB extends Dexie {
         savedMeals: 'id, profileId',
       })
       .upgrade(async (tx) => {
-        // Any seeded exercise that was actually trained becomes the member's
-        // own, so their history stays readable. The rest simply go away.
-        const usedIds = new Set<string>(
-          (await tx.table('sets').toArray()).map((set: SetEntry) => set.exerciseId)
-        )
-        const owner: string | undefined = (await tx.table('profiles').toArray())[0]?.id
+        const [exercises, sets, sessions, sessionExercises, routines] = await Promise.all([
+          tx.table('exercises').toArray() as Promise<Exercise[]>,
+          tx.table('sets').toArray() as Promise<SetEntry[]>,
+          tx.table('sessions').toArray() as Promise<Session[]>,
+          tx.table('sessionExercises').toArray() as Promise<SessionExercise[]>,
+          tx.table('routines').toArray() as Promise<Routine[]>,
+        ])
 
-        await tx
-          .table('exercises')
-          .toCollection()
-          .modify((exercise: Exercise, ref) => {
-            if (exercise.profileId !== SHARED) return
-            if (owner && usedIds.has(exercise.id)) {
-              exercise.profileId = owner
-              exercise.isCustom = 1
-            } else {
-              delete ref.value
-            }
-          })
+        const { claimed, droppedIds, remap } = claimSharedExercises({
+          exercises,
+          sets,
+          routines,
+          sessions,
+          sessionExercises,
+        })
+        await tx.table('exercises').bulkDelete(droppedIds)
+        await tx.table('exercises').bulkPut(claimed)
+
+        // Profiles other than the first got a cloned id; their references
+        // follow it.
+        if (remap.size > 0) {
+          const sessionProfile = new Map(sessions.map((s) => [s.id, s.profileId]))
+          const mappedId = (profileId: string | undefined, exerciseId: string) =>
+            profileId ? remap.get(profileId)?.get(exerciseId) : undefined
+
+          await tx.table('sets').bulkPut(
+            sets.flatMap((set) => {
+              const next = mappedId(set.profileId, set.exerciseId)
+              return next ? [{ ...set, exerciseId: next }] : []
+            })
+          )
+          await tx.table('sessionExercises').bulkPut(
+            sessionExercises.flatMap((entry) => {
+              const next = mappedId(sessionProfile.get(entry.sessionId), entry.exerciseId)
+              return next ? [{ ...entry, exerciseId: next }] : []
+            })
+          )
+          await tx.table('routines').bulkPut(
+            routines.flatMap((routine) => {
+              const ids = remap.get(routine.profileId)
+              if (!ids || !routine.items.some((item) => ids.has(item.exerciseId))) return []
+              return [
+                {
+                  ...routine,
+                  items: routine.items.map((item) => ({
+                    ...item,
+                    exerciseId: ids.get(item.exerciseId) ?? item.exerciseId,
+                  })),
+                },
+              ]
+            })
+          )
+        }
       })
+
+    // v4 adds progress photos. The weekly workout goal and the calorie
+    // calculator's inputs (sex, height, birth year, activity, goal) ride along
+    // as plain optional Profile fields — nothing indexes them, so they need no
+    // schema entry and no further version.
+    this.version(4).stores({
+      photos: 'id, profileId, [profileId+date]',
+    })
   }
 }
 

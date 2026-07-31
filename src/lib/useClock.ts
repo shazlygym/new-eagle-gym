@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getSession, getSessionExercise } from '../db/repository'
 
 // Every clock in the app derives from a stored instant and Date.now(), never
 // from an incrementing counter. iOS suspends JavaScript the moment the app is
@@ -60,3 +61,18 @@ export const useExerciseTimerStore = create<ExerciseTimerState>()(
     { name: 'eagle-gym-exercise-timer' }
   )
 )
+
+/**
+ * Drops a persisted timer whose owner is gone — the exercise was removed, or
+ * its session finished or was discarded, while the clock ran. The store
+ * survives restarts, so without this the orphaned id would keep every other
+ * exercise's Start button disabled forever. Called at boot and after any
+ * operation that can delete the owning row.
+ */
+export async function reconcileExerciseTimer(): Promise<void> {
+  const { sessionExerciseId, cancel } = useExerciseTimerStore.getState()
+  if (!sessionExerciseId) return
+  const entry = await getSessionExercise(sessionExerciseId)
+  const session = entry ? await getSession(entry.sessionId) : undefined
+  if (!entry || !session || session.status !== 'active') cancel()
+}

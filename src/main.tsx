@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import './index.css'
 import { ensureSeedData } from './db/repository'
+import { reconcileExerciseTimer } from './lib/useClock'
 import { applyLocaleToDocument, useAppStore } from './stores/appStore'
 
 // Direction has to be right before React paints, otherwise the first frame
@@ -18,6 +19,10 @@ void navigator.storage?.persist?.()
 // Seeds the built-in food table on a cold install and repairs it if it was ever
 // cleared out from under us.
 void ensureSeedData()
+
+// A persisted exercise timer can outlive its owning set row; left alone it
+// would keep every duration exercise's Start button disabled.
+void reconcileExerciseTimer()
 
 registerSW({ immediate: true })
 

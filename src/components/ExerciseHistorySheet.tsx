@@ -1,11 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { e1rm } from '../db/queries'
 import { getExercise, listSetsForExercise } from '../db/repository'
 import type { SetEntry, Units } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
 import { formatClock, formatNumber, formatShortDay, toDisplayWeight, unitLabel } from '../lib/format'
 import Sheet from './Sheet'
+
+// Recharts stays out of the workout bundle; it loads the first time a history
+// sheet with enough data actually opens.
+const TrendCharts = lazy(() => import('./ExerciseTrendCharts'))
 
 interface Props {
   open: boolean
@@ -88,6 +92,10 @@ export default function ExerciseHistorySheet({
               )}
             </div>
           )}
+
+          <Suspense fallback={<div className="mb-4 h-40 rounded-xl bg-ink-700/50" />}>
+            <TrendCharts sets={sets ?? []} units={units} isTimed={isTimed} />
+          </Suspense>
 
           <ul className="space-y-2">
             {sessions.map((session) => (

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Equipment, MuscleGroup, Tracking } from '../db/schema'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
@@ -49,8 +49,6 @@ interface Props {
  */
 export default function NewExerciseSheet({ open, onClose, onCreate, initial }: Props) {
   const { t } = useT()
-  // Mounted fresh each time it opens (see the callers), so seeding state from
-  // `initial` here is enough to make this both a create and an edit form.
   const [nameEn, setNameEn] = useState(initial?.nameEn ?? '')
   const [nameAr, setNameAr] = useState(initial?.nameAr ?? '')
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>(initial?.muscleGroup ?? 'chest')
@@ -58,6 +56,21 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
   const [tracking, setTracking] = useState<Tracking>(initial?.tracking ?? 'reps')
   const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? '')
   const [error, setError] = useState<string | null>(null)
+
+  // The create-mode callers keep this mounted with an `open` prop, so state
+  // survives a dismissal. Re-seed on every open: half-typed text from a
+  // cancelled attempt must not reappear, and edit mode must show `initial`.
+  useEffect(() => {
+    if (!open) return
+    setNameEn(initial?.nameEn ?? '')
+    setNameAr(initial?.nameAr ?? '')
+    setMuscleGroup(initial?.muscleGroup ?? 'chest')
+    setEquipment(initial?.equipment ?? 'barbell')
+    setTracking(initial?.tracking ?? 'reps')
+    setVideoUrl(initial?.videoUrl ?? '')
+    setError(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const submit = async () => {
     if (!nameEn.trim() && !nameAr.trim()) {

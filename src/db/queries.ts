@@ -119,30 +119,56 @@ export function personalRecords(sets: SetEntry[]): Map<string, ExerciseRecord> {
   return records
 }
 
+export interface NewRecord {
+  exerciseId: string
+  /** What was actually beaten — strength records and hold records differ. */
+  kind: 'e1rm' | 'duration'
+  weight: number
+  reps: number
+  e1rm: number
+  durationSeconds?: number
+}
+
 /**
  * Which of `sets` beat every earlier set of the same exercise. Used to badge new
- * PRs on the finish-workout summary.
+ * PRs on the finish-workout summary. Weighted work compares estimated 1RM;
+ * duration work compares the longest effort — its sets have no reps, so an e1rm
+ * comparison would never badge a plank however long it was held.
  */
-export function newRecordsIn(
-  sessionSets: SetEntry[],
-  allSets: SetEntry[]
-): Array<{ exerciseId: string; weight: number; reps: number; e1rm: number }> {
+export function newRecordsIn(sessionSets: SetEntry[], allSets: SetEntry[]): NewRecord[] {
   const sessionIds = new Set(sessionSets.map((s) => s.id))
   const priorBest = personalRecords(allSets.filter((s) => !sessionIds.has(s.id)))
-  const results: Array<{ exerciseId: string; weight: number; reps: number; e1rm: number }> = []
+  const results: NewRecord[] = []
 
   for (const [exerciseId, record] of personalRecords(sessionSets)) {
     const before = priorBest.get(exerciseId)
-    if (!before || record.bestE1rm > before.bestE1rm) {
-      const best = sessionSets
-        .filter((s) => s.exerciseId === exerciseId && s.done === 1 && s.setType !== 'warmup')
-        .sort((a, b) => e1rm(b.weight, b.reps) - e1rm(a.weight, a.reps))[0]
+    const working = sessionSets.filter(
+      (s) => s.exerciseId === exerciseId && s.done === 1 && s.setType !== 'warmup'
+    )
+
+    if (record.bestE1rm > 0 && record.bestE1rm > (before?.bestE1rm ?? 0)) {
+      const best = [...working].sort((a, b) => e1rm(b.weight, b.reps) - e1rm(a.weight, a.reps))[0]
       if (best) {
         results.push({
           exerciseId,
+          kind: 'e1rm',
           weight: best.weight,
           reps: best.reps,
           e1rm: e1rm(best.weight, best.reps),
+        })
+      }
+    } else if (record.bestDuration > 0 && record.bestDuration > (before?.bestDuration ?? 0)) {
+      const best = [...working].sort(
+        (a, b) => (b.durationSeconds ?? 0) - (a.durationSeconds ?? 0)
+      )[0]
+      if (best) {
+        results.push({
+          exerciseId,
+          kind: 'duration',
+          weight: best.weight,
+          reps: best.reps,
+          e1rm: 0,
+          durationSeconds: best.durationSeconds,
         })
       }
     }

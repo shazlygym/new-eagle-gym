@@ -11,7 +11,9 @@ interface Props {
 export default function EmptyState({ icon: Icon, title, body, action }: Props) {
   return (
     <div className="flex flex-col items-center px-8 py-14 text-center">
-      <div className="mb-4 rounded-2xl bg-ink-700 p-4 text-ink-300">
+      {/* Brand-tinted rather than grey-on-grey: an empty screen is an
+          invitation, not a dead end. */}
+      <div className="mb-4 rounded-3xl bg-brand-soft p-4 text-brand-400">
         <Icon size={28} strokeWidth={1.6} />
       </div>
       <h3 className="text-base font-semibold text-ink-100">{title}</h3>

@@ -22,6 +22,31 @@ export function unlockAudio(): void {
   if (context?.state === 'suspended') void context.resume()
 }
 
+/** A quick rising arpeggio for a new personal record — a bigger moment than
+ * the rest chime, so it gets one more note and a touch more level. */
+export function playPrFanfare(): void {
+  if (!context) return
+  if (context.state === 'suspended') void context.resume()
+
+  const now = context.currentTime
+  for (const [index, frequency] of [523, 659, 784, 1046].entries()) {
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    const start = now + index * 0.09
+
+    oscillator.type = 'triangle'
+    oscillator.frequency.setValueAtTime(frequency, start)
+
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.exponentialRampToValueAtTime(0.4, start + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22)
+
+    oscillator.connect(gain).connect(context.destination)
+    oscillator.start(start)
+    oscillator.stop(start + 0.24)
+  }
+}
+
 export function playRestChime(): void {
   if (!context) return
   // Safari can re-suspend the context when the app returns from the background.

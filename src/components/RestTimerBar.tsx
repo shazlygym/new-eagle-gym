@@ -42,10 +42,19 @@ export default function RestTimerBar({ timer }: Props) {
           </p>
         </div>
 
+        {!finished && (
+          <button
+            type="button"
+            onClick={() => timer.extend(-15)}
+            className="tabular rounded-xl bg-ink-600 px-3 py-2 text-xs font-semibold text-ink-50 active:bg-ink-500"
+          >
+            {t('workout.lessTime')}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => timer.extend(30)}
-          className="rounded-xl bg-ink-600 px-3 py-2 text-xs font-semibold text-ink-50 active:bg-ink-500"
+          className="tabular rounded-xl bg-ink-600 px-3 py-2 text-xs font-semibold text-ink-50 active:bg-ink-500"
         >
           {t('workout.addTime')}
         </button>

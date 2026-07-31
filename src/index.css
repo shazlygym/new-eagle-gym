@@ -14,6 +14,14 @@
   body {
     @apply bg-ink-950 text-ink-50 font-sans antialiased;
     margin: 0;
+    /* A faint brand glow at the top of each screen — the difference between
+       "dark grey app" and a lit room. Cheap: one gradient, no extra element. */
+    background-image: radial-gradient(
+      140% 44% at 50% 0%,
+      rgba(59, 130, 246, 0.07),
+      transparent 62%
+    );
+    background-repeat: no-repeat;
     /* Grey flash on tap is another browser tell. */
     -webkit-tap-highlight-color: transparent;
   }
@@ -69,6 +77,14 @@
     box-shadow:
       inset 0 1px 0 0 rgb(255 255 255 / 0.05),
       0 1px 2px 0 rgb(0 0 0 / 0.45);
+  }
+
+  /* Tappable cards brighten on press. The gradient above paints over any
+     active:bg-* utility, so without this rule card buttons give no feedback
+     at all — the gradient itself has to change. */
+  button.card:active,
+  a.card:active {
+    background-image: linear-gradient(180deg, #22304f 0%, theme('colors.ink.600') 60%);
   }
 
   /* The accent surface, for the one thing on a screen that matters most. */
@@ -132,6 +148,35 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* Confetti for the PR celebration. Pieces start above the viewport and tumble
+   past the bottom; each gets its own left/delay/color from inline styles. */
+@keyframes confetti-fall {
+  from {
+    opacity: 1;
+    transform: translateY(-6vh) rotate(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(104vh) rotate(560deg);
+  }
+}
+
+/* The record card lands with a small overshoot — it should feel like a win. */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
