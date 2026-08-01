@@ -1,7 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { addDays, format, parseISO } from 'date-fns'
-import { BookmarkPlus, ChevronLeft, ChevronRight, Plus, Target, Trash2, UtensilsCrossed } from 'lucide-react'
+import {
+  BookmarkPlus,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Target,
+  Trash2,
+  UtensilsCrossed,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FoodPicker from '../components/FoodPicker'
 import MacroRings, { type Totals } from '../components/MacroRings'
@@ -42,7 +52,19 @@ export default function Nutrition() {
   const { profile } = useActiveProfile()
   const profileId = profile?.id
 
-  const [date, setDate] = useState(today())
+  // `?date=` lets the history screen open a specific day. It is consumed once
+  // and then dropped from the URL: leaving it there would make the day arrows
+  // disagree with the address bar, and a refresh would silently jump back.
+  const [params, setParams] = useSearchParams()
+  const requestedDate = params.get('date')
+  const [date, setDate] = useState(requestedDate ?? today())
+
+  useEffect(() => {
+    if (!requestedDate) return
+    setDate(requestedDate)
+    setParams({}, { replace: true })
+  }, [requestedDate, setParams])
+
   const [picking, setPicking] = useState<MealSlot | null>(null)
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [savingSlot, setSavingSlot] = useState<MealSlot | null>(null)
@@ -83,14 +105,23 @@ export default function Nutrition() {
         title={t('nutrition.title')}
         large
         action={
-          <button
-            type="button"
-            onClick={() => setTargetsOpen(true)}
-            aria-label={t('nutrition.targets')}
-            className="rounded-xl bg-ink-700 p-2 text-brand-400 active:bg-ink-600"
-          >
-            <Target size={20} />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/nutrition/history"
+              aria-label={t('nutrition.history')}
+              className="rounded-xl bg-ink-700 p-2 text-brand-400 active:bg-ink-600"
+            >
+              <CalendarRange size={20} />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setTargetsOpen(true)}
+              aria-label={t('nutrition.targets')}
+              className="rounded-xl bg-ink-700 p-2 text-brand-400 active:bg-ink-600"
+            >
+              <Target size={20} />
+            </button>
+          </div>
         }
       />
 

@@ -3,6 +3,7 @@ import { Dumbbell, Pencil, Play, Plus, Search, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import EmptyState from '../components/EmptyState'
+import ExerciseHistorySheet from '../components/ExerciseHistorySheet'
 import NewExerciseSheet, { MUSCLE_GROUPS } from '../components/NewExerciseSheet'
 import PageHeader from '../components/PageHeader'
 import { createExercise, deleteExercise, listExercises, updateExercise } from '../db/repository'
@@ -14,9 +15,10 @@ import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Exercises() {
   const { t, locale } = useT()
-  const { profile } = useActiveProfile()
+  const { profile, units } = useActiveProfile()
   const profileId = profile?.id
 
+  const [historyFor, setHistoryFor] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [group, setGroup] = useState<MuscleGroup | 'all'>('all')
   const [formOpen, setFormOpen] = useState(false)
@@ -102,7 +104,14 @@ export default function Exercises() {
           <ul className="space-y-1.5">
             {results.map((exercise) => (
               <li key={exercise.id} className="card flex items-center gap-3 p-4">
-                <div className="min-w-0 flex-1">
+                {/* The name is the tap target for history: outside a workout,
+                    "what did I lift on this last time?" had no answer anywhere
+                    in the app. */}
+                <button
+                  type="button"
+                  onClick={() => setHistoryFor(exercise.id)}
+                  className="min-w-0 flex-1 py-1 text-start"
+                >
                   <p className="truncate text-sm font-medium text-ink-50">
                     {exerciseName(exercise, locale)}
                   </p>
@@ -110,7 +119,7 @@ export default function Exercises() {
                     {t(`group.${exercise.muscleGroup}` as TranslationKey)} ·{' '}
                     {t(`equipment.${exercise.equipment}` as TranslationKey)}
                   </p>
-                </div>
+                </button>
 
                 {exercise.videoUrl && (
                   <a
@@ -170,6 +179,16 @@ export default function Exercises() {
             await updateExercise(editing.id, input)
             setEditing(null)
           }}
+        />
+      )}
+
+      {historyFor && (
+        <ExerciseHistorySheet
+          open
+          onClose={() => setHistoryFor(null)}
+          profileId={profile.id}
+          exerciseId={historyFor}
+          units={units}
         />
       )}
 

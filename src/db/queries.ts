@@ -6,10 +6,12 @@ import {
   isSameWeek,
   parseISO,
   startOfWeek,
+  subDays,
   subWeeks,
 } from 'date-fns'
 import type {
   Exercise,
+  MealEntry,
   Movement,
   MuscleGroup,
   Program,
@@ -526,6 +528,90 @@ export function programProgress(program: Program, sessions: Session[]): ProgramP
       done: fromProgram.length,
       planned: program.days.length * weeksElapsed,
     },
+  }
+}
+
+export interface NutritionDay {
+  /** 'yyyy-MM-dd'. */
+  date: string
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  /** False for a day with no entries at all, which is not the same as a 0 kcal day. */
+  logged: boolean
+}
+
+export interface NutritionPeriod {
+  /** Oldest first, one entry per calendar day, including the days with nothing logged. */
+  days: NutritionDay[]
+  /** Averaged over the logged days only — dividing by 30 when 6 were logged
+   *  reports a diet nobody was on. */
+  average: { kcal: number; protein: number; carbs: number; fat: number }
+  loggedDays: number
+  /** Days that hit their target, out of the logged days. Undefined with no target set. */
+  onTargetDays?: number
+}
+
+/**
+ * Per-day macro totals across a window, for the nutrition history view.
+ *
+ * Days with nothing logged are kept in the series rather than skipped, so gaps
+ * read as gaps on the chart instead of silently closing up and making a week of
+ * three logged days look continuous.
+ */
+export function nutritionPeriod(
+  entries: MealEntry[],
+  endDate: string,
+  days: number,
+  kcalTarget?: number
+): NutritionPeriod {
+  const totals = new Map<string, NutritionDay>()
+  for (const entry of entries) {
+    const day = totals.get(entry.date)
+    if (day) {
+      day.kcal += entry.kcal
+      day.protein += entry.protein
+      day.carbs += entry.carbs
+      day.fat += entry.fat
+    } else {
+      totals.set(entry.date, {
+        date: entry.date,
+        kcal: entry.kcal,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+        logged: true,
+      })
+    }
+  }
+
+  const end = parseISO(endDate)
+  const series = Array.from({ length: days }, (_, index) => {
+    const key = format(subDays(end, days - 1 - index), 'yyyy-MM-dd')
+    return (
+      totals.get(key) ?? { date: key, kcal: 0, protein: 0, carbs: 0, fat: 0, logged: false }
+    )
+  })
+
+  const logged = series.filter((day) => day.logged)
+  const mean = (pick: (day: NutritionDay) => number) =>
+    logged.length === 0 ? 0 : Math.round(logged.reduce((sum, day) => sum + pick(day), 0) / logged.length)
+
+  return {
+    days: series,
+    average: {
+      kcal: mean((day) => day.kcal),
+      protein: mean((day) => day.protein),
+      carbs: mean((day) => day.carbs),
+      fat: mean((day) => day.fat),
+    },
+    loggedDays: logged.length,
+    // A 10% band either side: hitting a calorie target to the exact kcal is not
+    // a thing anyone does, and scoring it that way would read as always failing.
+    onTargetDays: kcalTarget
+      ? logged.filter((day) => Math.abs(day.kcal - kcalTarget) <= kcalTarget * 0.1).length
+      : undefined,
   }
 }
 

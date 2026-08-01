@@ -23,6 +23,9 @@ import WorkoutSummary from './pages/WorkoutSummary'
 // after the first visit they load instantly and work offline.
 const Progress = lazy(() => import('./pages/Progress'))
 const Body = lazy(() => import('./pages/Body'))
+// Same reason: the nutrition history charts pull recharts in, and the day-to-day
+// food log must not pay for a screen most people open once a week.
+const NutritionHistory = lazy(() => import('./pages/NutritionHistory'))
 
 export default function App() {
   const { profile, loading } = useActiveProfile()
@@ -60,6 +63,14 @@ export default function App() {
           <Route path="/programs/new" element={<ProgramEdit />} />
           <Route path="/programs/:programId" element={<ProgramEdit />} />
           <Route path="/nutrition" element={<Nutrition />} />
+          <Route
+            path="/nutrition/history"
+            element={
+              <Suspense fallback={<ChartsLoading />}>
+                <NutritionHistory />
+              </Suspense>
+            }
+          />
           <Route path="/history" element={<History />} />
           <Route path="/history/:sessionId" element={<SessionDetail />} />
           <Route

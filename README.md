@@ -21,8 +21,8 @@ Arabic (RTL) and English, switchable at runtime.
   your pocket. Plus a live workout stopwatch in the header.
 - Time-tracked exercises (planks, carries, cardio) get a start/stop timer
   instead of a reps field; stopping it logs the set.
-- Tap any exercise mid-workout to see every past session for it — including an
-  estimated-1RM trend chart and per-session volume.
+- Tap any exercise — mid-workout, or in the exercise library — to see every past
+  session for it, including an estimated-1RM trend chart and per-session volume.
 - Break a personal record mid-set and the app celebrates it on the spot —
   confetti, fanfare, and vibration where the platform has it.
 
@@ -49,6 +49,10 @@ Arabic (RTL) and English, switchable at runtime.
   cutting, maintaining or building — then split into protein, carbs and fat.
 - Rings and bars for calories and each macro, a seven-day calorie strip, and a
   per-item portion editor.
+- **Nutrition history** over 7, 30 or 90 days: your average calories and macros
+  across the days you actually logged, a bar per day for calories and for
+  protein against your target, how many days landed on target, and a day-by-day
+  list — tap any day to open its food log.
 - Saved meals: log a combination once, then repeat it in a single tap.
 - The picker orders itself by what you actually eat, so the list gets shorter
   the longer you use it.
