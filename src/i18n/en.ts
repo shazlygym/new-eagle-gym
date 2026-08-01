@@ -344,6 +344,7 @@ export const en = {
 
   'summary.timeUnderTension': 'Time worked',
   'progress.bestHold': 'Longest hold',
+  'progress.bestSet': 'Best set',
 
   'nav.train': 'Train',
   'train.title': 'Train',

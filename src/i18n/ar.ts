@@ -345,6 +345,7 @@ export const ar: Record<TranslationKey, string> = {
 
   'summary.timeUnderTension': 'وقت العمل',
   'progress.bestHold': 'أطول ثبات',
+  'progress.bestSet': 'أحسن مجموعة',
 
   'nav.train': 'التدريب',
   'train.title': 'التدريب',

@@ -34,9 +34,17 @@ import {
   volumeByMuscle,
   weeklyVolume,
 } from '../db/queries'
+import type { ExerciseRecord } from '../db/queries'
 import { listCompletedSets, listExercises, listSessions } from '../db/repository'
+import type { Units } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
-import { formatNumber, formatShortDay, toDisplayWeight, unitLabel } from '../lib/format'
+import {
+  formatClock,
+  formatNumber,
+  formatShortDay,
+  toDisplayWeight,
+  unitLabel,
+} from '../lib/format'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Progress() {
@@ -53,11 +61,23 @@ export default function Progress() {
 
   const records = useMemo(() => personalRecords(sets), [sets])
 
-  // Default to whatever has the most sets logged — the exercise the user
-  // actually cares about tracking.
+  /**
+   * Only exercises that have produced a real estimated 1RM belong on this chart.
+   * A plank or an unweighted pull-up has a e1rm of zero on every set, so it
+   * plots as a flat line on an axis that runs into the negatives — and since
+   * accessory work tends to be the most-logged thing in the table, it is
+   * exactly what the "most sets" default used to land on.
+   */
+  const strengthRecords = useMemo(
+    () => [...records.values()].filter((record) => record.bestE1rm > 0),
+    [records]
+  )
+
+  // Among those, default to whatever has the most sets logged — the lift the
+  // user actually cares about tracking.
   const activeExerciseId =
     selectedExerciseId ??
-    [...records.values()].sort((a, b) => b.totalSets - a.totalSets)[0]?.exerciseId ??
+    [...strengthRecords].sort((a, b) => b.totalSets - a.totalSets)[0]?.exerciseId ??
     null
 
   const volumeData = useMemo(() => weeklyVolume(sessions, sets), [sessions, sets])
@@ -141,6 +161,9 @@ export default function Progress() {
           </ResponsiveContainer>
         </ChartCard>
 
+        {/* Nothing weighted logged yet means nothing to plot — the card would be
+            an empty axis, so it stays away until there is a lift to show. */}
+        {strengthRecords.length > 0 && (
         <ChartCard
           title={t('progress.perExercise')}
           subtitle={
@@ -152,6 +175,7 @@ export default function Progress() {
               : undefined
           }
           action={
+            strengthRecords.length > 1 ? (
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
@@ -159,6 +183,7 @@ export default function Progress() {
             >
               {t('progress.selectExercise')}
             </button>
+            ) : undefined
           }
         >
           {exerciseData.length < 2 ? (
@@ -199,6 +224,7 @@ export default function Progress() {
             </ResponsiveContainer>
           )}
         </ChartCard>
+        )}
 
         <LoadRatioCard data={load} units={units} />
         <MuscleVolumeCard data={muscleVolume} units={units} />
@@ -222,15 +248,7 @@ export default function Progress() {
                     {t('progress.lastDone')} · {formatShortDay(record.lastPerformedAt, locale)}
                   </p>
                 </div>
-                <div className="shrink-0 text-end">
-                  <p className="tabular text-sm font-bold text-brand-500">
-                    {formatNumber(toDisplayWeight(record.bestWeight, units))}{' '}
-                    {unitLabel(units, locale)} × {record.bestWeightReps}
-                  </p>
-                  <p className="tabular mt-0.5 text-xs text-ink-300">
-                    {t('progress.e1rm')} {formatNumber(toDisplayWeight(record.bestE1rm, units))}
-                  </p>
-                </div>
+                <RecordValue record={record} units={units} />
               </li>
             ))}
           </ul>
@@ -239,7 +257,9 @@ export default function Progress() {
 
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title={t('progress.selectExercise')} tall>
         <ul className="space-y-1.5">
-          {rankedRecords.map((record) => (
+          {/* Same filter as the chart: offering a plank here would just switch
+              the card to an empty one. */}
+          {strengthRecords.map((record) => (
             <li key={record.exerciseId}>
               <button
                 type="button"
@@ -266,6 +286,50 @@ export default function Progress() {
           ))}
         </ul>
       </Sheet>
+    </div>
+  )
+}
+
+/**
+ * The best-ever figure on a record row, in whatever terms the exercise is
+ * actually trained in. A plank has no heaviest set and a bodyweight pull-up has
+ * no weight to print, so both used to render as "0 kg × 0 · Est. 1RM 0".
+ */
+function RecordValue({ record, units }: { record: ExerciseRecord; units: Units }) {
+  const { t, locale } = useT()
+
+  if (record.bestE1rm > 0) {
+    return (
+      <div className="shrink-0 text-end">
+        <p className="tabular text-sm font-bold text-brand-500">
+          {formatNumber(toDisplayWeight(record.bestWeight, units))} {unitLabel(units, locale)} ×{' '}
+          {record.bestWeightReps}
+        </p>
+        <p className="tabular mt-0.5 text-xs text-ink-300">
+          {t('progress.e1rm')} {formatNumber(toDisplayWeight(record.bestE1rm, units))}
+        </p>
+      </div>
+    )
+  }
+
+  if (record.bestDuration > 0) {
+    return (
+      <div className="shrink-0 text-end">
+        <p className="tabular text-sm font-bold text-brand-500">
+          {formatClock(record.bestDuration)}
+        </p>
+        <p className="mt-0.5 text-xs text-ink-300">{t('progress.bestHold')}</p>
+      </div>
+    )
+  }
+
+  // Trained unweighted: the rep count is the whole record.
+  return (
+    <div className="shrink-0 text-end">
+      <p className="tabular text-sm font-bold text-brand-500">
+        {record.bestReps} {t('common.reps')}
+      </p>
+      <p className="mt-0.5 text-xs text-ink-300">{t('progress.bestSet')}</p>
     </div>
   )
 }
