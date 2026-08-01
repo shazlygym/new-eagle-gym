@@ -15,7 +15,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
-import { sessionsByDay } from '../db/queries'
+import { sessionsByDay, volumeOf } from '../db/queries'
 import { listCompletedSets, listSessions } from '../db/repository'
 import { useT } from '../i18n'
 import { dateLocale, formatShortDay, formatVolume } from '../lib/format'
@@ -130,11 +130,11 @@ export default function History() {
                       </p>
                     </div>
                     <span className="tabular shrink-0 text-sm font-semibold text-brand-500">
-                      {formatVolume(
-                        sessionSets.reduce((total, s) => total + s.weight * s.reps, 0),
-                        units,
-                        locale
-                      )}
+                      {/* volumeOf, not a raw sum. A raw sum counts the warm-up
+                          ramp as tonnage, so the same workout read heavier here
+                          than on Home — two different numbers for one session,
+                          with nothing on screen to say which one is the truth. */}
+                      {formatVolume(volumeOf(sessionSets), units, locale)}
                     </span>
                   </Link>
                 </li>

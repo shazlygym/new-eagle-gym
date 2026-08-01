@@ -9,11 +9,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { format } from 'date-fns'
 import { e1rm, volumeOf } from '../db/queries'
 import type { SetEntry, Units } from '../db/schema'
 import { useT } from '../i18n'
-import { formatClock, toDisplayWeight, unitLabel } from '../lib/format'
+import { formatClock, formatShortDay, toDisplayWeight, unitLabel } from '../lib/format'
 import { CHART, ChartTooltip } from './Chart'
 
 interface Props {
@@ -44,7 +43,7 @@ export default function ExerciseTrendCharts({ sets, units, isTimed }: Props) {
       const date = Math.min(...rows.map((row) => row.completedAt ?? 0))
       return {
         date,
-        label: format(new Date(date), 'd MMM'),
+        label: formatShortDay(date, locale),
         e1rm: Math.round(
           toDisplayWeight(Math.max(...rows.map((row) => e1rm(row.weight, row.reps))), units)
         ),

@@ -18,6 +18,7 @@ import type {
   Session,
   SetEntry,
 } from './schema'
+import { countsAsWork } from '../lib/setTypes'
 
 // Derived numbers — PRs, tonnage, streaks — are computed from the set log rather
 // than stored. A denormalised PR table would need invalidating on every edit,
@@ -60,7 +61,12 @@ export interface SessionStats {
 }
 
 export function sessionStats(session: Session, sets: SetEntry[]): SessionStats {
-  const working = sets.filter((s) => s.done === 1)
+  // Warm-ups are excluded from the counts as well as the tonnage. They used to
+  // count here and nowhere else, so a session with four warm-ups reported 16
+  // sets next to a volume figure built from 12 — two numbers on the same card
+  // that could not be reconciled, and a third, smaller count for the same
+  // workout over on Progress.
+  const working = sets.filter((s) => s.done === 1 && countsAsWork(s.setType))
   return {
     sets: working.length,
     reps: working.reduce((total, s) => total + s.reps, 0),
@@ -179,9 +185,13 @@ export function newRecordsIn(sessionSets: SetEntry[], allSets: SetEntry[]): NewR
   return results
 }
 
+// No `label` on any of the chart point types below. Formatting a date here
+// meant doing it without a locale — the charts on Progress and Body were
+// stuck on English months while the nutrition chart, which formats in the
+// component, followed the language. Points carry the instant; the screen that
+// renders them formats it with the locale it already has.
 export interface WeekPoint {
   weekStart: Date
-  label: string
   volume: number
   sessions: number
 }
@@ -204,7 +214,6 @@ export function weeklyVolume(sessions: Session[], sets: SetEntry[], weeks = 8): 
 
     return {
       weekStart,
-      label: format(weekStart, 'd MMM'),
       volume: Math.round(volumeOf(weekSets.filter((s) => s.done === 1))),
       sessions: inWeek.length,
     }
@@ -213,7 +222,6 @@ export function weeklyVolume(sessions: Session[], sets: SetEntry[], weeks = 8): 
 
 export interface ExercisePoint {
   date: number
-  label: string
   e1rm: number
   topWeight: number
   volume: number
@@ -230,7 +238,6 @@ export function exerciseProgress(exerciseId: string, sets: SetEntry[]): Exercise
       const date = Math.min(...sessionSets.map((s) => s.completedAt ?? 0))
       return {
         date,
-        label: format(new Date(date), 'd MMM'),
         e1rm: Math.round(Math.max(...sessionSets.map((s) => e1rm(s.weight, s.reps)))),
         topWeight: Math.max(...sessionSets.map((s) => s.weight)),
         volume: Math.round(volumeOf(sessionSets)),
@@ -300,12 +307,11 @@ export function sessionsByDay(sessions: Session[]): Map<string, number> {
 
 export function bodyWeightSeries(
   stats: Array<{ date: string; weight?: number }>
-): Array<{ date: number; label: string; weight: number }> {
+): Array<{ date: number; weight: number }> {
   return stats
     .filter((s): s is { date: string; weight: number } => typeof s.weight === 'number')
     .map((s) => ({
       date: parseISO(s.date).getTime(),
-      label: format(parseISO(s.date), 'd MMM'),
       weight: s.weight,
     }))
     .sort((a, b) => a.date - b.date)

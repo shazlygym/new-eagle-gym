@@ -80,16 +80,25 @@ export default function Progress() {
     [...strengthRecords].sort((a, b) => b.totalSets - a.totalSets)[0]?.exerciseId ??
     null
 
-  const volumeData = useMemo(() => weeklyVolume(sessions, sets), [sessions, sets])
+  // Axis labels are built here, not in the query, so they follow the language.
+  const volumeData = useMemo(
+    () =>
+      weeklyVolume(sessions, sets).map((point) => ({
+        ...point,
+        label: formatShortDay(point.weekStart, locale),
+      })),
+    [sessions, sets, locale]
+  )
   const exerciseData = useMemo(
     () =>
       activeExerciseId
         ? exerciseProgress(activeExerciseId, sets).map((point) => ({
             ...point,
+            label: formatShortDay(point.date, locale),
             e1rm: Math.round(toDisplayWeight(point.e1rm, units)),
           }))
         : [],
-    [activeExerciseId, sets, units]
+    [activeExerciseId, sets, units, locale]
   )
 
   const rankedRecords = useMemo(

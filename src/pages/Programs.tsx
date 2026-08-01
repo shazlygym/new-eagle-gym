@@ -13,11 +13,11 @@ import {
   listRoutines,
   listSessions,
   restartProgram,
-  startSession,
 } from '../db/repository'
 import type { Program } from '../db/schema'
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
+import { briefPath } from '../lib/routes'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Programs() {
@@ -37,10 +37,16 @@ export default function Programs() {
     const day = program.days[dayIndex]
     if (!day) return
     const existing = await getActiveSession(profile.id)
-    const sessionId =
-      existing?.id ??
-      (await startSession(profile.id, day.routineId, { id: program.id, week, dayIndex }))
-    navigate(`/workout/${sessionId}`)
+    // Mid-workout there is nothing left to plan, so resuming skips the brief.
+    if (existing) {
+      navigate(`/workout/${existing.id}`)
+      return
+    }
+    // Through the brief, exactly as Home, Train and Routines do. This screen
+    // used to call startSession directly, so starting the same program day was
+    // shown last week's loads from three places and dropped straight into an
+    // empty workout from the fourth.
+    navigate(briefPath(day.routineId, program.id, week, dayIndex))
   }
 
   return (

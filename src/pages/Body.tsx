@@ -48,6 +48,7 @@ export default function Body() {
 
   const series = bodyWeightSeries(stats).map((point) => ({
     ...point,
+    label: formatShortDay(point.date, locale),
     weight: toDisplayWeight(point.weight, units),
   }))
 
