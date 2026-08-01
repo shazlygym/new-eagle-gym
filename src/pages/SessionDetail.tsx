@@ -172,7 +172,9 @@ export default function SessionDetail() {
               id="notes"
               rows={2}
               defaultValue={session.notes ?? ''}
-              onBlur={(event) => updateSession(sessionId, { notes: event.target.value })}
+              // On change, not on blur — leaving edit mode or backing out of the
+              // screen unmounts this without ever firing a blur.
+              onChange={(event) => updateSession(sessionId, { notes: event.target.value })}
               placeholder={t('workout.notesPlaceholder')}
               className="field resize-none"
             />

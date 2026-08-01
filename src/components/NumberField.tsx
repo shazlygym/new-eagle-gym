@@ -22,6 +22,14 @@ interface Props {
  *   - the field holds a string while focused, so typing "12." or clearing it
  *     doesn't get stomped by a premature parse back to 0
  *   - font-size stays at 16px (see index.css) so iOS never zooms on focus
+ *
+ * The value goes up on every keystroke, not on blur. Blur-only looks identical
+ * until you type a number and tap Save without touching anything else first:
+ * on iOS the button takes the tap without moving focus, blur never fires, and
+ * the number you just typed is thrown away while everything you typed earlier
+ * saves — which reads as "the app doesn't save". The draft still owns what is
+ * *displayed*, so live-committing costs nothing: "12." keeps showing "12." even
+ * though 12 is what went upstream.
  */
 export default function NumberField({
   value,
@@ -40,10 +48,10 @@ export default function NumberField({
   const [draft, setDraft] = useState<string | null>(null)
   const shown = draft ?? (value === 0 ? '' : String(value))
 
-  const commit = (raw: string) => {
+  /** Parse and hand upstream. An unparseable field is a zero, same as empty. */
+  const push = (raw: string) => {
     const parsed = Number.parseFloat(raw.replace(',', '.'))
     onChange(Number.isFinite(parsed) ? Math.max(min, parsed) : 0)
-    setDraft(null)
   }
 
   const nudge = (delta: number) => {
@@ -74,12 +82,20 @@ export default function NumberField({
             enterKeyHint="done"
             value={shown}
             placeholder={placeholder}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value)
+              push(event.target.value)
+            }}
             onFocus={(event) => {
               setDraft(shown)
               event.target.select()
             }}
-            onBlur={(event) => commit(event.target.value)}
+            // Hands the draft back to the prop, so a field left as "12." or ""
+            // settles to how the number actually reads.
+            onBlur={(event) => {
+              push(event.target.value)
+              setDraft(null)
+            }}
             onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
             className="tabular field w-full text-center font-semibold"
           />

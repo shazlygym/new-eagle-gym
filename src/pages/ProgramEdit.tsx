@@ -65,16 +65,21 @@ export default function ProgramEdit() {
     navigate('/programs', { replace: true })
   }
 
+  // Functional updates throughout: reading `days` out of the closure means a
+  // second change landing in the same tick is applied to the list as it was
+  // rendered, silently undoing the first.
   const move = (index: number, direction: -1 | 1) => {
-    const target = index + direction
-    if (target < 0 || target >= days.length) return
-    const next = [...days]
-    ;[next[index], next[target]] = [next[target], next[index]]
-    setDays(next)
+    setDays((current) => {
+      const target = index + direction
+      if (target < 0 || target >= current.length) return current
+      const next = [...current]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
   }
 
   const patch = (index: number, changes: Partial<ProgramDay>) =>
-    setDays(days.map((day, i) => (i === index ? { ...day, ...changes } : day)))
+    setDays((current) => current.map((day, i) => (i === index ? { ...day, ...changes } : day)))
 
   return (
     <div>
@@ -170,7 +175,7 @@ export default function ProgramEdit() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDays(days.filter((_, i) => i !== index))}
+                    onClick={() => setDays((current) => current.filter((_, i) => i !== index))}
                     aria-label={t('common.delete')}
                     className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
                   >
@@ -196,7 +201,7 @@ export default function ProgramEdit() {
             type="button"
             onClick={() => {
               setError(null)
-              setDays([...days, { routineId: '', labelAr: '', labelEn: '' }])
+              setDays((current) => [...current, { routineId: '', labelAr: '', labelEn: '' }])
             }}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border
                        border-dashed border-ink-400 py-3.5 text-sm font-medium
@@ -257,14 +262,20 @@ export default function ProgramEdit() {
                   type="button"
                   onClick={() => {
                     if (picking === null) return
-                    const current = days[picking]
-                    patch(picking, {
-                      routineId: routine.id,
-                      // An unnamed day takes the routine's name, which is almost
-                      // always what you'd have typed anyway.
-                      labelAr: current.labelAr || routine.nameAr,
-                      labelEn: current.labelEn || routine.nameEn,
-                    })
+                    setDays((current) =>
+                      current.map((day, i) =>
+                        i === picking
+                          ? {
+                              ...day,
+                              routineId: routine.id,
+                              // An unnamed day takes the routine's name, which is
+                              // almost always what you'd have typed anyway.
+                              labelAr: day.labelAr || routine.nameAr,
+                              labelEn: day.labelEn || routine.nameEn,
+                            }
+                          : day
+                      )
+                    )
                     setPicking(null)
                   }}
                   className="w-full rounded-xl bg-ink-700 px-4 py-3 text-start text-sm font-medium text-ink-50 active:bg-ink-600"

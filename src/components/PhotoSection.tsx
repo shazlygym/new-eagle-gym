@@ -36,6 +36,7 @@ export default function PhotoSection({ profileId }: { profileId: string }) {
   const [compareOpen, setCompareOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const photos = useLiveQuery(() => listPhotos(profileId), [profileId]) ?? []
 
@@ -44,9 +45,16 @@ export default function PhotoSection({ profileId }: { profileId: string }) {
     event.target.value = ''
     if (!file) return
     setSaving(true)
+    setError(null)
     try {
       const blob = await compressImage(file)
       await addPhoto(profileId, { date: today(), blob })
+    } catch {
+      // A HEIC the canvas cannot decode, or a photo too large to hold in
+      // memory, throws here. Without a catch it surfaced as an unhandled
+      // rejection: the button came back to life and nothing else happened, so
+      // the only reading available was that the app had ignored the tap.
+      setError(t('common.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -102,6 +110,8 @@ export default function PhotoSection({ profileId }: { profileId: string }) {
           </button>
         </div>
       )}
+
+      {error && <p className="mt-2 px-1 text-xs text-red-400">{error}</p>}
 
       <input
         ref={fileInput}

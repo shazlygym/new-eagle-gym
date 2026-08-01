@@ -35,6 +35,7 @@ export const ar: Record<TranslationKey, string> = {
   'common.next': 'التالي',
   'common.increase': 'زيادة',
   'common.decrease': 'نقصان',
+  'common.saveFailed': 'تعذّر الحفظ. من فضلك حاول مرة أخرى.',
 
   'nav.home': 'الرئيسية',
   'nav.routines': 'الروتينات',

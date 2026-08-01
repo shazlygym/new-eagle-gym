@@ -36,9 +36,18 @@ export default function Onboarding() {
     // create a usable AudioContext for the rest timer later on.
     unlockAudio()
 
-    const profile = await createProfile({ name, membershipNumber, units })
-    setActiveProfileId(profile.id)
-    navigate('/', { replace: true })
+    // A throw here used to leave `saving` true forever, and the Start button
+    // disabled with no message — on first run that is the whole app, dead on a
+    // screen with no way forward. Safari in private mode refuses IndexedDB
+    // outright, so this is reachable and not just defensive.
+    try {
+      const profile = await createProfile({ name, membershipNumber, units })
+      setActiveProfileId(profile.id)
+      navigate('/', { replace: true })
+    } catch {
+      setError(t('common.saveFailed'))
+      setSaving(false)
+    }
   }
 
   return (

@@ -70,15 +70,27 @@ export default function RoutineEdit() {
   }
 
   const move = (index: number, direction: -1 | 1) => {
-    const target = index + direction
-    if (target < 0 || target >= items.length) return
-    const next = [...items]
-    ;[next[index], next[target]] = [next[target], next[index]]
-    setItems(next)
+    setItems((current) => {
+      const target = index + direction
+      if (target < 0 || target >= current.length) return current
+      const next = [...current]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
   }
 
+  // Functional, because the sets box and the rep boxes can each hand up a value
+  // in the same tick — reading `items` from the closure would let whichever
+  // landed second overwrite the first with the value it was rendered with.
   const patch = (index: number, changes: Partial<RoutineItem>) => {
-    setItems(items.map((item, i) => (i === index ? { ...item, ...changes } : item)))
+    patchWith(index, () => changes)
+  }
+
+  /** For changes that depend on the item's other fields — the rep range pair. */
+  const patchWith = (index: number, make: (item: RoutineItem) => Partial<RoutineItem>) => {
+    setItems((current) =>
+      current.map((item, i) => (i === index ? { ...item, ...make(item) } : item))
+    )
   }
 
   return (
@@ -167,7 +179,7 @@ export default function RoutineEdit() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setItems(items.filter((_, i) => i !== index))}
+                    onClick={() => setItems((current) => current.filter((_, i) => i !== index))}
                     aria-label={t('common.delete')}
                     className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
                   >
@@ -215,7 +227,9 @@ export default function RoutineEdit() {
                         className="flex-1"
                         value={item.targetReps}
                         onChange={(value) =>
-                          patch(index, normalizeRepTarget(value, item.targetRepsMax))
+                          patchWith(index, (current) =>
+                            normalizeRepTarget(value, current.targetRepsMax)
+                          )
                         }
                       />
                       <span className="shrink-0 text-sm font-medium text-ink-300">–</span>
@@ -223,7 +237,11 @@ export default function RoutineEdit() {
                         className="flex-1"
                         value={item.targetRepsMax ?? 0}
                         placeholder={t('common.empty')}
-                        onChange={(value) => patch(index, normalizeRepTarget(item.targetReps, value))}
+                        onChange={(value) =>
+                          patchWith(index, (current) =>
+                            normalizeRepTarget(current.targetReps, value)
+                          )
+                        }
                       />
                     </div>
                     <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
@@ -268,8 +286,8 @@ export default function RoutineEdit() {
           setError(null)
           // The range comes from the exercise itself, so a movement you always
           // train at 3–5 arrives that way instead of as a generic 10.
-          setItems([
-            ...items,
+          setItems((current) => [
+            ...current,
             {
               exerciseId,
               targetSets: 3,

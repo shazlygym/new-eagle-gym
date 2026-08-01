@@ -133,7 +133,10 @@ export default function Settings() {
               <input
                 id="p-name"
                 defaultValue={profile.name}
-                onBlur={(event) =>
+                // On change, not on blur: these fields have no Save button, so
+                // blur is the only commit point — and blur never fires when the
+                // field is unmounted by a tab tap, which loses the edit.
+                onChange={(event) =>
                   event.target.value.trim() &&
                   updateProfile(profile.id, { name: event.target.value.trim() })
                 }
@@ -149,7 +152,7 @@ export default function Settings() {
                 id="p-member"
                 defaultValue={profile.membershipNumber ?? ''}
                 inputMode="numeric"
-                onBlur={(event) =>
+                onChange={(event) =>
                   updateProfile(profile.id, {
                     membershipNumber: event.target.value.trim() || undefined,
                   })
@@ -197,7 +200,7 @@ export default function Settings() {
                 min={0}
                 max={14}
                 defaultValue={profile.weeklyWorkoutTarget ?? ''}
-                onBlur={(event) => {
+                onChange={(event) => {
                   const value = Math.max(0, Math.min(14, Math.round(Number(event.target.value))))
                   updateProfile(profile.id, {
                     weeklyWorkoutTarget: value > 0 ? value : undefined,
@@ -222,7 +225,7 @@ export default function Settings() {
                 max={600}
                 step={15}
                 defaultValue={profile.defaultRestSeconds ?? 90}
-                onBlur={(event) => {
+                onChange={(event) => {
                   const value = Math.max(0, Math.min(600, Math.round(Number(event.target.value))))
                   updateProfile(profile.id, { defaultRestSeconds: value })
                 }}

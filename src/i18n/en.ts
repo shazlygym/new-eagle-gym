@@ -34,6 +34,7 @@ export const en = {
   'common.next': 'Next',
   'common.increase': 'Increase',
   'common.decrease': 'Decrease',
+  'common.saveFailed': 'That could not be saved. Please try again.',
 
   'nav.home': 'Home',
   'nav.routines': 'Routines',

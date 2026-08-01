@@ -182,7 +182,9 @@ export default function Workout() {
             id="session-notes"
             rows={2}
             defaultValue={session.notes ?? ''}
-            onBlur={(event) => updateSession(sessionId, { notes: event.target.value })}
+            // On change, not on blur — tapping "Finish" straight after typing
+            // doesn't reliably blur on iOS, and the note went in the bin.
+            onChange={(event) => updateSession(sessionId, { notes: event.target.value })}
             placeholder={t('workout.notesPlaceholder')}
             className="field resize-none"
           />
