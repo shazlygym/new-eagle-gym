@@ -13,6 +13,8 @@ Arabic (RTL) and English, switchable at runtime.
   excluded from volume and records.
 - Auto-generated warm-up ramp to your working weight.
 - Supersets — link exercises so rest is taken once at the end of the group.
+- Reorder, superset and remove live behind one ⋯ button per exercise card, so the
+  header keeps a readable name and full-size tap targets instead of five 29px icons.
 - Optional RPE (reps in reserve) column.
 - Plate calculator: what to load per side, seeded from the set you're on.
 - Rest timer that survives the phone being pocketed — set the length yourself
@@ -27,15 +29,20 @@ Arabic (RTL) and English, switchable at runtime.
   confetti, fanfare, and vibration where the platform has it.
 
 **Planning**
-- **Routines** — saved exercise lists with target sets/reps/rest, duplicable in
-  one tap to build variations.
+- **Routines** — saved exercise lists with target sets, rest, and a **rep range**
+  rather than a single number: 8–12 for a press, 3–5 for a heavy pull. Duplicable
+  in one tap to build variations. Timed movements ask for seconds instead.
+- **Per-exercise defaults** — every exercise in your library carries the range
+  it's normally trained in, so a routine that picks it up starts there instead of
+  at a generic 10.
 - **Weekly goal** — set a workouts-per-week target and Home shows a goal ring;
   a gentle nudge appears after a few idle days.
 - **Programs** — multi-week blocks that schedule routines across training days,
   track which week you're in, show the next day on Home, and report adherence.
 - **Progression suggestions** — double progression: hold the weight until every
-  working set hits the target, then add the smallest jump. Two stalled sessions
-  in a row suggests a deload instead.
+  working set reaches the *top* of the rep range, then add the smallest jump and
+  start again at the bottom. Two stalled sessions in a row suggests a deload
+  instead.
 
 **Nutrition**
 - Food log split across breakfast, lunch, dinner and snacks, with the day's

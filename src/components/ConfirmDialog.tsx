@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useId } from 'react'
 import { useT } from '../i18n'
+import { useOverlayEscape } from '../lib/useOverlayEscape'
 
 interface Props {
   open: boolean
@@ -25,14 +26,12 @@ export default function ConfirmDialog({
   onCancel,
 }: Props) {
   const { t } = useT()
+  const titleId = useId()
+  const bodyId = useId()
 
-  // Escape cancels, same as tapping the backdrop — matches Sheet.
-  useEffect(() => {
-    if (!open) return
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onCancel()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onCancel])
+  // Escape cancels, same as tapping the backdrop — matches Sheet, and like
+  // Sheet it only fires when this is the topmost thing open.
+  useOverlayEscape(open, onCancel)
 
   if (!open) return null
 
@@ -40,7 +39,7 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-8">
       <button
         type="button"
-        aria-label="cancel"
+        aria-label={t('common.cancel')}
         onClick={onCancel}
         className="absolute inset-0 animate-fade-in bg-black/70"
       />
@@ -48,12 +47,20 @@ export default function ConfirmDialog({
       <div
         role="alertdialog"
         aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={body ? bodyId : undefined}
         className="relative w-full max-w-xs animate-fade-in overflow-hidden rounded-2xl
                    bg-ink-700 text-center shadow-2xl"
       >
         <div className="px-5 py-5">
-          <h2 className="text-base font-semibold text-ink-50">{title}</h2>
-          {body && <p className="mt-1.5 text-sm leading-relaxed text-ink-200">{body}</p>}
+          <h2 id={titleId} className="text-base font-semibold text-ink-50">
+            {title}
+          </h2>
+          {body && (
+            <p id={bodyId} className="mt-1.5 text-sm leading-relaxed text-ink-200">
+              {body}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 border-t border-ink-500/60 divide-x divide-ink-500/60 rtl:divide-x-reverse">

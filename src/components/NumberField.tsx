@@ -1,5 +1,6 @@
 import { Minus, Plus } from 'lucide-react'
 import { useState } from 'react'
+import { useT } from '../i18n'
 
 interface Props {
   value: number
@@ -8,6 +9,8 @@ interface Props {
   min?: number
   suffix?: string
   label?: string
+  /** Shown when the field is empty. Defaults to "0". */
+  placeholder?: string
   /** Adds −/+ buttons either side; skip them where space is tight. */
   steppers?: boolean
   className?: string
@@ -27,9 +30,11 @@ export default function NumberField({
   min = 0,
   suffix,
   label,
+  placeholder = '0',
   steppers = false,
   className = '',
 }: Props) {
+  const { t } = useT()
   // While `draft` is non-null the input owns its own text; outside of that it
   // renders straight from props, so external updates flow in normally.
   const [draft, setDraft] = useState<string | null>(null)
@@ -56,7 +61,7 @@ export default function NumberField({
             type="button"
             onClick={() => nudge(-step)}
             className="rounded-xl bg-ink-700 px-3 text-ink-100 active:bg-ink-600"
-            aria-label="decrease"
+            aria-label={t('common.decrease')}
           >
             <Minus size={16} />
           </button>
@@ -68,7 +73,7 @@ export default function NumberField({
             inputMode="decimal"
             enterKeyHint="done"
             value={shown}
-            placeholder="0"
+            placeholder={placeholder}
             onChange={(event) => setDraft(event.target.value)}
             onFocus={(event) => {
               setDraft(shown)
@@ -90,7 +95,7 @@ export default function NumberField({
             type="button"
             onClick={() => nudge(step)}
             className="rounded-xl bg-ink-700 px-3 text-ink-100 active:bg-ink-600"
-            aria-label="increase"
+            aria-label={t('common.increase')}
           >
             <Plus size={16} />
           </button>

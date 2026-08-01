@@ -2,9 +2,13 @@ import type { SetEntry, Units } from '../db/schema'
 import { countsAsWork } from './setTypes'
 
 // Double progression, the rule most intermediate lifters actually run: hold the
-// weight until you hit the target reps on every working set, then add the
-// smallest available jump and start again. It's conservative on purpose —
-// suggesting a PR every session is how people stall and then quit.
+// weight until you hit the top of the rep range on every working set, then add
+// the smallest available jump and start again at the bottom of the range. It's
+// conservative on purpose — suggesting a PR every session is how people stall
+// and then quit.
+//
+// A plan with no range (`repsMax` absent) still works: the single target is
+// both the floor and the ceiling, exactly as it behaved before ranges existed.
 
 /** Smallest jump that can be loaded on a bar, per unit. */
 const INCREMENT: Record<Units, number> = { kg: 2.5, lb: 5 }
@@ -20,18 +24,19 @@ export interface Suggestion {
 
 export function suggestNextLoad(
   previousSessions: SetEntry[][],
-  target: { reps: number; sets: number },
+  target: { reps: number; repsMax?: number; sets: number },
   units: Units
 ): Suggestion | null {
   const step = units === 'lb' ? INCREMENT.lb / 2.2046226218 : INCREMENT.kg
+  // The weight only moves once the top of the range is hit on every set.
+  const goal = target.repsMax && target.repsMax > target.reps ? target.repsMax : target.reps
 
   const last = previousSessions[0]?.filter((s) => countsAsWork(s.setType) && s.done === 1) ?? []
   if (last.length === 0) return null
 
   const topWeight = Math.max(...last.map((s) => s.weight))
   const atTopWeight = last.filter((s) => s.weight >= topWeight - 1e-9)
-  const hitTarget =
-    atTopWeight.length >= target.sets && atTopWeight.every((s) => s.reps >= target.reps)
+  const hitTarget = atTopWeight.length >= target.sets && atTopWeight.every((s) => s.reps >= goal)
 
   if (hitTarget) {
     return {
@@ -51,7 +56,7 @@ export function suggestNextLoad(
     const stalled = Math.abs(previousTop - topWeight) < 1e-9
     const missedThen = !previous
       .filter((s) => s.weight >= previousTop - 1e-9)
-      .every((s) => s.reps >= target.reps)
+      .every((s) => s.reps >= goal)
 
     if (stalled && missedThen) {
       return {

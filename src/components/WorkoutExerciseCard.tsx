@@ -2,15 +2,14 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import {
   Calculator,
   Check,
-  ChevronDown,
-  ChevronUp,
   Flame,
   History,
   Link2,
+  Minus,
+  MoreHorizontal,
   Play,
   Plus,
   Timer,
-  Trash2,
   TrendingUp,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
@@ -31,12 +30,21 @@ import {
 } from '../db/repository'
 import type { SessionExercise, SetEntry, Units } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
-import { formatClock, formatNumber, toDisplayWeight, toStoredWeight, unitLabel } from '../lib/format'
+import {
+  formatClock,
+  formatNumber,
+  ltrIsolate,
+  toDisplayWeight,
+  toStoredWeight,
+  unitLabel,
+} from '../lib/format'
 import { suggestNextLoad } from '../lib/progression'
+import { formatRepRange } from '../lib/repRange'
 import { SET_TYPE_BADGE, SET_TYPE_LABEL, SET_TYPE_STYLE, nextSetType } from '../lib/setTypes'
 import { useExerciseTimerStore } from '../lib/useClock'
 import { warmupSets } from '../lib/warmup'
 import ConfirmDialog from './ConfirmDialog'
+import ExerciseActionsSheet from './ExerciseActionsSheet'
 import DurationTimer from './DurationTimer'
 import ExerciseHistorySheet from './ExerciseHistorySheet'
 import NumberField from './NumberField'
@@ -82,6 +90,7 @@ export default function WorkoutExerciseCard({
   const [historyOpen, setHistoryOpen] = useState(false)
   const [platesOpen, setPlatesOpen] = useState(false)
   const [restOpen, setRestOpen] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
   // The best value already celebrated this session, so a heavier set later in
   // the same workout celebrates again but re-ticking the same set doesn't.
   const celebrated = useRef(0)
@@ -107,7 +116,11 @@ export default function WorkoutExerciseCard({
       ? null
       : suggestNextLoad(
           recent,
-          { reps: sessionExercise.targetReps, sets: sessionExercise.targetSets ?? 1 },
+          {
+            reps: sessionExercise.targetReps,
+            repsMax: sessionExercise.targetRepsMax,
+            sets: sessionExercise.targetSets ?? 1,
+          },
           units
         )
 
@@ -210,59 +223,57 @@ export default function WorkoutExerciseCard({
             )}
             {sessionExercise.targetSets && sessionExercise.targetReps
               ? t('workout.target', {
-                  sets: sessionExercise.targetSets,
-                  reps: isTimed
-                    ? formatClock(sessionExercise.targetReps)
-                    : String(sessionExercise.targetReps),
+                  // One isolated expression rather than two placeholders: in
+                  // Arabic the ×, the dash and each number are separate runs,
+                  // and "3×6–10" came out laid backwards as "10–6×3".
+                  value: ltrIsolate(
+                    `${sessionExercise.targetSets}×${
+                      isTimed
+                        ? formatClock(sessionExercise.targetReps)
+                        : formatRepRange(
+                            sessionExercise.targetReps,
+                            sessionExercise.targetRepsMax
+                          )
+                    }`
+                  ),
                 })
               : null}
           </p>
         </button>
 
+        {/* Only two icons left beside the name, both at a real 44pt target:
+            the form video and the plate maths. Reordering, superset linking
+            and removal moved into the ⋯ sheet — rare actions that were taking
+            up three of the five slots in this row. */}
         {exercise?.videoUrl && (
           <a
             href={exercise.videoUrl}
             target="_blank"
             rel="noreferrer noopener"
             aria-label={t('exercises.watch')}
-            className="rounded-lg p-1.5 text-red-400 active:bg-ink-600"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
+                       text-red-400 active:bg-ink-600"
           >
-            <Play size={17} fill="currentColor" />
+            <Play size={18} fill="currentColor" />
           </a>
         )}
         <button
           type="button"
           onClick={() => setPlatesOpen(true)}
           aria-label={t('plates.title')}
-          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
+                     text-ink-300 active:bg-ink-600"
         >
-          <Calculator size={17} />
+          <Calculator size={18} />
         </button>
         <button
           type="button"
-          disabled={isFirst}
-          onClick={() => reorderSessionExercise(sessionExercise.id, -1)}
-          aria-label={t('workout.moveUp')}
-          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
+          onClick={() => setActionsOpen(true)}
+          aria-label={t('workout.exerciseActions')}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
+                     text-ink-300 active:bg-ink-600"
         >
-          <ChevronUp size={18} />
-        </button>
-        <button
-          type="button"
-          disabled={isLast}
-          onClick={() => reorderSessionExercise(sessionExercise.id, 1)}
-          aria-label={t('workout.moveDown')}
-          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
-        >
-          <ChevronDown size={18} />
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirmRemove(true)}
-          aria-label={t('workout.removeExercise')}
-          className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
-        >
-          <Trash2 size={17} />
+          <MoreHorizontal size={20} />
         </button>
       </header>
 
@@ -428,37 +439,37 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={addWarmup}
               aria-label={t('workout.addWarmup')}
-              className="rounded-xl bg-ink-600 px-3 text-sky-300 active:bg-ink-500"
+              className="rounded-xl bg-ink-600 px-3.5 text-sky-300 active:bg-ink-500"
             >
-              <Flame size={15} />
+              <Flame size={16} />
             </button>
           )}
 
-          {!isFirst && (
-            <button
-              type="button"
-              onClick={() => toggleSuperset(sessionExercise.id)}
-              aria-label={inSuperset ? t('workout.breakSuperset') : t('workout.makeSuperset')}
-              className={`rounded-xl px-3 active:bg-ink-500 ${
-                inSuperset ? 'bg-aqua-500/20 text-aqua-300' : 'bg-ink-600 text-ink-300'
-              }`}
-            >
-              <Link2 size={15} />
-            </button>
-          )}
-
+          {/* Removes the last row, not the exercise — the exercise itself is
+              removed from the ⋯ sheet, where the label says so. */}
           {ordered.length > 0 && (
             <button
               type="button"
               onClick={() => deleteSet(ordered[ordered.length - 1].id)}
-              aria-label={t('common.delete')}
-              className="rounded-xl bg-ink-600 px-3 text-ink-300 active:bg-ink-500"
+              aria-label={t('workout.removeSet')}
+              className="rounded-xl bg-ink-600 px-3.5 text-ink-300 active:bg-ink-500"
             >
-              <Trash2 size={15} />
+              <Minus size={16} />
             </button>
           )}
         </div>
       </div>
+
+      <ExerciseActionsSheet
+        open={actionsOpen}
+        onClose={() => setActionsOpen(false)}
+        isFirst={isFirst}
+        isLast={isLast}
+        inSuperset={inSuperset}
+        onMove={(direction) => void reorderSessionExercise(sessionExercise.id, direction)}
+        onToggleSuperset={() => void toggleSuperset(sessionExercise.id)}
+        onRemove={() => setConfirmRemove(true)}
+      />
 
       <ConfirmDialog
         open={confirmRemove}

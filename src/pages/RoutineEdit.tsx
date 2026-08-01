@@ -9,6 +9,7 @@ import PageHeader from '../components/PageHeader'
 import { deleteRoutine, getRoutine, listExercises, saveRoutine } from '../db/repository'
 import type { RoutineItem } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
+import { isTimed, normalizeRepTarget, repTargetFor } from '../lib/repRange'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function RoutineEdit() {
@@ -38,6 +39,12 @@ export default function RoutineEdit() {
     setItems(routine.items)
     setLoaded(true)
   }, [routine, routineId, loaded])
+
+  // Which of the picked exercises are measured in seconds — their target box
+  // has to say so instead of asking for reps.
+  const timedItems = new Set(
+    exercises.filter((exercise) => isTimed(exercise)).map((exercise) => exercise.id)
+  )
 
   if (!profile) return null
 
@@ -168,16 +175,11 @@ export default function RoutineEdit() {
                   </button>
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <NumberField
                     label={t('routines.targetSets')}
                     value={item.targetSets}
                     onChange={(value) => patch(index, { targetSets: Math.round(value) })}
-                  />
-                  <NumberField
-                    label={t('routines.targetReps')}
-                    value={item.targetReps}
-                    onChange={(value) => patch(index, { targetReps: Math.round(value) })}
                   />
                   <NumberField
                     label={t('routines.rest')}
@@ -186,6 +188,49 @@ export default function RoutineEdit() {
                     onChange={(value) => patch(index, { restSeconds: Math.round(value) })}
                   />
                 </div>
+
+                {/* A plank's target is seconds, not reps. It used to be typed
+                    into a box labelled "Reps", which is how you end up with a
+                    routine that reads "3 × 45 reps" for a 45-second hold. */}
+                {timedItems.has(item.exerciseId) ? (
+                  <div className="mt-2">
+                    <NumberField
+                      label={t('routines.targetTime')}
+                      value={item.targetReps}
+                      step={5}
+                      suffix={t('common.sec')}
+                      onChange={(value) => patch(index, { targetReps: Math.round(value) })}
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-2">
+                    <span className="mb-1 block text-xs font-medium text-ink-200">
+                      {t('routines.repRange')}
+                    </span>
+                    {/* Forced left-to-right: it is one numeric expression, and
+                        in RTL the two boxes flipped so the range read "12–8".
+                        Safe here because the label and hint live outside it. */}
+                    <div className="flex items-center gap-2" dir="ltr">
+                      <NumberField
+                        className="flex-1"
+                        value={item.targetReps}
+                        onChange={(value) =>
+                          patch(index, normalizeRepTarget(value, item.targetRepsMax))
+                        }
+                      />
+                      <span className="shrink-0 text-sm font-medium text-ink-300">–</span>
+                      <NumberField
+                        className="flex-1"
+                        value={item.targetRepsMax ?? 0}
+                        placeholder={t('common.empty')}
+                        onChange={(value) => patch(index, normalizeRepTarget(item.targetReps, value))}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
+                      {t('routines.repRangeHint')}
+                    </p>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -221,7 +266,17 @@ export default function RoutineEdit() {
         onPick={(exerciseId) => {
           setPickerOpen(false)
           setError(null)
-          setItems([...items, { exerciseId, targetSets: 3, targetReps: 10, restSeconds: 90 }])
+          // The range comes from the exercise itself, so a movement you always
+          // train at 3–5 arrives that way instead of as a generic 10.
+          setItems([
+            ...items,
+            {
+              exerciseId,
+              targetSets: 3,
+              ...repTargetFor(exercises.find((exercise) => exercise.id === exerciseId)),
+              restSeconds: 90,
+            },
+          ])
         }}
       />
 

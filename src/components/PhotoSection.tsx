@@ -222,7 +222,7 @@ function CompareColumn({
   index: number
   onStep: (delta: number) => void
 }) {
-  const { locale } = useT()
+  const { t, locale } = useT()
   const photo = photos[index]
   const url = usePhotoUrl(photo?.blob)
 
@@ -240,7 +240,7 @@ function CompareColumn({
           type="button"
           disabled={index === 0}
           onClick={() => onStep(-1)}
-          aria-label="earlier"
+          aria-label={t('common.previous')}
           className="rounded-lg bg-ink-600 p-1.5 text-ink-200 active:bg-ink-500 disabled:opacity-30"
         >
           <ChevronLeft size={15} />
@@ -252,7 +252,7 @@ function CompareColumn({
           type="button"
           disabled={index === photos.length - 1}
           onClick={() => onStep(1)}
-          aria-label="later"
+          aria-label={t('common.next')}
           className="rounded-lg bg-ink-600 p-1.5 text-ink-200 active:bg-ink-500 disabled:opacity-30"
         >
           <ChevronRight size={15} />

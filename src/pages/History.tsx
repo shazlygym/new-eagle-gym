@@ -55,7 +55,7 @@ export default function History() {
             <button
               type="button"
               onClick={() => setMonth(addMonths(month, -1))}
-              aria-label="previous month"
+              aria-label={t('common.previous')}
               className="rounded-lg p-1.5 text-ink-200 active:bg-ink-600"
             >
               <ChevronLeft size={20} className="rtl-flip" />
@@ -66,7 +66,7 @@ export default function History() {
             <button
               type="button"
               onClick={() => setMonth(addMonths(month, 1))}
-              aria-label="next month"
+              aria-label={t('common.next')}
               className="rounded-lg p-1.5 text-ink-200 active:bg-ink-600"
             >
               <ChevronRight size={20} className="rtl-flip" />

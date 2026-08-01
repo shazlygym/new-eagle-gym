@@ -171,96 +171,7 @@ export default function Home() {
         </Reveal>
       )}
 
-      <Reveal index={2} className="grid grid-cols-3 gap-2.5 px-5 pt-4">
-        <StatCard icon={Flame} label={t('home.streak')} value={String(streak)} />
-        <StatCard
-          icon={CalendarDays}
-          label={t('home.thisWeek')}
-          value={weeklyTarget > 0 ? `${doneThisWeek}/${weeklyTarget}` : String(doneThisWeek)}
-          hint={t('home.workouts')}
-        />
-        <StatCard
-          icon={Weight}
-          label={t('common.volume')}
-          // Compact from the first thousand, unit in the hint — the tile is a
-          // third of a phone wide and can't hold both.
-          value={volumeValue(volumeThisWeek(sessions, weekSets), units, { compact: true })}
-          hint={unitLabel(units, locale)}
-        />
-      </Reveal>
-
-      {weeklyTarget > 0 && (
-        <Reveal index={3} className="px-5 pt-3">
-          <div
-            className={`card flex items-center gap-4 p-4 ${
-              doneThisWeek >= weeklyTarget ? 'border-green-500/40' : ''
-            }`}
-          >
-            <ProgressRing
-              value={doneThisWeek / weeklyTarget}
-              label={`${doneThisWeek}/${weeklyTarget}`}
-              size={52}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-ink-50">
-                {doneThisWeek >= weeklyTarget ? t('home.goalMet') : t('home.weeklyGoal')}
-              </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-ink-300">
-                {doneThisWeek >= weeklyTarget
-                  ? t('home.goalMetHint')
-                  : t('home.goalHint', { count: weeklyTarget - doneThisWeek })}
-              </p>
-            </div>
-          </div>
-        </Reveal>
-      )}
-
-      {showInactiveNudge && (
-        <Reveal index={3} className="px-5 pt-3">
-          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
-            <CalendarClock size={20} className="shrink-0 text-amber-400" />
-            <p className="min-w-0 flex-1 text-sm text-ink-100">
-              {t('home.inactiveNudge', { days: daysSinceLast })}
-            </p>
-          </div>
-        </Reveal>
-      )}
-
-      {showBackupNudge && (
-        <Reveal index={3} className="px-5 pt-3">
-          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
-            <ShieldAlert size={20} className="shrink-0 text-amber-400" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-ink-50">{t('home.backupNudge')}</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-ink-300">
-                {t('home.backupNudgeHint')}
-              </p>
-              <div className="mt-2 flex gap-4">
-                <Link to="/settings" className="text-xs font-semibold text-brand-500">
-                  {t('settings.export')}
-                </Link>
-                <button
-                  type="button"
-                  onClick={snoozeBackupNudge}
-                  className="text-xs font-medium text-ink-300"
-                >
-                  {t('common.later')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      )}
-
-      <Reveal index={4} className="px-5 pt-3">
-        <WeightCard />
-      </Reveal>
-
-      <section className="px-5 pt-5">
-        <InstallHint />
-      </section>
-
-      <Reveal index={4} className="px-5 pt-5">
+      <Reveal index={2} className="px-5 pt-4">
         <h2 className="section-title mb-3">{t('home.quickStart')}</h2>
 
         {routines.length === 0 ? (
@@ -327,7 +238,96 @@ export default function Home() {
         </div>
       </Reveal>
 
-      <Reveal index={5} className="px-5 pt-7">
+      <Reveal index={3} className="grid grid-cols-3 gap-2.5 px-5 pt-4">
+        <StatCard icon={Flame} label={t('home.streak')} value={String(streak)} />
+        <StatCard
+          icon={CalendarDays}
+          label={t('home.thisWeek')}
+          value={String(doneThisWeek)}
+          hint={t('home.workouts')}
+        />
+        <StatCard
+          icon={Weight}
+          label={t('common.volume')}
+          // Compact from the first thousand, unit in the hint — the tile is a
+          // third of a phone wide and can't hold both.
+          value={volumeValue(volumeThisWeek(sessions, weekSets), units, { compact: true })}
+          hint={unitLabel(units, locale)}
+        />
+      </Reveal>
+
+      {weeklyTarget > 0 && (
+        <Reveal index={4} className="px-5 pt-3">
+          <div
+            className={`card flex items-center gap-4 p-4 ${
+              doneThisWeek >= weeklyTarget ? 'border-green-500/40' : ''
+            }`}
+          >
+            <ProgressRing
+              value={doneThisWeek / weeklyTarget}
+              label={`${doneThisWeek}/${weeklyTarget}`}
+              size={52}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-ink-50">
+                {doneThisWeek >= weeklyTarget ? t('home.goalMet') : t('home.weeklyGoal')}
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-ink-300">
+                {doneThisWeek >= weeklyTarget
+                  ? t('home.goalMetHint')
+                  : t('home.goalHint', { count: weeklyTarget - doneThisWeek })}
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      {showInactiveNudge && (
+        <Reveal index={5} className="px-5 pt-3">
+          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
+            <CalendarClock size={20} className="shrink-0 text-amber-400" />
+            <p className="min-w-0 flex-1 text-sm text-ink-100">
+              {t('home.inactiveNudge', { days: daysSinceLast })}
+            </p>
+          </div>
+        </Reveal>
+      )}
+
+      {showBackupNudge && (
+        <Reveal index={6} className="px-5 pt-3">
+          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
+            <ShieldAlert size={20} className="shrink-0 text-amber-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-ink-50">{t('home.backupNudge')}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-ink-300">
+                {t('home.backupNudgeHint')}
+              </p>
+              <div className="mt-2 flex gap-4">
+                <Link to="/settings" className="text-xs font-semibold text-brand-500">
+                  {t('settings.export')}
+                </Link>
+                <button
+                  type="button"
+                  onClick={snoozeBackupNudge}
+                  className="text-xs font-medium text-ink-300"
+                >
+                  {t('common.later')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      <Reveal index={7} className="px-5 pt-3">
+        <WeightCard />
+      </Reveal>
+
+      <section className="px-5 pt-5">
+        <InstallHint />
+      </section>
+
+      <Reveal index={8} className="px-5 pt-7">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="section-title">{t('home.recent')}</h2>
           {recent.length > 0 && (

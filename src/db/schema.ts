@@ -102,13 +102,29 @@ export interface Exercise {
   tracking?: Tracking
   /** A YouTube (or any) link to a form demo, opened in the browser. */
   videoUrl?: string
+  /**
+   * The rep range this movement is normally trained in — 8–12 for a press,
+   * 3–5 for a heavy deadlift, 15–20 for calves. It seeds every routine that
+   * picks the exercise up, so the range is decided once here rather than
+   * retyped on every plan. On a `duration` exercise it is a range of seconds.
+   */
+  defaultRepsMin?: number
+  defaultRepsMax?: number
   isCustom: 0 | 1
 }
 
 export interface RoutineItem {
   exerciseId: string
   targetSets: number
+  /**
+   * The bottom of the rep range, and the only rep target on plans written
+   * before ranges existed — which is why it keeps the old name and the old
+   * meaning when `targetRepsMax` is absent. On a `duration` exercise it is a
+   * number of seconds and never has a maximum.
+   */
   targetReps: number
+  /** The top of the range. Set only when it is above `targetReps`. */
+  targetRepsMax?: number
   restSeconds: number
   supersetGroup?: string
 }
@@ -150,7 +166,10 @@ export interface SessionExercise {
   exerciseId: string
   order: number
   targetSets?: number
+  /** Bottom of the rep range — see `RoutineItem.targetReps`. */
   targetReps?: number
+  /** Top of the range, when the plan asks for one. */
+  targetRepsMax?: number
   restSeconds: number
   /**
    * Exercises sharing a group id are performed back to back as a superset, so

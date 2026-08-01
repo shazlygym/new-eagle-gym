@@ -73,7 +73,14 @@ export function useRestTimer(): RestTimer {
   useEffect(() => {
     if (!endsAt) return
 
-    const tick = () => forceTick((n) => n + 1)
+    // Stop ticking once the deadline passes. The bar stays on screen at 0:00
+    // until it's dismissed or the next set starts, and re-rendering it four
+    // times a second for a number that can no longer change kept the phone
+    // awake for nothing.
+    const tick = () => {
+      forceTick((n) => n + 1)
+      if (Date.now() >= endsAt) window.clearInterval(interval)
+    }
     const interval = window.setInterval(tick, 250)
     // Recompute the moment the app is foregrounded, before the next interval
     // would have fired — otherwise the first frame back shows a stale number.

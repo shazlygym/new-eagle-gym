@@ -1,6 +1,7 @@
 import { ChevronLeft } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useT } from '../i18n'
 
 interface Props {
   title: string
@@ -20,6 +21,7 @@ interface Props {
 const HANDOFF = 44
 
 export default function PageHeader({ title, subtitle, onBack, action, large }: Props) {
+  const { t } = useT()
   const navigate = useNavigate()
   const handleBack = onBack === 'history' ? () => navigate(-1) : onBack
 
@@ -50,8 +52,9 @@ export default function PageHeader({ title, subtitle, onBack, action, large }: P
             <button
               type="button"
               onClick={handleBack}
-              className="-ms-2 rounded-full p-2 text-ink-100 active:bg-ink-700"
-              aria-label="back"
+              className="-ms-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full
+                         text-ink-100 active:bg-ink-700"
+              aria-label={t('common.back')}
             >
               <ChevronLeft size={24} className="rtl-flip" />
             </button>

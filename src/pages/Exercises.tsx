@@ -11,6 +11,8 @@ import type { Exercise, MuscleGroup } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
 import { filterExercises } from '../lib/exerciseSearch'
+import { ltrIsolate } from '../lib/format'
+import { formatRepRange, isTimed } from '../lib/repRange'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Exercises() {
@@ -118,6 +120,21 @@ export default function Exercises() {
                   <p className="mt-0.5 text-xs text-ink-300">
                     {t(`group.${exercise.muscleGroup}` as TranslationKey)} ·{' '}
                     {t(`equipment.${exercise.equipment}` as TranslationKey)}
+                    {/* Only when the exercise actually carries one. Falling back
+                        to the house default here would print "8–12" on every
+                        row and make it look like a decision someone took. */}
+                    {exercise.defaultRepsMin ? (
+                      <>
+                        {' · '}
+                        <span className="tabular text-ink-200">
+                          {isTimed(exercise)
+                            ? `${exercise.defaultRepsMin}${t('common.sec')}`
+                            : `${ltrIsolate(
+                                formatRepRange(exercise.defaultRepsMin, exercise.defaultRepsMax)
+                              )} ${t('common.reps')}`}
+                        </span>
+                      </>
+                    ) : null}
                   </p>
                 </button>
 
@@ -174,6 +191,8 @@ export default function Exercises() {
             equipment: editing.equipment,
             tracking: editing.tracking ?? 'reps',
             videoUrl: editing.videoUrl,
+            defaultRepsMin: editing.defaultRepsMin,
+            defaultRepsMax: editing.defaultRepsMax,
           }}
           onCreate={async (input) => {
             await updateExercise(editing.id, input)

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CalendarRange, ChevronRight, Dumbbell, LibraryBig, Play } from 'lucide-react'
+import { CalendarRange, ChevronRight, Dumbbell, LibraryBig, Play, Plus } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
@@ -16,6 +16,7 @@ import {
 } from '../db/repository'
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
+import { formatTimeAgo } from '../lib/format'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 /**
@@ -35,6 +36,10 @@ export default function Train() {
   const sessions = useLiveQuery(() => (profileId ? listSessions(profileId) : []), [profileId]) ?? []
   const active = useLiveQuery(
     () => (profileId ? getActiveProgram(profileId) : undefined),
+    [profileId]
+  )
+  const session = useLiveQuery(
+    () => (profileId ? getActiveSession(profileId) : undefined),
     [profileId]
   )
 
@@ -58,11 +63,39 @@ export default function Train() {
     navigate(`/workout/${sessionId}`)
   }
 
+  // A tab called "Train" that couldn't start training was the one thing here
+  // you'd expect to work and couldn't: every route on this screen led to
+  // planning. Resuming, or starting from nothing, now lives on it too.
+  const begin = async () => {
+    unlockAudio()
+    const existing = await getActiveSession(profile.id)
+    const sessionId = existing?.id ?? (await startSession(profile.id))
+    navigate(`/workout/${sessionId}`)
+  }
+
   return (
     <div className="pb-6">
       <PageHeader title={t('train.title')} large />
 
       <div className="space-y-3 px-4 py-4">
+        {session && (
+          <button
+            type="button"
+            onClick={() => navigate(`/workout/${session.id}`)}
+            className="flex w-full items-center gap-3 rounded-2xl bg-brand-gradient p-4
+                       text-start text-ink-950 active:scale-[0.99] transition-transform"
+          >
+            <Play size={20} className="shrink-0" fill="currentColor" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">{t('home.activeTitle')}</p>
+              <p className="text-xs opacity-80">
+                {t('home.activeBody', { time: formatTimeAgo(session.startedAt, locale) })}
+              </p>
+            </div>
+            <span className="shrink-0 text-sm font-bold">{t('home.resume')}</span>
+          </button>
+        )}
+
         {active && progress && !progress.complete && (
           <section className="card overflow-hidden border-brand-500/25">
             <div className="flex items-center gap-3 p-4">
@@ -125,6 +158,19 @@ export default function Train() {
           hint={t('train.exercisesHint')}
           count={exercises.length}
         />
+
+        {!session && (
+          <button
+            type="button"
+            onClick={begin}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border
+                       border-dashed border-ink-400 py-3.5 text-sm font-medium
+                       text-brand-500 active:bg-ink-700"
+          >
+            <Plus size={18} />
+            {t('home.startEmpty')}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -150,7 +196,7 @@ function HubLink({
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-ink-50">{title}</p>
-        <p className="mt-0.5 truncate text-xs text-ink-300">{hint}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-ink-300">{hint}</p>
       </div>
       <span className="tabular shrink-0 text-sm font-semibold text-ink-200">{count}</span>
       <ChevronRight size={18} className="rtl-flip shrink-0 text-ink-300" />

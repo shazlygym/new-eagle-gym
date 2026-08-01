@@ -28,6 +28,25 @@ export function formatNumber(value: number): string {
   return NUMBER_FORMAT.format(value)
 }
 
+/**
+ * Wraps a numeric expression in a bidi isolate (U+2066 … U+2069).
+ *
+ * Dropped bare into an Arabic sentence, an expression like "3×6–10" is not one
+ * run but five, and RTL lays them out right to left, so the rep range reads as
+ * counting down: "10–6×3". The isolate holds it left-to-right without
+ * disturbing the Arabic label beside it — which `dir="ltr"` on the surrounding
+ * element would.
+ *
+ * Only for expressions made purely of digits and symbols. An expression whose
+ * figures are each followed by an Arabic letter — the macro line, "15ب · 20ك"
+ * — must be left bare: bidi rule W2 retypes those digits as *Arabic* numbers,
+ * which lay out right-to-left inside the isolate too, so wrapping them causes
+ * the very reversal it is meant to prevent. See MacroLine.tsx.
+ */
+export function ltrIsolate(text: string): string {
+  return `⁦${text}⁩`
+}
+
 export function unitLabel(units: Units, locale: Locale): string {
   if (locale === 'ar') return units === 'kg' ? 'كجم' : 'رطل'
   return units

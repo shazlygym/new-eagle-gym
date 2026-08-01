@@ -64,6 +64,15 @@
     touch-action: manipulation; /* kills the 300ms double-tap-to-zoom delay */
   }
 
+  /* Keyboard users had no way to tell where they were: every button suppresses
+     the default outline through Tailwind's reset and nothing replaced it.
+     `:focus-visible` means a tap never shows this — only Tab does. */
+  :focus-visible {
+    outline: 2px solid theme('colors.brand.500');
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
   /* Directional icons (back chevrons, arrows) mirror with the layout. */
   [dir='rtl'] .rtl-flip {
     transform: scaleX(-1);

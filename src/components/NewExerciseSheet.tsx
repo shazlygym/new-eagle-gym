@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import type { Equipment, MuscleGroup, Tracking } from '../db/schema'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
+import { DEFAULT_HOLD_SECONDS, DEFAULT_REP_RANGE, normalizeRepTarget } from '../lib/repRange'
+import NumberField from './NumberField'
 import SegmentedControl from './SegmentedControl'
 import Sheet from './Sheet'
 
@@ -32,6 +34,8 @@ export interface NewExerciseInput {
   equipment: Equipment
   tracking: Tracking
   videoUrl?: string
+  defaultRepsMin?: number
+  defaultRepsMax?: number
 }
 
 interface Props {
@@ -47,6 +51,11 @@ interface Props {
  * exercise the app doesn't know about happens mid-session, at the rack, and
  * shouldn't mean abandoning the workout to go and add it.
  */
+/** 8 reps, or 30 seconds — whichever the exercise is measured in. */
+function defaultMin(tracking: Tracking | undefined): number {
+  return tracking === 'duration' ? DEFAULT_HOLD_SECONDS : DEFAULT_REP_RANGE.min
+}
+
 export default function NewExerciseSheet({ open, onClose, onCreate, initial }: Props) {
   const { t } = useT()
   const [nameEn, setNameEn] = useState(initial?.nameEn ?? '')
@@ -55,6 +64,8 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
   const [equipment, setEquipment] = useState<Equipment>(initial?.equipment ?? 'barbell')
   const [tracking, setTracking] = useState<Tracking>(initial?.tracking ?? 'reps')
   const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? '')
+  const [repsMin, setRepsMin] = useState(initial?.defaultRepsMin ?? defaultMin(initial?.tracking))
+  const [repsMax, setRepsMax] = useState(initial?.defaultRepsMax ?? DEFAULT_REP_RANGE.max)
   const [error, setError] = useState<string | null>(null)
 
   // The create-mode callers keep this mounted with an `open` prop, so state
@@ -68,9 +79,13 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
     setEquipment(initial?.equipment ?? 'barbell')
     setTracking(initial?.tracking ?? 'reps')
     setVideoUrl(initial?.videoUrl ?? '')
+    setRepsMin(initial?.defaultRepsMin ?? defaultMin(initial?.tracking))
+    setRepsMax(initial?.defaultRepsMax ?? DEFAULT_REP_RANGE.max)
     setError(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  const range = normalizeRepTarget(repsMin, repsMax)
 
   const submit = async () => {
     if (!nameEn.trim() && !nameAr.trim()) {
@@ -86,6 +101,9 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
       equipment,
       tracking,
       videoUrl: videoUrl.trim() || undefined,
+      // Seconds on a timed exercise, so there is no upper bound to store.
+      defaultRepsMin: tracking === 'duration' ? repsMin : range.targetReps,
+      defaultRepsMax: tracking === 'duration' ? undefined : range.targetRepsMax,
     })
     setNameEn('')
     setNameAr('')
@@ -172,7 +190,12 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
           </span>
           <SegmentedControl<Tracking>
             value={tracking}
-            onChange={setTracking}
+            onChange={(value) => {
+              // Switching to timed leaves "8" sitting in a box that now means
+              // seconds. Carry the default across unless it was edited.
+              if (repsMin === defaultMin(tracking)) setRepsMin(defaultMin(value))
+              setTracking(value)
+            }}
             options={[
               { value: 'reps', label: t('exercises.trackingReps') },
               { value: 'duration', label: t('exercises.trackingDuration') },
@@ -180,6 +203,36 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
           />
           <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
             {t('exercises.trackingHint')}
+          </p>
+        </div>
+
+        <div>
+          <span className="mb-1.5 block text-xs font-medium text-ink-200">
+            {tracking === 'duration' ? t('exercises.defaultHold') : t('exercises.defaultReps')}
+          </span>
+          {tracking === 'duration' ? (
+            <NumberField
+              value={repsMin}
+              step={5}
+              suffix={t('common.sec')}
+              onChange={(value) => setRepsMin(Math.round(value) || DEFAULT_HOLD_SECONDS)}
+            />
+          ) : (
+            // Left-to-right: one numeric expression, and in RTL the boxes
+            // swapped so the range read "12–8". No translated text inside.
+            <div className="flex items-center gap-2" dir="ltr">
+              <NumberField className="flex-1" value={repsMin} onChange={setRepsMin} />
+              <span className="shrink-0 text-sm font-medium text-ink-300">–</span>
+              <NumberField
+                className="flex-1"
+                value={repsMax}
+                placeholder={t('common.empty')}
+                onChange={setRepsMax}
+              />
+            </div>
+          )}
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-300">
+            {t('exercises.defaultRepsHint')}
           </p>
         </div>
 

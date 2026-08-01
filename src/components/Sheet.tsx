@@ -1,5 +1,7 @@
 import { X } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useId, type ReactNode } from 'react'
+import { useT } from '../i18n'
+import { useOverlayEscape } from '../lib/useOverlayEscape'
 
 interface Props {
   open: boolean
@@ -15,6 +17,9 @@ interface Props {
  * the bottom edge so it stays inside thumb reach on a large phone.
  */
 export default function Sheet({ open, onClose, title, children, tall }: Props) {
+  const { t } = useT()
+  const titleId = useId()
+
   // Locking the body prevents the page behind from scrolling with the sheet,
   // which on iOS otherwise leaves you scrolled somewhere random on dismiss.
   useEffect(() => {
@@ -26,12 +31,8 @@ export default function Sheet({ open, onClose, title, children, tall }: Props) {
     }
   }, [open])
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  // Only the topmost sheet answers Escape — see useOverlayEscape.
+  useOverlayEscape(open, onClose)
 
   if (!open) return null
 
@@ -39,7 +40,7 @@ export default function Sheet({ open, onClose, title, children, tall }: Props) {
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <button
         type="button"
-        aria-label="close"
+        aria-label={t('common.close')}
         onClick={onClose}
         className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-[2px]"
       />
@@ -47,6 +48,7 @@ export default function Sheet({ open, onClose, title, children, tall }: Props) {
       <div
         role="dialog"
         aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
         className={`relative flex animate-slide-up flex-col rounded-t-3xl border-t
                     border-ink-500/60 bg-ink-800 pb-safe-b
                     ${tall ? 'h-[85dvh]' : 'max-h-[85dvh]'}`}
@@ -58,12 +60,15 @@ export default function Sheet({ open, onClose, title, children, tall }: Props) {
 
         {title && (
           <div className="flex items-center gap-2 px-5 pb-2 pt-3">
-            <h2 className="flex-1 text-lg font-semibold text-ink-50">{title}</h2>
+            <h2 id={titleId} className="flex-1 text-lg font-semibold text-ink-50">
+              {title}
+            </h2>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-2 text-ink-200 active:bg-ink-700"
-              aria-label="close"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full
+                         text-ink-200 active:bg-ink-700"
+              aria-label={t('common.close')}
             >
               <X size={20} />
             </button>

@@ -23,6 +23,7 @@ import {
 } from './schema'
 import { SEED_FOODS } from './foods'
 import { SEED_EXERCISES } from './seed'
+import { repTargetFor } from '../lib/repRange'
 
 // Every read and write in the app goes through this module — nothing else
 // imports Dexie directly. That keeps the storage engine swappable: adding a
@@ -352,6 +353,7 @@ export async function startSession(
         order: index,
         targetSets: item.targetSets,
         targetReps: item.targetReps,
+        targetRepsMax: item.targetRepsMax,
         restSeconds: item.restSeconds,
         supersetGroup: item.supersetGroup,
       })
@@ -473,11 +475,17 @@ export async function addExerciseToSession(
   restSeconds = 90
 ): Promise<string> {
   const count = await db.sessionExercises.where('sessionId').equals(sessionId).count()
+  // An exercise bolted on mid-workout used to arrive with no target at all,
+  // which quietly switched off both the target chip and the progression
+  // suggestion for it. It inherits the exercise's own range instead.
+  const exercise = await db.exercises.get(exerciseId)
   const entry: SessionExercise = {
     id: newId(),
     sessionId,
     exerciseId,
     order: count,
+    targetSets: 3,
+    ...repTargetFor(exercise),
     restSeconds,
   }
   await db.sessionExercises.add(entry)
@@ -1252,7 +1260,14 @@ export async function updateMealEntry(id: string, grams: number): Promise<void> 
   const entry = await db.mealEntries.get(id)
   if (!entry) return
   const food = await db.foods.get(entry.foodId)
-  // Fall back to rescaling the snapshot when the food itself is gone.
+  // Fall back to rescaling the snapshot when the food itself is gone. A
+  // zero-gram snapshot carries no ratio to rescale from — dividing by it would
+  // write NaN into the entry and poison the day's totals for good — so leave
+  // the macros where they are and record the new weight alone.
+  if (!food && entry.grams <= 0) {
+    await db.mealEntries.update(id, { grams })
+    return
+  }
   const per100 = food ?? {
     ...entry,
     kcal: (entry.kcal / entry.grams) * 100,
