@@ -11,6 +11,7 @@ import {
   birthYearFromAge,
   suggestTargets,
 } from '../lib/nutritionMath'
+import MacroLine from './MacroLine'
 import NumberField from './NumberField'
 import Sheet from './Sheet'
 
@@ -186,8 +187,12 @@ export default function TargetsSheet({ open, profile, latestWeightKg, onClose, o
                     {t('nutrition.kcalUnit')}
                   </span>
                 </p>
-                <p className="tabular mt-1 text-xs text-ink-200" dir="ltr">
-                  {suggestion.protein}P · {suggestion.carbs}C · {suggestion.fat}F
+                <p className="mt-1 text-xs text-ink-200">
+                  <MacroLine
+                    protein={suggestion.protein}
+                    carbs={suggestion.carbs}
+                    fat={suggestion.fat}
+                  />
                 </p>
                 <button
                   type="button"

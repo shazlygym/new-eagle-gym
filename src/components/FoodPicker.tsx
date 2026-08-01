@@ -7,6 +7,7 @@ import type { Food, FoodCategory } from '../db/schema'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
 import { normalizeSearch } from '../lib/exerciseSearch'
+import MacroLine from './MacroLine'
 import NewFoodSheet from './NewFoodSheet'
 import NumberField from './NumberField'
 import Sheet from './Sheet'
@@ -123,9 +124,14 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
                     <p className="truncate text-sm font-medium text-ink-50">
                       {foodName(food, locale)}
                     </p>
-                    <p className="tabular mt-0.5 text-xs text-ink-300">
-                      {food.kcal} kcal · {food.protein}P {food.carbs}C {food.fat}F ·{' '}
-                      {t('nutrition.per100')}
+                    <p className="mt-0.5 truncate text-xs text-ink-300">
+                      <MacroLine
+                        prefix={`${food.kcal} ${t('nutrition.kcalUnit')}`}
+                        protein={food.protein}
+                        carbs={food.carbs}
+                        fat={food.fat}
+                      />{' '}
+                      · {t('nutrition.per100')}
                     </p>
                   </div>
                   {food.isCustom === 1 ? (

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FoodPicker from '../components/FoodPicker'
+import MacroLine from '../components/MacroLine'
 import MacroRings, { type Totals } from '../components/MacroRings'
 import PageHeader from '../components/PageHeader'
 import Reveal from '../components/Reveal'
@@ -131,7 +132,7 @@ export default function Nutrition() {
           <button
             type="button"
             onClick={() => shift(-1)}
-            aria-label="previous day"
+            aria-label={t('common.previous')}
             className="rounded-lg p-2 text-ink-200 active:bg-ink-600"
           >
             <ChevronLeft size={18} className="rtl-flip" />
@@ -143,7 +144,7 @@ export default function Nutrition() {
             type="button"
             disabled={date >= today()}
             onClick={() => shift(1)}
-            aria-label="next day"
+            aria-label={t('common.next')}
             className="rounded-lg p-2 text-ink-200 active:bg-ink-600 disabled:opacity-25"
           >
             <ChevronRight size={18} className="rtl-flip" />
@@ -215,11 +216,13 @@ export default function Nutrition() {
                           <p className="truncate text-sm text-ink-50">
                             {locale === 'ar' ? entry.nameAr : entry.nameEn}
                           </p>
-                          <p className="tabular mt-0.5 text-xs text-ink-300">
-                            <span dir="ltr">
-                              {entry.grams} {t('common.g')}
-                            </span>{' '}
-                            · {entry.protein}P {entry.carbs}C {entry.fat}F
+                          <p className="mt-0.5 text-xs text-ink-300">
+                            <MacroLine
+                              prefix={`${entry.grams}${t('common.g')}`}
+                              protein={entry.protein}
+                              carbs={entry.carbs}
+                              fat={entry.fat}
+                            />
                           </p>
                         </button>
                         <span className="tabular shrink-0 text-sm font-semibold text-ink-100">

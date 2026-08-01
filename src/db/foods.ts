@@ -1,14 +1,25 @@
 import { SHARED, type Food, type FoodCategory, type FoodPortion } from './schema'
 
-// Egyptian food table. Values are per 100 g (per 100 ml for drinks) and are
-// drawn from standard composition tables for the raw items, adjusted to how the
-// dish is actually cooked here — Egyptian home cooking uses far more oil and
+// Egyptian food table. Values are per 100 g (per 100 ml for drinks).
+//
+// Where a food exists in USDA FoodData Central — every raw ingredient, every
+// plain cooked staple, every packaged item — the row is that entry's figures.
+// That is deliberately the same source MyFitnessPal's verified (green-tick)
+// entries are built from, so a number here and a number there agree. MFP's
+// wider database is user-submitted and openly contradicts itself, which makes
+// it a reference you cannot copy from; USDA is what its trustworthy half
+// resolves to.
+//
+// Composed Egyptian dishes have no USDA entry, so they are built from their
+// ingredients as actually cooked here — home cooking uses far more oil and
 // samna than a generic "cooked vegetables" entry assumes, and a table that
-// ignores that will under-count someone's day by hundreds of calories.
+// ignores that under-counts a day by hundreds of calories. That licence covers
+// *added fat only*: a staple boiled in plain water carries the USDA figure
+// unchanged.
 //
 // Household portions matter more than the per-100 g figures: nobody weighs a
 // loaf of baladi bread or a plate of koshari, so every common dish carries the
-// measure people actually think in.
+// measure people actually think in. Spoon portions are one tablespoon.
 
 type Seed = [
   id: string,
@@ -76,15 +87,18 @@ const SEEDS: Seed[] = [
     4.2,
     [plate(400), { nameAr: 'طبق كبير', nameEn: 'large plate', grams: 600 }],
   ],
-  ['foul-medames', 'فول مدمس', 'Foul Medames', 'egyptian', 132, 7.8, 15, 4.6, [plate(200), spoon(30)]],
-  ['foul-bezeit', 'فول بالزيت', 'Foul with Oil', 'egyptian', 178, 7.2, 14, 10.5, [plate(200)]],
+  ['foul-medames', 'فول مدمس', 'Foul Medames', 'egyptian', 132, 7.8, 19, 4.6, [plate(200), spoon(30)]],
+  ['foul-bezeit', 'فول بالزيت', 'Foul with Oil', 'egyptian', 178, 7.2, 17.5, 10.5, [plate(200)]],
   ['taameya', 'طعمية', 'Taameya (Falafel)', 'egyptian', 330, 13, 27, 19, [piece(25)]],
-  ['molokhia', 'ملوخية', 'Molokhia', 'egyptian', 95, 4.2, 5.5, 6.2, [plate(250), cup(200)]],
+  // The soup as served, not the leaf: it is thinned with a lot of broth, so the
+  // 4.65 g protein of raw jute mallow does not survive into the bowl.
+  ['molokhia', 'ملوخية', 'Molokhia', 'egyptian', 60, 2.5, 5.5, 3.6, [plate(250), cup(200)]],
   ['bamia', 'بامية بالصلصة', 'Okra Stew', 'egyptian', 105, 3.4, 8.5, 6.6, [plate(250)]],
   ['mahshi-waraq', 'محشي ورق عنب', 'Stuffed Vine Leaves', 'egyptian', 195, 3.6, 24, 9.5, [piece(20)]],
   ['mahshi-koronb', 'محشي كرنب', 'Stuffed Cabbage', 'egyptian', 168, 3.4, 22, 7.6, [piece(35)]],
   ['mahshi-kosa', 'محشي كوسة', 'Stuffed Courgette', 'egyptian', 148, 4.2, 19, 6.4, [piece(70)]],
-  ['mesa2a', 'مسقعة', "Mesa'aa", 'egyptian', 175, 3.8, 12, 12.8, [plate(250)]],
+  // The everyday version is fried aubergine in tomato sauce with no meat in it.
+  ['mesa2a', 'مسقعة', "Mesa'aa", 'egyptian', 175, 1.3, 12, 12.8, [plate(250)]],
   ['bechamel', 'مكرونة بشاميل', 'Béchamel Pasta', 'egyptian', 215, 9.5, 22, 10.5, [plate(300), piece(150)]],
   ['roz-moammar', 'رز معمر', 'Roz Moammar', 'egyptian', 240, 6.5, 28, 11.5, [plate(250)]],
   ['fatta', 'فتة باللحمة', 'Fatta with Meat', 'egyptian', 215, 10.5, 22, 9.8, [plate(300)]],
@@ -110,11 +124,13 @@ const SEEDS: Seed[] = [
   ['eish-sham', 'عيش شامي', 'Pita Bread', 'carbs', 270, 9, 54, 1.5, [loaf(70)]],
   ['toast', 'توست أبيض', 'White Toast', 'carbs', 265, 8.5, 49, 3.5, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 28 }]],
   ['roz-abyad', 'رز أبيض مطبوخ', 'Cooked White Rice', 'carbs', 145, 2.8, 30, 1.6, [cup(180), plate(250)]],
-  ['makarona', 'مكرونة مسلوقة', 'Boiled Pasta', 'carbs', 140, 4.8, 27, 1.2, [plate(250), cup(180)]],
+  // Boiled in plain water, so this one carries the reference figure untouched —
+  // the added-fat licence in the header does not apply.
+  ['makarona', 'مكرونة مسلوقة', 'Boiled Pasta', 'carbs', 157, 5.8, 30.9, 0.9, [plate(250), cup(180)]],
   ['batates-maslou2a', 'بطاطس مسلوقة', 'Boiled Potato', 'carbs', 86, 1.9, 20, 0.1, [medium(150)]],
   ['belila', 'بليلة', 'Belila', 'carbs', 118, 3.8, 24, 0.9, [cup(200)]],
-  ['shofan', 'شوفان', 'Oats (dry)', 'carbs', 379, 13, 67, 6.5, [cup(80), spoon(12)]],
-  ['cornflakes', 'كورن فليكس', 'Cornflakes', 'carbs', 375, 7, 84, 0.9, [cup(35)]],
+  ['shofan', 'شوفان', 'Oats (dry)', 'carbs', 379, 13, 67, 6.5, [cup(80), spoon(6)]],
+  ['cornflakes', 'كورن فليكس', 'Cornflakes', 'carbs', 357, 7.5, 84, 0.4, [cup(35)]],
   ['batata-helwa', 'بطاطا حلوة', 'Sweet Potato', 'carbs', 90, 2, 21, 0.1, [medium(150)]],
 
   // ─── البروتين ───────────────────────────────────────────────────────────────
@@ -128,8 +144,10 @@ const SEEDS: Seed[] = [
   ['bolti', 'سمك بلطي مشوي', 'Grilled Tilapia', 'protein', 128, 26, 0, 2.7, [piece(200)]],
   ['bolti-mo2li', 'سمك بلطي مقلي', 'Fried Tilapia', 'protein', 215, 24, 6, 11, [piece(200)]],
   ['bouri', 'سمك بوري', 'Mullet', 'protein', 150, 24, 0, 5.5, [piece(200)]],
-  ['tuna-zeit', 'تونة بالزيت', 'Tuna in Oil', 'protein', 198, 24, 0, 11, [{ nameAr: 'علبة', nameEn: 'can', grams: 80 }]],
-  ['tuna-maya', 'تونة بالماء', 'Tuna in Water', 'protein', 116, 26, 0, 1, [{ nameAr: 'علبة', nameEn: 'can', grams: 80 }]],
+  // Drained solids, which is what ends up on the plate — and what the standard
+  // 140 g Egyptian tin leaves you with.
+  ['tuna-zeit', 'تونة بالزيت', 'Tuna in Oil', 'protein', 198, 29, 0, 8.2, [{ nameAr: 'علبة', nameEn: 'can', grams: 100 }]],
+  ['tuna-maya', 'تونة بالماء', 'Tuna in Water', 'protein', 116, 26, 0, 1, [{ nameAr: 'علبة', nameEn: 'can', grams: 100 }]],
   ['gambari', 'جمبري', 'Shrimp', 'protein', 99, 21, 0.2, 1.4, [plate(150)]],
   ['calamari', 'كاليماري', 'Calamari', 'protein', 175, 15, 8, 9, [plate(150)]],
   ['beid-maslou2', 'بيض مسلوق', 'Boiled Egg', 'protein', 155, 13, 1.1, 11, [piece(55)]],
@@ -146,9 +164,9 @@ const SEEDS: Seed[] = [
   ['gebna-2arish', 'جبنة قريش', 'Areesh Cheese', 'dairy', 98, 14, 3.5, 3.2, [spoon(30), plate(120)]],
   ['gebna-roumi', 'جبنة رومي', 'Roumi Cheese', 'dairy', 390, 26, 2.5, 31, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 25 }]],
   ['gebna-mosarela', 'موتزاريلا', 'Mozzarella', 'dairy', 300, 22, 2.2, 22, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 28 }]],
-  ['labna', 'لبنة', 'Labneh', 'dairy', 174, 6, 6, 14, [spoon(30)]],
+  ['labna', 'لبنة', 'Labneh', 'dairy', 174, 6, 6, 14, [spoon(15)]],
   ['gebna-mothalathat', 'جبنة مثلثات', 'Triangle Cheese', 'dairy', 235, 10, 6, 19, [piece(17)]],
-  ['2eshta', 'قشطة', 'Cream', 'dairy', 340, 2.5, 3.5, 35, [spoon(25)]],
+  ['2eshta', 'قشطة', 'Cream', 'dairy', 340, 2.5, 3.5, 35, [spoon(15)]],
 
   // ─── البقوليات ──────────────────────────────────────────────────────────────
   ['3ads-asfar', 'شوربة عدس', 'Lentil Soup', 'legumes', 88, 5.5, 13, 1.8, [cup(220), plate(300)]],
@@ -271,27 +289,31 @@ const SEEDS: Seed[] = [
   ['sayadeya', 'صيادية', 'Sayadeya Rice & Fish', 'egyptian', 185, 11, 24, 5.5, [plate(300)]],
   ['shakshouka', 'شكشوكة', 'Shakshouka', 'egyptian', 118, 6.5, 6, 7.8, [plate(220)]],
   ['bastirma-beid', 'بيض بالبسطرمة', 'Eggs with Bastirma', 'egyptian', 235, 17, 2, 18, [plate(150)]],
-  ['bastirma', 'بسطرمة', 'Bastirma', 'egyptian', 240, 34, 2, 11, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 15 }]],
+  ['bastirma', 'بسطرمة', 'Bastirma', 'egyptian', 240, 34, 2, 11, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 6 }]],
   ['kishk', 'كشك', 'Kishk', 'egyptian', 145, 6, 18, 5.5, [cup(200)]],
   ['macarona-salsa', 'مكرونة بالصلصة', 'Pasta with Tomato Sauce', 'egyptian', 155, 5, 26, 3.6, [plate(300)]],
   ['she3reya', 'أرز بالشعرية', 'Rice with Vermicelli', 'egyptian', 155, 3.2, 30, 2.6, [plate(250)]],
   ['kebab', 'كباب مشوي', 'Kebab', 'egyptian', 240, 20, 2, 17, [{ nameAr: 'سيخ', nameEn: 'skewer', grams: 80 }]],
   ['shish-tawook', 'شيش طاووق', 'Shish Tawook', 'egyptian', 165, 25, 3, 6, [{ nameAr: 'سيخ', nameEn: 'skewer', grams: 90 }]],
   ['reyash', 'ريش ضاني', 'Lamb Chops', 'egyptian', 305, 24, 0, 23, [piece(90)]],
-  ['hamam-mashwi', 'حمام مشوي', 'Grilled Pigeon', 'egyptian', 175, 24, 0, 8.5, [piece(200)]],
+  // Squab is dark, fatty meat — the old figure was closer to chicken breast.
+  ['hamam-mashwi', 'حمام مشوي', 'Grilled Pigeon', 'egyptian', 215, 24, 0, 12, [piece(200)]],
   ['batates-tagen', 'طاجن بطاطس باللحمة', 'Potato & Meat Tagine', 'egyptian', 145, 8, 13, 6.8, [plate(300)]],
   ['fasolia-lahma', 'فاصوليا باللحمة', 'Beans with Meat', 'egyptian', 138, 9.5, 13, 5.4, [plate(280)]],
   ['moza', 'موزة مطبوخة', 'Braised Shank', 'egyptian', 235, 26, 2, 14, [piece(200)]],
   ['eish-belahma', 'عيش باللحمة (شاورما بلدي)', 'Baladi Meat Wrap', 'egyptian', 245, 15, 24, 10, [sandwich(220)]],
   ['gebna-tomatem', 'جبنة بالطماطم', 'Cheese with Tomato', 'egyptian', 155, 9, 6, 11, [plate(150)]],
-  ['batarekh', 'بطارخ', 'Bottarga', 'egyptian', 350, 24, 0, 28, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 20 }]],
+  // Cured roe is far denser in protein than the old row implied; all three
+  // figures move together so the line still adds up.
+  ['batarekh', 'بطارخ', 'Bottarga', 'egyptian', 390, 40, 0, 25, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 8 }]],
   ['fesikh', 'فسيخ', 'Fesikh', 'egyptian', 210, 22, 0, 13, [piece(120)]],
-  ['renga', 'رنجة', 'Herring', 'egyptian', 217, 20, 0, 15, [piece(100)]],
+  ['renga', 'رنجة', 'Herring', 'egyptian', 217, 24.6, 0, 12.4, [piece(100)]],
 
   // ─── بروتين إضافي ───────────────────────────────────────────────────────────
   ['kebda-firakh', 'كبدة فراخ', 'Chicken Liver', 'protein', 167, 25, 1, 6.5, [plate(150)]],
   ['sardin', 'سردين', 'Sardines', 'protein', 208, 25, 0, 11.5, [{ nameAr: 'علبة', nameEn: 'can', grams: 90 }]],
-  ['makarel', 'ماكريل', 'Mackerel', 'protein', 205, 19, 0, 14, [piece(150)]],
+  // Cooked, to match the other fish rows — 205 was the raw figure.
+  ['makarel', 'ماكريل', 'Mackerel', 'protein', 262, 23.9, 0, 17.8, [piece(150)]],
   ['filet-samak', 'فيليه سمك', 'Fish Fillet', 'protein', 105, 22, 0, 1.5, [piece(150)]],
   ['beid-abyad', 'بياض البيض', 'Egg White', 'protein', 52, 11, 0.7, 0.2, [piece(33)]],
   ['deek-roumi', 'ديك رومي', 'Turkey', 'protein', 135, 29, 0, 1.7, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 25 }]],
@@ -299,7 +321,7 @@ const SEEDS: Seed[] = [
 
   // ─── ألبان إضافية ───────────────────────────────────────────────────────────
   ['gebna-cheddar', 'جبنة شيدر', 'Cheddar', 'dairy', 402, 25, 1.3, 33, [{ nameAr: 'شريحة', nameEn: 'slice', grams: 25 }]],
-  ['gebna-kraimi', 'جبنة كريمي', 'Cream Cheese', 'dairy', 342, 6, 4, 34, [spoon(30)]],
+  ['gebna-kraimi', 'جبنة كريمي', 'Cream Cheese', 'dairy', 342, 6, 4, 34, [spoon(15)]],
   ['laban-rayeb', 'لبن رايب', 'Rayeb Milk', 'dairy', 58, 3.3, 4.5, 3, [glass(200)]],
   ['laban-half', 'لبن نصف دسم', 'Semi-skimmed Milk', 'dairy', 50, 3.4, 4.8, 1.8, [cup(240)]],
 
@@ -308,8 +330,10 @@ const SEEDS: Seed[] = [
   ['croissant', 'كرواسون', 'Croissant', 'carbs', 406, 8, 46, 21, [piece(60)]],
   ['tortilla', 'تورتيلا', 'Tortilla', 'carbs', 310, 8, 51, 8, [piece(50)]],
   ['bakset', 'بقسماط', 'Rusk', 'carbs', 395, 12, 72, 6, [piece(15)]],
-  ['fereek', 'فريك', 'Freekeh', 'carbs', 145, 5.5, 28, 1.4, [plate(250)]],
-  ['borghol', 'برغل', 'Bulgur', 'carbs', 138, 4.5, 28, 0.6, [plate(250)]],
+  // Both are sold dry and eaten cooked, and a plate portion only makes sense for
+  // the cooked grain — which takes up roughly three times its weight in water.
+  ['fereek', 'فريك', 'Freekeh', 'carbs', 118, 4.8, 23, 1, [plate(250)]],
+  ['borghol', 'برغل', 'Bulgur', 'carbs', 83, 3.1, 18.6, 0.24, [plate(250)]],
 
   // ─── بقوليات وخضار إضافية ───────────────────────────────────────────────────
   ['fool-nabet', 'فول نابت', 'Sprouted Fava', 'legumes', 112, 7.5, 16, 1.8, [plate(200)]],
@@ -337,7 +361,7 @@ const SEEDS: Seed[] = [
   // ─── سناكس ومكسرات ─────────────────────────────────────────────────────────
   ['lb-abyad', 'لب أبيض', 'Pumpkin Seeds', 'fats', 559, 30, 11, 49, [cup(60), spoon(10)]],
   ['sudani-malh', 'سوداني مملح', 'Salted Peanuts', 'fats', 599, 24, 21, 49, [spoon(15)]],
-  ['boshar', 'فشار', 'Popcorn', 'fats', 387, 13, 78, 4.5, [cup(15)]],
+  ['boshar', 'فشار', 'Popcorn', 'fastfood', 387, 13, 78, 4.5, [cup(8)]],
   ['dora-mashweya', 'ذرة مشوية', 'Grilled Corn', 'vegetables', 96, 3.4, 21, 1.5, [piece(150)]],
   ['bondo2', 'بندق', 'Hazelnuts', 'fats', 628, 15, 17, 61, [spoon(12)]],
   ['kagoo', 'كاجو', 'Cashews', 'fats', 553, 18, 30, 44, [spoon(12)]],
@@ -365,10 +389,11 @@ const SEEDS: Seed[] = [
 
   // ─── وجبات سريعة إضافية ─────────────────────────────────────────────────────
   ['shawerma-farkha-sandwich', 'ساندويتش فراخ مشوي', 'Grilled Chicken Sandwich', 'fastfood', 210, 16, 22, 6, [sandwich(200)]],
-  ['hot-dog', 'هوت دوج', 'Hot Dog', 'fastfood', 290, 11, 24, 17, [piece(120)]],
+  // Sausage and bun together, which is what the 120 g piece weighs.
+  ['hot-dog', 'هوت دوج', 'Hot Dog', 'fastfood', 247, 11.1, 18.4, 14.1, [piece(120)]],
   ['nuggets', 'ناجتس', 'Chicken Nuggets', 'fastfood', 296, 15, 18, 19, [piece(17)]],
   ['onion-rings', 'حلقات بصل', 'Onion Rings', 'fastfood', 411, 5.5, 46, 23, [{ nameAr: 'وسط', nameEn: 'medium', grams: 100 }]],
-  ['ketchup', 'كاتشب', 'Ketchup', 'fats', 101, 1.2, 25, 0.1, [spoon(17)]],
+  ['ketchup', 'كاتشب', 'Ketchup', 'fastfood', 101, 1.2, 25, 0.1, [spoon(17)]],
 ]
 
 export const SEED_FOODS: Food[] = SEEDS.map(([id, nameAr, nameEn, category, kcal, protein, carbs, fat, portions]) => ({
