@@ -73,7 +73,7 @@ export default function WorkoutSummary() {
         rtl: locale === 'ar',
       })
 
-      const file = new File([blob], 'eagle-gym-workout.png', { type: 'image/png' })
+      const file = new File([blob], 'workout-summary.png', { type: 'image/png' })
       // Same dance as the backup export: on iOS only the Share sheet actually
       // lets the user keep the file.
       if (navigator.canShare?.({ files: [file] })) {

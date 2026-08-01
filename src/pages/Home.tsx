@@ -146,7 +146,7 @@ export default function Home() {
             type="button"
             onClick={() => navigate(`/workout/${active.id}`)}
             className="flex w-full animate-pulse-brand items-center gap-3 rounded-2xl
-                       bg-brand-gradient p-4 text-start text-white active:scale-[0.99]
+                       bg-brand-gradient p-4 text-start text-ink-950 active:scale-[0.99]
                        transition-transform"
           >
             <Play size={20} className="shrink-0" fill="currentColor" />

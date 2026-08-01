@@ -88,7 +88,7 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
                             ${
                               category === value
-                                ? 'bg-brand-500 text-white'
+                                ? 'bg-brand-500 text-ink-950'
                                 : 'bg-ink-600 text-ink-200'
                             }`}
               >
@@ -202,7 +202,7 @@ function PortionSheet({
                   className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
                               ${
                                 grams === portion.grams
-                                  ? 'bg-brand-500 text-white'
+                                  ? 'bg-brand-500 text-ink-950'
                                   : 'bg-ink-600 text-ink-200'
                               }`}
                 >

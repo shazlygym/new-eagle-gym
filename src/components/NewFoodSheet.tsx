@@ -103,7 +103,7 @@ export default function NewFoodSheet({ open, onClose, onCreate }: Props) {
                 type="button"
                 onClick={() => setCategory(value)}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
-                            ${category === value ? 'bg-brand-500 text-white' : 'bg-ink-600 text-ink-200'}`}
+                            ${category === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-600 text-ink-200'}`}
               >
                 {t(`foodCat.${value}` as TranslationKey)}
               </button>

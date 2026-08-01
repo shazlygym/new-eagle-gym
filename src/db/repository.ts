@@ -882,6 +882,12 @@ export interface BackupPhoto {
 }
 
 export interface Backup {
+  /**
+   * Frozen at the app's original name — this is the file-format sentinel, not
+   * branding. Every backup a member has already exported carries this exact
+   * string, and changing it would make all of them fail the check in
+   * `parseBackup`.
+   */
   app: 'eagle-gym'
   /**
    * 1 predates set types and programs, 2 predates nutrition, 3 predates

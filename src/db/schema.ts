@@ -386,7 +386,7 @@ export function claimSharedExercises(input: {
   return { claimed, droppedIds, remap }
 }
 
-class EagleGymDB extends Dexie {
+class WorkoutDB extends Dexie {
   profiles!: Table<Profile, string>
   exercises!: Table<Exercise, string>
   routines!: Table<Routine, string>
@@ -401,6 +401,9 @@ class EagleGymDB extends Dexie {
   photos!: Table<ProgressPhoto, string>
 
   constructor() {
+    // Frozen at the app's original name. This string is the IndexedDB database
+    // name, not branding: changing it points the app at an empty database and
+    // every workout already on the phone becomes unreachable.
     super('eagle-gym')
 
     this.version(1).stores({
@@ -506,7 +509,7 @@ class EagleGymDB extends Dexie {
   }
 }
 
-export const db = new EagleGymDB()
+export const db = new WorkoutDB()
 
 /** Short, collision-safe id. crypto.randomUUID is available in all iOS 15.4+ Safari. */
 export function newId(): string {

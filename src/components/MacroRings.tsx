@@ -72,7 +72,7 @@ export default function MacroRings({ totals, targets, onSetTargets }: Props) {
 
       <div className="mt-5 grid grid-cols-3 gap-3">
         <MacroBar label={t('nutrition.protein')} value={totals.protein} target={targets.protein} tint="bg-brand-500" />
-        <MacroBar label={t('nutrition.carbs')} value={totals.carbs} target={targets.carbs} tint="bg-violet-500" />
+        <MacroBar label={t('nutrition.carbs')} value={totals.carbs} target={targets.carbs} tint="bg-aqua-500" />
         <MacroBar label={t('nutrition.fat')} value={totals.fat} target={targets.fat} tint="bg-amber-400" />
       </div>
     </section>

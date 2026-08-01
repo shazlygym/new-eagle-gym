@@ -139,7 +139,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
                 type="button"
                 onClick={() => setMuscleGroup(value)}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
-                            ${muscleGroup === value ? 'bg-brand-500 text-white' : 'bg-ink-700 text-ink-200'}`}
+                            ${muscleGroup === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-700 text-ink-200'}`}
               >
                 {t(`group.${value}` as TranslationKey)}
               </button>
@@ -158,7 +158,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
                 type="button"
                 onClick={() => setEquipment(value)}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
-                            ${equipment === value ? 'bg-brand-500 text-white' : 'bg-ink-700 text-ink-200'}`}
+                            ${equipment === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-700 text-ink-200'}`}
               >
                 {t(`equipment.${value}` as TranslationKey)}
               </button>

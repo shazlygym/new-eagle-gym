@@ -61,10 +61,12 @@ const BALANCE_LABEL: Record<BalanceKey, TranslationKey> = {
   other: 'analytics.other',
 }
 
+// Three bars that have to be told apart at a glance, so three clearly separate
+// hues — sky sat too close to the cyan next to it.
 const BALANCE_COLOR: Record<BalanceKey, string> = {
   push: 'bg-brand-500',
-  pull: 'bg-sky-500',
-  legs: 'bg-violet-500',
+  pull: 'bg-fuchsia-500',
+  legs: 'bg-aqua-500',
   other: 'bg-ink-400',
 }
 

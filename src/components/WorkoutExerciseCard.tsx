@@ -186,9 +186,9 @@ export default function WorkoutExerciseCard({
 
   return (
     // Superset members stay as separate cards — the list has a gap between them,
-    // so merging their borders would just look broken. A violet edge and a chip
+    // so merging their borders would just look broken. A cyan edge and a chip
     // carry the grouping instead.
-    <article className={`card overflow-hidden ${inSuperset ? 'border-violet-500/40' : ''}`}>
+    <article className={`card overflow-hidden ${inSuperset ? 'border-aqua-500/40' : ''}`}>
       <header className="flex items-center gap-2 border-b border-ink-500/50 px-4 py-3">
         {/* The name is a button: tapping it answers "what did I lift last time?"
             without leaving the workout. */}
@@ -203,7 +203,7 @@ export default function WorkoutExerciseCard({
           </h3>
           <p className="flex items-center gap-1.5 text-xs text-ink-300">
             {inSuperset && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-aqua-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-aqua-300">
                 <Link2 size={10} />
                 {t('workout.superset')}
               </span>
@@ -440,7 +440,7 @@ export default function WorkoutExerciseCard({
               onClick={() => toggleSuperset(sessionExercise.id)}
               aria-label={inSuperset ? t('workout.breakSuperset') : t('workout.makeSuperset')}
               className={`rounded-xl px-3 active:bg-ink-500 ${
-                inSuperset ? 'bg-violet-500/20 text-violet-300' : 'bg-ink-600 text-ink-300'
+                inSuperset ? 'bg-aqua-500/20 text-aqua-300' : 'bg-ink-600 text-ink-300'
               }`}
             >
               <Link2 size={15} />

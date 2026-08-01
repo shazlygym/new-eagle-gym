@@ -39,7 +39,8 @@ export const useRestTimerStore = create<RestTimerState>()(
       stop: () => set({ endsAt: null, totalSeconds: 0 }),
     }),
     // Persisted so a reload — or iOS evicting the tab mid-rest — resumes the
-    // countdown instead of losing it.
+    // countdown instead of losing it. The key keeps the app's original name:
+    // it's a localStorage key, not branding.
     { name: 'eagle-gym-rest-timer' }
   )
 )

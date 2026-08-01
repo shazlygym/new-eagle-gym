@@ -106,7 +106,7 @@ export default function Workout() {
             // Finishing with nothing ticked off would leave an empty workout in
             // History and a zero in every chart, so that path discards instead.
             onClick={() => (completedCount > 0 ? setConfirmFinish(true) : setConfirmDiscard(true))}
-            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 active:scale-95 transition-transform"
           >
             {t('workout.finish')}
           </button>

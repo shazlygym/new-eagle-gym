@@ -60,7 +60,7 @@ export default function Body() {
           <button
             type="button"
             onClick={() => setFormOpen(true)}
-            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 active:scale-95 transition-transform"
           >
             {t('common.add')}
           </button>

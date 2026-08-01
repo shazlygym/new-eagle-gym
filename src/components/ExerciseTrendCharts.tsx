@@ -106,7 +106,7 @@ export default function ExerciseTrendCharts({ sets, units, isTimed }: Props) {
               <XAxis dataKey="label" reversed={isRTL} interval="preserveStartEnd" {...axisProps} />
               <YAxis orientation={isRTL ? 'right' : 'left'} width={34} {...axisProps} />
               <Tooltip
-                cursor={{ fill: 'rgba(59,130,246,0.08)' }}
+                cursor={{ fill: 'rgba(163,230,53,0.08)' }}
                 content={<ChartTooltip suffix={unitLabel(units, locale)} />}
               />
               <Bar dataKey="volume" fill={CHART.series} radius={[4, 4, 0, 0]} maxBarSize={22} />

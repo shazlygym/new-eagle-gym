@@ -66,7 +66,7 @@ export default function SessionDetail() {
             type="button"
             onClick={() => setEditing(!editing)}
             className={`rounded-xl px-4 py-2 text-sm font-semibold active:scale-95 transition-transform
-                        ${editing ? 'bg-brand-500 text-white' : 'bg-ink-700 text-ink-100'}`}
+                        ${editing ? 'bg-brand-500 text-ink-950' : 'bg-ink-700 text-ink-100'}`}
           >
             {editing ? t('session.doneEditing') : t('common.edit')}
           </button>

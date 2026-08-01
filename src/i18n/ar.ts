@@ -1,7 +1,9 @@
 import type { TranslationKey } from './en'
 
 export const ar: Record<TranslationKey, string> = {
-  'app.name': 'إيجل جيم',
+  // Left in Latin script on purpose: the mark and the Home Screen label say
+  // "Workout", so transliterating it here would give the app two names.
+  'app.name': 'Workout',
   'app.tagline': 'سجّل كل مجموعة. يعمل بدون إنترنت.',
 
   'common.save': 'حفظ',
@@ -36,7 +38,7 @@ export const ar: Record<TranslationKey, string> = {
   'nav.progress': 'التقدم',
   'nav.settings': 'الإعدادات',
 
-  'onboarding.welcome': 'أهلاً بك في إيجل جيم',
+  'onboarding.welcome': 'أهلاً بك في Workout',
   'onboarding.intro':
     'تماريـنك محفوظة على هذا الجهاز فقط. لا يتم رفع أي شيء، وكل شيء يعمل بدون اتصال بالإنترنت.',
   'onboarding.name': 'اسمك',
@@ -198,7 +200,7 @@ export const ar: Record<TranslationKey, string> = {
   'settings.importMerge': 'الدمج مع الموجود',
   'settings.importPrompt': 'كيف تريد تطبيق هذه النسخة؟',
   'settings.importDone': 'تم استيراد النسخة الاحتياطية',
-  'settings.importFailed': 'هذا الملف ليس نسخة احتياطية من إيجل جيم.',
+  'settings.importFailed': 'هذا الملف ليس نسخة احتياطية من تطبيق Workout.',
   'settings.storage': 'المساحة المستخدمة',
   'settings.persisted': 'محمي من الحذف التلقائي',
   'settings.notPersisted': 'غير محمي من الحذف التلقائي',

@@ -68,7 +68,7 @@ export default function Settings() {
   const runExport = async () => {
     const backup = await exportBackup()
     const json = JSON.stringify(backup, null, 2)
-    const filename = `eagle-gym-${backup.exportedAt.slice(0, 10)}.json`
+    const filename = `workout-backup-${backup.exportedAt.slice(0, 10)}.json`
     const file = new File([json], filename, { type: 'application/json' })
 
     // iOS Safari ignores the download attribute — the Share sheet is the only

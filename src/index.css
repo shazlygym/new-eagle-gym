@@ -15,10 +15,12 @@
     @apply bg-ink-950 text-ink-50 font-sans antialiased;
     margin: 0;
     /* A faint brand glow at the top of each screen — the difference between
-       "dark grey app" and a lit room. Cheap: one gradient, no extra element. */
+       "dark grey app" and a lit room. Cheap: one gradient, no extra element.
+       Weaker than the old blue one: lime at the same alpha tints the whole
+       page green instead of just lifting it. */
     background-image: radial-gradient(
       140% 44% at 50% 0%,
-      rgba(59, 130, 246, 0.07),
+      rgba(163, 230, 53, 0.055),
       transparent 62%
     );
     background-repeat: no-repeat;
@@ -73,7 +75,7 @@
      hairline highlight along the top edge. */
   .card {
     @apply rounded-2xl border border-ink-500/40;
-    background-image: linear-gradient(180deg, #1A2540 0%, theme('colors.ink.700') 60%);
+    background-image: linear-gradient(180deg, #1E1E22 0%, theme('colors.ink.700') 60%);
     box-shadow:
       inset 0 1px 0 0 rgb(255 255 255 / 0.05),
       0 1px 2px 0 rgb(0 0 0 / 0.45);
@@ -84,7 +86,7 @@
      at all — the gradient itself has to change. */
   button.card:active,
   a.card:active {
-    background-image: linear-gradient(180deg, #22304f 0%, theme('colors.ink.600') 60%);
+    background-image: linear-gradient(180deg, #2A2A30 0%, theme('colors.ink.600') 60%);
   }
 
   /* The accent surface, for the one thing on a screen that matters most. */
@@ -92,8 +94,8 @@
     @apply rounded-2xl border border-brand-500/30;
     background-image: linear-gradient(
       135deg,
-      rgba(59, 130, 246, 0.14) 0%,
-      rgba(139, 92, 246, 0.14) 100%
+      rgba(163, 230, 53, 0.12) 0%,
+      rgba(34, 211, 238, 0.12) 100%
     );
   }
 
@@ -105,8 +107,11 @@
     @apply text-[30px] font-bold leading-[1.15] tracking-tight text-ink-50;
   }
 
+  /* Dark label, not white: lime and cyan are both light enough that white text
+     on them lands around 1.5:1. Ink-950 on either end of the gradient is 11:1
+     or better. Every other brand-filled surface follows the same rule. */
   .btn-primary {
-    @apply rounded-2xl bg-brand-gradient px-5 py-3.5 font-semibold text-white shadow-brand
+    @apply rounded-2xl bg-brand-gradient px-5 py-3.5 font-semibold text-ink-950 shadow-brand
            active:scale-[0.98] transition-transform disabled:opacity-40
            disabled:active:scale-100;
   }

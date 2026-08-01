@@ -1,4 +1,4 @@
-# Eagle Gym — Workout Tracker
+# Workout — Gym Tracker
 
 An offline-first workout tracker, built as a PWA and designed for the iOS Home
 Screen. Members log sets at the rack; everything is stored on the phone.
@@ -15,9 +15,10 @@ Arabic (RTL) and English, switchable at runtime.
 - Supersets — link exercises so rest is taken once at the end of the group.
 - Optional RPE (reps in reserve) column.
 - Plate calculator: what to load per side, seeded from the set you're on.
-- Rest timer that survives the phone being pocketed — adjustable ±15/30s from
-  the bar, and the chime still fires on return if the time ran out while the
-  phone was in your pocket. Plus a live workout stopwatch in the header.
+- Rest timer that survives the phone being pocketed — set the length yourself
+  (per exercise, or applied to the whole session), adjust ±15/30s from the bar,
+  and the chime still fires on return if the time ran out while the phone was in
+  your pocket. Plus a live workout stopwatch in the header.
 - Time-tracked exercises (planks, carries, cardio) get a start/stop timer
   instead of a reps field; stopping it logs the set.
 - Tap any exercise mid-workout to see every past session for it — including an

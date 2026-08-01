@@ -1,6 +1,8 @@
 // Renders the finished-workout summary as an image for sharing. Drawn on a
-// canvas with the app's own navy palette so the card looks like the app, and
-// with the system font stack so Arabic shapes correctly with zero downloads.
+// canvas with the app's own near-black and lime palette so the card looks like
+// the app, and with the system font stack so Arabic shapes correctly with zero
+// downloads. The hexes are copied from tailwind.config.js rather than read from
+// it — canvas takes no class names, and the ramp is commented at each use.
 
 export interface ShareCardData {
   appName: string
@@ -53,23 +55,23 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('canvas-unavailable')
 
-  // Background: the app's page navy with a soft brand glow up top.
+  // Background: the app's page black with a soft brand glow up top.
   const bg = ctx.createLinearGradient(0, 0, 0, H)
-  bg.addColorStop(0, '#0D1526')
-  bg.addColorStop(1, '#070B14')
+  bg.addColorStop(0, '#17171B')
+  bg.addColorStop(1, '#09090B')
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, W, H)
 
   const glow = ctx.createRadialGradient(W * 0.8, 0, 0, W * 0.8, 0, W * 0.9)
-  glow.addColorStop(0, 'rgba(59,130,246,0.22)')
-  glow.addColorStop(1, 'rgba(59,130,246,0)')
+  glow.addColorStop(0, 'rgba(163,230,53,0.16)')
+  glow.addColorStop(1, 'rgba(163,230,53,0)')
   ctx.fillStyle = glow
   ctx.fillRect(0, 0, W, H)
 
   // Brand strip along the top edge.
   const strip = ctx.createLinearGradient(0, 0, W, 0)
-  strip.addColorStop(0, '#3B82F6')
-  strip.addColorStop(1, '#8B5CF6')
+  strip.addColorStop(0, '#A3E635')
+  strip.addColorStop(1, '#22D3EE')
   ctx.fillStyle = strip
   ctx.fillRect(0, 0, W, 14)
 
@@ -81,17 +83,17 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
 
   let y = MARGIN + 60
 
-  ctx.fillStyle = '#3B82F6'
+  ctx.fillStyle = '#A3E635'
   ctx.font = FONT('700', 40)
   ctx.fillText(data.appName, startX, y)
 
   y += 108
-  ctx.fillStyle = '#F1F5FD'
+  ctx.fillStyle = '#FAFAFA'
   ctx.font = FONT('700', 76)
   ctx.fillText(truncate(ctx, data.title, contentWidth), startX, y)
 
   y += 62
-  ctx.fillStyle = '#7C8CB0'
+  ctx.fillStyle = '#A1A1AA'
   ctx.font = FONT('400', 36)
   ctx.fillText(data.dateLabel, startX, y)
 
@@ -105,19 +107,19 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
     const slot = data.rtl ? data.stats.length - 1 - index : index
     const x = MARGIN + slot * (tileWidth + gap)
 
-    ctx.fillStyle = '#16203A'
+    ctx.fillStyle = '#18181B'
     roundRect(ctx, x, y, tileWidth, tileHeight, 28)
     ctx.fill()
-    ctx.strokeStyle = '#2A3A5F'
+    ctx.strokeStyle = '#32323A'
     ctx.lineWidth = 2
     ctx.stroke()
 
     const centerX = x + tileWidth / 2
     ctx.textAlign = 'center'
-    ctx.fillStyle = '#F1F5FD'
+    ctx.fillStyle = '#FAFAFA'
     ctx.font = FONT('700', 58)
     ctx.fillText(truncate(ctx, stat.value, tileWidth - 32), centerX, y + 92)
-    ctx.fillStyle = '#A9B6D4'
+    ctx.fillStyle = '#C7C7D0'
     ctx.font = FONT('400', 30)
     ctx.fillText(truncate(ctx, stat.label, tileWidth - 32), centerX, y + 148)
     ctx.textAlign = data.rtl ? 'right' : 'left'
@@ -128,29 +130,29 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   const records = data.records.slice(0, 4)
   if (records.length > 0) {
     y += 96
-    ctx.fillStyle = '#60A5FA'
+    ctx.fillStyle = '#BEF264'
     ctx.font = FONT('700', 38)
     ctx.fillText(`🏆 ${data.recordsTitle}`, startX, y)
     y += 28
 
     for (const record of records) {
       const rowHeight = 108
-      ctx.fillStyle = 'rgba(22,32,58,0.85)'
+      ctx.fillStyle = 'rgba(24,24,27,0.85)'
       roundRect(ctx, MARGIN, y, contentWidth, rowHeight, 24)
       ctx.fill()
-      ctx.strokeStyle = 'rgba(59,130,246,0.35)'
+      ctx.strokeStyle = 'rgba(163,230,53,0.35)'
       ctx.lineWidth = 2
       ctx.stroke()
 
       const middle = y + rowHeight / 2 + 14
-      ctx.fillStyle = '#F1F5FD'
+      ctx.fillStyle = '#FAFAFA'
       ctx.font = FONT('600', 38)
       ctx.fillText(truncate(ctx, record.name, contentWidth * 0.55), data.rtl ? W - MARGIN - 36 : MARGIN + 36, middle)
 
       // The value is numeric and reads LTR in both languages.
       ctx.direction = 'ltr'
       ctx.textAlign = data.rtl ? 'left' : 'right'
-      ctx.fillStyle = '#60A5FA'
+      ctx.fillStyle = '#BEF264'
       ctx.font = FONT('700', 40)
       ctx.fillText(record.value, data.rtl ? MARGIN + 36 : W - MARGIN - 36, middle)
       ctx.direction = data.rtl ? 'rtl' : 'ltr'
@@ -162,7 +164,7 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
 
   // Footer.
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#7C8CB0'
+  ctx.fillStyle = '#A1A1AA'
   ctx.font = FONT('400', 30)
   ctx.fillText(data.tagline, W / 2, H - 76)
 

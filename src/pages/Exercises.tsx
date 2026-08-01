@@ -71,7 +71,7 @@ export default function Exercises() {
               type="button"
               onClick={() => setGroup(value)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
-                          ${group === value ? 'bg-brand-500 text-white' : 'bg-ink-700 text-ink-200'}`}
+                          ${group === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-700 text-ink-200'}`}
             >
               {value === 'all' ? t('common.all') : t(`group.${value}` as TranslationKey)}
             </button>

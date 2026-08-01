@@ -51,7 +51,7 @@ export default function RestSheet({ open, seconds, onClose, onSave }: Props) {
               className={`tabular rounded-xl py-2.5 text-sm font-semibold transition-colors
                           ${
                             value === preset
-                              ? 'bg-brand-500 text-white'
+                              ? 'bg-brand-500 text-ink-950'
                               : 'bg-ink-600 text-ink-100 active:bg-ink-500'
                           }`}
             >

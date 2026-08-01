@@ -67,7 +67,7 @@ export default function WeightCard() {
           type="button"
           onClick={() => setOpen(true)}
           className="shrink-0 rounded-xl bg-brand-500 px-3.5 py-2 text-xs font-semibold
-                     text-white transition-transform active:scale-95"
+                     text-ink-950 transition-transform active:scale-95"
         >
           {t('body.logWeight')}
         </button>

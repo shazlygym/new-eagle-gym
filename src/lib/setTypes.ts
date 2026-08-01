@@ -16,7 +16,7 @@ export const SET_TYPE_BADGE: Record<SetType, string | null> = {
 export const SET_TYPE_STYLE: Record<SetType, string> = {
   warmup: 'bg-sky-500/15 text-sky-300',
   working: 'text-ink-200',
-  drop: 'bg-violet-500/15 text-violet-300',
+  drop: 'bg-aqua-500/15 text-aqua-300',
   failure: 'bg-red-500/15 text-red-300',
 }
 

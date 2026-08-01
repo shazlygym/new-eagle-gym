@@ -2,7 +2,7 @@
 // a missing translation is a compile error rather than a blank label at runtime.
 
 export const en = {
-  'app.name': 'Eagle Gym',
+  'app.name': 'Workout',
   'app.tagline': 'Track every set. Works offline.',
 
   'common.save': 'Save',
@@ -37,7 +37,7 @@ export const en = {
   'nav.progress': 'Progress',
   'nav.settings': 'Settings',
 
-  'onboarding.welcome': 'Welcome to Eagle Gym',
+  'onboarding.welcome': 'Welcome to Workout',
   'onboarding.intro':
     'Your workouts are stored on this device only. Nothing is uploaded, and it all works without a connection.',
   'onboarding.name': 'Your name',
@@ -199,7 +199,7 @@ export const en = {
   'settings.importMerge': 'Merge with existing',
   'settings.importPrompt': 'How should this backup be applied?',
   'settings.importDone': 'Backup imported',
-  'settings.importFailed': 'That file is not an Eagle Gym backup.',
+  'settings.importFailed': 'That file is not a Workout backup.',
   'settings.storage': 'Storage used',
   'settings.persisted': 'Protected from automatic cleanup',
   'settings.notPersisted': 'Not protected from automatic cleanup',

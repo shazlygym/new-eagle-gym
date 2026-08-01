@@ -18,8 +18,11 @@ const TARGETS = [
   { file: 'apple-touch-icon-180.png', size: 180, svg: { inset: 1 } },
   { file: 'icon-192.png', size: 192, svg: { inset: 1, rounded: true } },
   { file: 'icon-512.png', size: 512, svg: { inset: 1, rounded: true } },
-  // Maskable art must survive an aggressive circular crop, hence the inset.
-  { file: 'icon-512-maskable.png', size: 512, svg: { inset: 0.66 } },
+  // Maskable art must survive an aggressive circular crop, hence the inset. The
+  // barbell is a wide, short mark, so it needs less shrinking than a tall one
+  // would — 0.8 keeps its far corners ~142px from centre, inside the ~205px
+  // safe radius, without leaving the icon swimming in background.
+  { file: 'icon-512-maskable.png', size: 512, svg: { inset: 0.8 } },
 ]
 
 const executablePath =

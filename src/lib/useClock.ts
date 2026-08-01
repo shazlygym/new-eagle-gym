@@ -58,6 +58,8 @@ export const useExerciseTimerStore = create<ExerciseTimerState>()(
       },
       cancel: () => set({ sessionExerciseId: null, startedAt: null }),
     }),
+    // Frozen at the app's original name: it's the localStorage key, so renaming
+    // it drops any timer that was running when the member last closed the app.
     { name: 'eagle-gym-exercise-timer' }
   )
 )

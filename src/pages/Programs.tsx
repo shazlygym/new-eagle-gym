@@ -208,7 +208,7 @@ export default function Programs() {
                       <button
                         type="button"
                         onClick={() => activateProgram(profile.id, program.id)}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 py-2.5 text-sm font-semibold text-white active:scale-[0.98] transition-transform"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 py-2.5 text-sm font-semibold text-ink-950 active:scale-[0.98] transition-transform"
                       >
                         <Play size={14} fill="currentColor" />
                         {t('programs.activate')}

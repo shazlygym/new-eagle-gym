@@ -23,7 +23,7 @@ export default function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             aria-pressed={selected}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors
-                        ${selected ? 'bg-brand-500 text-white' : 'text-ink-200 active:bg-ink-700'}`}
+                        ${selected ? 'bg-brand-500 text-ink-950' : 'text-ink-200 active:bg-ink-700'}`}
           >
             {option.label}
           </button>

@@ -11,7 +11,7 @@ export interface PrEvent {
 
 // Deterministic spread: index math instead of randomness, so the burst looks
 // the same every time and never re-rolls mid-animation on a re-render.
-const COLORS = ['#3B82F6', '#8B5CF6', '#22C55E', '#F59E0B', '#60A5FA']
+const COLORS = ['#A3E635', '#22D3EE', '#BEF264', '#FACC15', '#67E8F9']
 const PIECES = Array.from({ length: 22 }, (_, index) => ({
   left: (index * 41) % 100,
   delay: (index * 73) % 500,
@@ -80,7 +80,7 @@ export default function PrCelebration({
                    p-6 text-center shadow-brand-lg"
         style={{ animation: 'pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both' }}
       >
-        <div className="mx-auto mb-3 w-fit rounded-2xl bg-brand-gradient p-3.5 text-white">
+        <div className="mx-auto mb-3 w-fit rounded-2xl bg-brand-gradient p-3.5 text-ink-950">
           <Trophy size={28} />
         </div>
         <p className="text-lg font-bold text-ink-50">{t('workout.prTitle')}</p>

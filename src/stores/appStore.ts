@@ -35,6 +35,9 @@ export const useAppStore = create<AppState>()(
       markBackupDone: () => set({ lastBackupAt: Date.now(), backupNudgeSnoozedAt: null }),
       snoozeBackupNudge: () => set({ backupNudgeSnoozedAt: Date.now() }),
     }),
+    // Frozen at the app's original name: renaming this localStorage key resets
+    // language, active profile and the install hint for everyone already using
+    // the app.
     { name: 'eagle-gym-prefs' }
   )
 )

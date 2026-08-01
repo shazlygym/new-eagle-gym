@@ -5,10 +5,10 @@ import type { ReactNode } from 'react'
 // ramp; text stays on ink tokens so identity is never carried by coloured type.
 
 export const CHART = {
-  series: '#3B82F6',
-  grid: '#2A3A5F',
-  axis: '#7C8CB0',
-  surface: '#16203A',
+  series: '#A3E635', // brand.500
+  grid: '#32323A', // ink.500
+  axis: '#A1A1AA', // ink.300
+  surface: '#18181B', // ink.700
 } as const
 
 export function ChartCard({

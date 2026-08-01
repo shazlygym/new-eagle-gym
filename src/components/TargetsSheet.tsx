@@ -193,7 +193,7 @@ export default function TargetsSheet({ open, profile, latestWeightKg, onClose, o
                   type="button"
                   onClick={apply}
                   className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl
-                             bg-brand-500 py-2.5 text-sm font-semibold text-white active:bg-brand-600"
+                             bg-brand-500 py-2.5 text-sm font-semibold text-ink-950 active:bg-brand-600"
                 >
                   <Sparkles size={15} />
                   {t('nutrition.useThese')}
@@ -253,7 +253,7 @@ function Choice<T extends string>({
             className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
                         ${
                           selected === option.value
-                            ? 'bg-brand-500 text-white'
+                            ? 'bg-brand-500 text-ink-950'
                             : 'bg-ink-600 text-ink-200'
                         }`}
           >

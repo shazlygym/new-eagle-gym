@@ -89,7 +89,7 @@ export default function Routines() {
                     type="button"
                     onClick={() => begin(routine.id)}
                     className="flex items-center gap-1.5 rounded-xl bg-brand-500 px-3.5 py-2.5
-                               text-sm font-semibold text-white active:scale-95 transition-transform"
+                               text-sm font-semibold text-ink-950 active:scale-95 transition-transform"
                   >
                     <Play size={15} fill="currentColor" />
                     {t('routines.start')}

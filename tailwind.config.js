@@ -4,38 +4,46 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Deep navy surfaces. `ink` climbs from the page background up through
-        // card, raised and border steps, so components pick a depth rather than
-        // guessing at a hex.
+        // Near-black neutral surfaces. `ink` climbs from the page background up
+        // through card, raised and border steps, so components pick a depth
+        // rather than guessing at a hex. Kept hue-free so the lime accent is the
+        // only colour on the screen that carries meaning.
         ink: {
-          950: '#070B14', // page background
-          900: '#0B1120',
-          800: '#111A2E', // sunken (inputs)
-          700: '#16203A', // card
-          600: '#1E2B4A', // raised control
-          500: '#2A3A5F', // border / divider
-          400: '#3D5180', // disabled text
-          300: '#7C8CB0', // muted text
-          200: '#A9B6D4', // secondary text
-          100: '#D6DEF0',
-          50: '#F1F5FD', // primary text
+          950: '#09090B', // page background
+          900: '#0E0E11',
+          800: '#141417', // sunken (inputs)
+          700: '#18181B', // card
+          600: '#232327', // raised control
+          500: '#32323A', // border / divider
+          400: '#7A7A83', // dim text — 4.7:1 on the page background, so it
+          //                  stays readable where it labels rather than disables
+          300: '#A1A1AA', // muted text
+          200: '#C7C7D0', // secondary text
+          100: '#E4E4E7',
+          50: '#FAFAFA', // primary text
         },
+        // Lime. Very bright against near-black (13:1), which is why every
+        // surface painted with brand-500 carries dark text, not white.
         brand: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          200: '#BFDBFE',
-          300: '#93C5FD',
-          400: '#60A5FA',
-          500: '#3B82F6', // primary accent
-          600: '#2563EB',
-          700: '#1D4ED8',
-          800: '#1E40AF',
-          900: '#1E3A8A',
+          50: '#F7FEE7',
+          100: '#ECFCCB',
+          200: '#D9F99D',
+          300: '#CFF171',
+          400: '#BEF264',
+          500: '#A3E635', // primary accent
+          600: '#8CCF22', // pressed
+          700: '#74AD16',
+          800: '#5C8A12',
+          900: '#48690F',
         },
-        violet: {
-          400: '#A78BFA',
-          500: '#8B5CF6',
-          600: '#7C3AED',
+        // Cyan, the second accent — supersets, drop sets, the carbs bar. Far
+        // enough from lime in hue to read as a different thing at a glance.
+        aqua: {
+          200: '#A5F3FC',
+          300: '#67E8F9',
+          400: '#22D3EE',
+          500: '#06B6D4',
+          600: '#0891B2',
         },
       },
       spacing: {
@@ -64,12 +72,14 @@ export default {
         numeric: ['ui-rounded', '-apple-system', 'SF Pro Rounded', 'Segoe UI', 'sans-serif'],
       },
       backgroundImage: {
-        'brand-gradient': 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
-        'brand-soft': 'linear-gradient(135deg, rgba(59,130,246,0.16) 0%, rgba(139,92,246,0.16) 100%)',
+        'brand-gradient': 'linear-gradient(135deg, #A3E635 0%, #22D3EE 100%)',
+        'brand-soft': 'linear-gradient(135deg, rgba(163,230,53,0.16) 0%, rgba(34,211,238,0.16) 100%)',
       },
       boxShadow: {
-        brand: '0 6px 24px -6px rgba(59,130,246,0.45)',
-        'brand-lg': '0 12px 40px -8px rgba(99,102,241,0.5)',
+        // Lower alpha than the old blue glow: lime is far brighter, so the same
+        // opacity would read as a halo rather than a lift.
+        brand: '0 6px 24px -6px rgba(163,230,53,0.35)',
+        'brand-lg': '0 12px 40px -8px rgba(163,230,53,0.4)',
         card: '0 1px 2px rgba(0,0,0,0.5)',
       },
       animation: {
@@ -84,8 +94,8 @@ export default {
           to: { transform: 'translateY(0)' },
         },
         pulseBrand: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(59,130,246,0.45)' },
-          '50%': { boxShadow: '0 0 0 14px rgba(59,130,246,0)' },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(163,230,53,0.4)' },
+          '50%': { boxShadow: '0 0 0 14px rgba(163,230,53,0)' },
         },
       },
     },

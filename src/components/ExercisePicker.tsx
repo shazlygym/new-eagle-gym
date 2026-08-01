@@ -65,7 +65,7 @@ export default function ExercisePicker({
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
                             ${
                               group === value
-                                ? 'bg-brand-500 text-white'
+                                ? 'bg-brand-500 text-ink-950'
                                 : 'bg-ink-700 text-ink-200'
                             }`}
               >
