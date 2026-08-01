@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { useT } from '../i18n'
+import { useBodyScrollLock } from '../lib/useBodyScrollLock'
 import { useOverlayEscape } from '../lib/useOverlayEscape'
 
 interface Props {
@@ -32,6 +33,10 @@ export default function ConfirmDialog({
   // Escape cancels, same as tapping the backdrop — matches Sheet, and like
   // Sheet it only fires when this is the topmost thing open.
   useOverlayEscape(open, onCancel)
+
+  // A blocking decision shouldn't let the page drift behind it. This dialog
+  // opens on top of sheets that lock too, so the lock has to be counted.
+  useBodyScrollLock(open)
 
   if (!open) return null
 

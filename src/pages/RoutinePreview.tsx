@@ -94,8 +94,10 @@ export default function RoutinePreview() {
       </div>
 
       {/* Above the tab bar rather than replacing it — leaving this screen without
-          starting has to stay one tap away. */}
-      <div className="safe-bottom fixed inset-x-0 bottom-16 z-30 border-t border-ink-500/40 bg-ink-900/95 px-4 py-3 backdrop-blur">
+          starting has to stay one tap away. `bottom-tabbar` carries the home
+          indicator inset; a plain `bottom-16` sits under the tab bar on any
+          phone that has one. */}
+      <div className="fixed inset-x-0 bottom-tabbar z-30 border-t border-ink-500/40 bg-ink-900/95 px-4 py-3 backdrop-blur">
         <button
           type="button"
           onClick={begin}

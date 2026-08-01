@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
-import { useEffect, useId, type ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { useT } from '../i18n'
+import { useBodyScrollLock } from '../lib/useBodyScrollLock'
 import { useOverlayEscape } from '../lib/useOverlayEscape'
 
 interface Props {
@@ -22,14 +23,8 @@ export default function Sheet({ open, onClose, title, children, tall }: Props) {
 
   // Locking the body prevents the page behind from scrolling with the sheet,
   // which on iOS otherwise leaves you scrolled somewhere random on dismiss.
-  useEffect(() => {
-    if (!open) return
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previous
-    }
-  }, [open])
+  // Counted, not saved-and-restored — sheets stack, see useBodyScrollLock.
+  useBodyScrollLock(open)
 
   // Only the topmost sheet answers Escape — see useOverlayEscape.
   useOverlayEscape(open, onClose)
