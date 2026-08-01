@@ -414,6 +414,8 @@ export const ar: Record<TranslationKey, string> = {
   'nutrition.addFood': 'إضافة أكل',
   'nutrition.searchFood': 'ابحث عن أكل',
   'nutrition.noResults': 'مفيش نتيجة. أضفه كصنف خاص بك.',
+  'nutrition.resultCount': '{count} صنف',
+  'nutrition.showMore': 'عرض {count} كمان',
   'nutrition.grams': 'جرام',
   'nutrition.portion': 'المقدار',
   'nutrition.log': 'سجّله',
@@ -511,6 +513,8 @@ export const ar: Record<TranslationKey, string> = {
   'foodCat.sweets': 'حلويات',
   'foodCat.drinks': 'مشروبات',
   'foodCat.fastfood': 'وجبات سريعة',
+  'foodCat.supplements': 'مكملات',
+  'foodCat.sauces': 'صلصات',
 
   'exercises.video': 'رابط الفيديو',
   'exercises.videoHint': 'الصق رابط يوتيوب وهيفتح من شاشة التمرين.',

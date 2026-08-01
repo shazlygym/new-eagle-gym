@@ -67,6 +67,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
   const [repsMin, setRepsMin] = useState(initial?.defaultRepsMin ?? defaultMin(initial?.tracking))
   const [repsMax, setRepsMax] = useState(initial?.defaultRepsMax ?? DEFAULT_REP_RANGE.max)
   const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   // The create-mode callers keep this mounted with an `open` prop, so state
   // survives a dismissal. Re-seed on every open: half-typed text from a
@@ -82,29 +83,38 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
     setRepsMin(initial?.defaultRepsMin ?? defaultMin(initial?.tracking))
     setRepsMax(initial?.defaultRepsMax ?? DEFAULT_REP_RANGE.max)
     setError(null)
+    setSaving(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const range = normalizeRepTarget(repsMin, repsMax)
 
   const submit = async () => {
+    // The write is awaited, so a second tap before it lands would file the same
+    // exercise twice — at the rack, with the phone in one hand, that happens.
+    if (saving) return
     if (!nameEn.trim() && !nameAr.trim()) {
       setError(t('exercises.nameRequired'))
       return
     }
-    // One name is enough — it stands in for the other language rather than
-    // leaving a blank row after a language switch.
-    await onCreate({
-      nameEn: nameEn.trim() || nameAr.trim(),
-      nameAr: nameAr.trim() || nameEn.trim(),
-      muscleGroup,
-      equipment,
-      tracking,
-      videoUrl: videoUrl.trim() || undefined,
-      // Seconds on a timed exercise, so there is no upper bound to store.
-      defaultRepsMin: tracking === 'duration' ? repsMin : range.targetReps,
-      defaultRepsMax: tracking === 'duration' ? undefined : range.targetRepsMax,
-    })
+    setSaving(true)
+    try {
+      // One name is enough — it stands in for the other language rather than
+      // leaving a blank row after a language switch.
+      await onCreate({
+        nameEn: nameEn.trim() || nameAr.trim(),
+        nameAr: nameAr.trim() || nameEn.trim(),
+        muscleGroup,
+        equipment,
+        tracking,
+        videoUrl: videoUrl.trim() || undefined,
+        // Seconds on a timed exercise, so there is no upper bound to store.
+        defaultRepsMin: tracking === 'duration' ? repsMin : range.targetReps,
+        defaultRepsMax: tracking === 'duration' ? undefined : range.targetRepsMax,
+      })
+    } finally {
+      setSaving(false)
+    }
     setNameEn('')
     setNameAr('')
     setVideoUrl('')
@@ -255,7 +265,12 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
 
         {error && <p className="text-xs text-danger-400">{error}</p>}
 
-        <button type="button" onClick={submit} className="btn-primary w-full">
+        <button
+          type="button"
+          onClick={submit}
+          disabled={saving}
+          className="btn-primary w-full disabled:opacity-60"
+        >
           {initial ? t('common.save') : t('exercises.create')}
         </button>
       </div>

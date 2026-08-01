@@ -36,23 +36,33 @@ export default function NewFoodSheet({ open, onClose, onCreate }: Props) {
   const [carbs, setCarbs] = useState(0)
   const [fat, setFat] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const submit = async () => {
+    // onCreate writes to IndexedDB and awaits it. Without this, an impatient
+    // double-tap files the same food twice and both copies stay in the picker.
+    if (saving) return
     if (!nameAr.trim() && !nameEn.trim()) {
       setError(t('exercises.nameRequired'))
       return
     }
-    await onCreate({
-      nameAr: nameAr.trim() || nameEn.trim(),
-      nameEn: nameEn.trim() || nameAr.trim(),
-      category,
-      kcal,
-      protein,
-      carbs,
-      fat,
-    })
+    setSaving(true)
+    try {
+      await onCreate({
+        nameAr: nameAr.trim() || nameEn.trim(),
+        nameEn: nameEn.trim() || nameAr.trim(),
+        category,
+        kcal,
+        protein,
+        carbs,
+        fat,
+      })
+    } finally {
+      setSaving(false)
+    }
     setNameAr('')
     setNameEn('')
+    setCategory('egyptian')
     setKcal(0)
     setProtein(0)
     setCarbs(0)
@@ -122,7 +132,12 @@ export default function NewFoodSheet({ open, onClose, onCreate }: Props) {
 
         {error && <p className="text-xs text-danger-400">{error}</p>}
 
-        <button type="button" onClick={submit} className="btn-primary w-full">
+        <button
+          type="button"
+          onClick={submit}
+          disabled={saving}
+          className="btn-primary w-full disabled:opacity-60"
+        >
           {t('nutrition.createFood')}
         </button>
       </div>

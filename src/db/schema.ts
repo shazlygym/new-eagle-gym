@@ -259,6 +259,11 @@ export type FoodCategory =
   | 'sweets'
   | 'drinks'
   | 'fastfood'
+  // Supplements sat under 'protein' next to chicken and fish, which made the
+  // one category a gym member filters by useless. Sauces sat under 'fastfood'
+  // and 'fats' — a spoon of ketchup is neither.
+  | 'supplements'
+  | 'sauces'
 
 /** A household measure, so nobody has to weigh a loaf of bread. */
 export interface FoodPortion {

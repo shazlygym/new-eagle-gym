@@ -413,6 +413,8 @@ export const en = {
   'nutrition.addFood': 'Add food',
   'nutrition.searchFood': 'Search food',
   'nutrition.noResults': 'Nothing found. Add it as your own food.',
+  'nutrition.resultCount': '{count} foods',
+  'nutrition.showMore': 'Show {count} more',
   'nutrition.grams': 'Grams',
   'nutrition.portion': 'Portion',
   'nutrition.log': 'Log it',
@@ -510,6 +512,8 @@ export const en = {
   'foodCat.sweets': 'Sweets',
   'foodCat.drinks': 'Drinks',
   'foodCat.fastfood': 'Fast food',
+  'foodCat.supplements': 'Supplements',
+  'foodCat.sauces': 'Sauces',
 
   'exercises.video': 'Video link',
   'exercises.videoHint': 'Paste a YouTube link and it opens from the workout screen.',

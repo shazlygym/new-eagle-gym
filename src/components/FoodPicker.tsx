@@ -1,12 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createFood, listFoods, recentFoodIds, scaleFood } from '../db/repository'
 import { FOOD_CATEGORIES } from '../db/foods'
 import type { Food, FoodCategory } from '../db/schema'
 import { useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
-import { normalizeSearch } from '../lib/exerciseSearch'
+import {
+  foodHaystack,
+  foodMatchRank,
+  foodQueryTerms,
+  matchesFoodQuery,
+} from '../lib/foodSearch'
 import MacroLine from './MacroLine'
 import NewFoodSheet from './NewFoodSheet'
 import NumberField from './NumberField'
@@ -24,12 +29,16 @@ interface Props {
  * asking someone to estimate that a plate of koshari is 400 grams is how a food
  * log stops getting filled in.
  */
+/** Rows rendered before the "show more" button. One thumb-flick of scrolling. */
+const PAGE_SIZE = 60
+
 export default function FoodPicker({ open, profileId, onClose, onPick }: Props) {
   const { t, locale } = useT()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<FoodCategory | 'all'>('all')
   const [selected, setSelected] = useState<Food | null>(null)
   const [creating, setCreating] = useState(false)
+  const [shown, setShown] = useState(PAGE_SIZE)
 
   const foods = useLiveQuery(() => listFoods(profileId), [profileId]) ?? []
   const recent = useLiveQuery(() => recentFoodIds(profileId), [profileId])
@@ -40,27 +49,39 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
     return rank
   }, [recent])
 
+  // Normalising 479 names on every keystroke is wasted work — the names only
+  // change when the table does.
+  const haystacks = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const food of foods) map.set(food.id, foodHaystack(food))
+    return map
+  }, [foods])
+
   const results = useMemo(() => {
-    const needle = normalizeSearch(query)
+    const terms = foodQueryTerms(query)
     return foods
       .filter((food) => category === 'all' || food.category === category)
-      .filter(
-        (food) =>
-          !needle ||
-          normalizeSearch(food.nameAr).includes(needle) ||
-          normalizeSearch(food.nameEn).includes(needle)
-      )
+      .filter((food) => terms.length === 0 || matchesFoodQuery(haystacks.get(food.id) ?? '', terms))
       .sort((a, b) => {
         // What this member actually eats comes first, in the order they eat it.
         const rankA = recentRank.get(a.id) ?? Infinity
         const rankB = recentRank.get(b.id) ?? Infinity
         if (rankA !== rankB) return rankA - rankB
+        // Then, when searching, the names that begin with what was typed.
+        if (terms.length > 0) {
+          const matchA = foodMatchRank(haystacks.get(a.id) ?? '', terms)
+          const matchB = foodMatchRank(haystacks.get(b.id) ?? '', terms)
+          if (matchA !== matchB) return matchA - matchB
+        }
         // Then their own foods — added on purpose, so worth surfacing.
         if (a.isCustom !== b.isCustom) return b.isCustom - a.isCustom
         return foodName(a, locale).localeCompare(foodName(b, locale), locale)
       })
-      .slice(0, 80)
-  }, [foods, query, category, locale, recentRank])
+  }, [foods, query, category, locale, recentRank, haystacks])
+
+  // A new search starts at the top of its own list, not 200 rows into the last
+  // one. Reset on close too, so reopening never lands mid-list.
+  useEffect(() => setShown(PAGE_SIZE), [query, category, open])
 
   return (
     <>
@@ -112,8 +133,14 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
         {results.length === 0 ? (
           <p className="py-10 text-center text-sm text-ink-300">{t('nutrition.noResults')}</p>
         ) : (
+          <>
+            {/* The table is nearly 500 rows deep. Saying how many matched is the
+                difference between "that's all there is" and "keep typing". */}
+            <p className="mb-2 px-1 text-[11px] font-medium text-ink-400">
+              {t('nutrition.resultCount', { count: results.length })}
+            </p>
           <ul className="space-y-1.5">
-            {results.map((food) => (
+            {results.slice(0, shown).map((food) => (
               <li key={food.id}>
                 <button
                   type="button"
@@ -147,6 +174,18 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
               </li>
             ))}
           </ul>
+
+            {results.length > shown && (
+              <button
+                type="button"
+                onClick={() => setShown((count) => count + PAGE_SIZE)}
+                className="mt-2 w-full rounded-xl border border-ink-500 py-3 text-sm
+                           font-medium text-ink-100 active:bg-ink-600"
+              >
+                {t('nutrition.showMore', { count: results.length - shown })}
+              </button>
+            )}
+          </>
         )}
       </Sheet>
 
