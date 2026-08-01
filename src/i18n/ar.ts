@@ -114,6 +114,11 @@ export const ar: Record<TranslationKey, string> = {
   'routines.repRangeHint': 'فضل على نفس الوزن لحد ما كل المجاميع توصل لأعلى رقم، بعدين زوّد الوزن وابدأ من أول النطاق تاني. سيب الخانة التانية فاضية لو عايز رقم واحد.',
   'routines.targetTime': 'مدة الثبات',
   'routines.start': 'ابدأ',
+
+  // Pre-workout brief: what the plan asks for, next to what you actually did.
+  'preview.intro': 'آخر ٣ مرات لعبت فيهم كل تمرين، عشان تعرف تحط كام قبل ما تمسك البار.',
+  'preview.firstTime': 'أول مرة تلعب التمرين دا — اللي هتسجله النهاردة هيبقى الرقم اللي تكسره المرة الجاية.',
+
   'routines.empty': 'لا توجد روتينات بعد',
   'routines.emptyHint': 'الروتين هو قائمة تمارين محفوظة تبدأها بضغطة واحدة.',
   'routines.deleteConfirm': 'حذف هذا الروتين؟',

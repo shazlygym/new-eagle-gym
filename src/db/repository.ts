@@ -682,6 +682,63 @@ export async function recentSessionsForExercise(
   return grouped.map((rows) => rows.sort((a, b) => a.setNumber - b.setNumber))
 }
 
+export interface ExerciseSessionLog {
+  sessionId: string
+  /** When the session's first set was ticked — the day it belongs to. */
+  date: number
+  /** Completed sets in set order, warm-ups included. */
+  sets: SetEntry[]
+}
+
+export interface RoutineBriefItem {
+  item: RoutineItem
+  exercise: Exercise | undefined
+  /** Newest session first, at most `count` of them. Empty on a first attempt. */
+  history: ExerciseSessionLog[]
+}
+
+/**
+ * What every exercise in a routine was last trained with.
+ *
+ * The question you ask standing in the gym about to start Push Day is "what did
+ * I press last week, and how many did I get" — and until now the only answer was
+ * one exercise at a time, from inside a session that had already started. This
+ * gathers the whole routine at once so it can be read before the first set.
+ */
+export async function routineBrief(
+  profileId: string,
+  routineId: string,
+  count = 3
+): Promise<RoutineBriefItem[]> {
+  const routine = await getRoutine(routineId)
+  if (!routine) return []
+
+  return Promise.all(
+    routine.items.map(async (item) => {
+      const [exercise, sessions] = await Promise.all([
+        getExercise(item.exerciseId),
+        // Over-fetch: a session that was started and abandoned has no ticked
+        // sets and drops out below, and asking for exactly `count` would let a
+        // couple of those hide the real training underneath them.
+        recentSessionsForExercise(profileId, item.exerciseId, count * 2),
+      ])
+
+      const history = sessions
+        // A set left un-ticked was planned, not performed.
+        .map((sets) => sets.filter((set) => set.done === 1))
+        .filter((sets) => sets.length > 0)
+        .map((sets) => ({
+          sessionId: sets[0].sessionId,
+          date: Math.min(...sets.map((set) => set.completedAt ?? 0)),
+          sets,
+        }))
+        .slice(0, count)
+
+      return { item, exercise, history }
+    })
+  )
+}
+
 /**
  * Records a timed effort against the next un-ticked set of a duration exercise,
  * creating one if they have all been used. Returns the set that was filled so

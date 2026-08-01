@@ -17,6 +17,7 @@ import {
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
 import { formatTimeAgo } from '../lib/format'
+import { briefPath } from '../lib/routes'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 /**
@@ -53,14 +54,12 @@ export default function Train() {
     if (!day) return
     unlockAudio()
     const existing = await getActiveSession(profile.id)
-    const sessionId =
-      existing?.id ??
-      (await startSession(profile.id, day.routineId, {
-        id: active.id,
-        week: progress.week,
-        dayIndex,
-      }))
-    navigate(`/workout/${sessionId}`)
+    // Mid-workout there is nothing left to plan, so resuming skips the brief.
+    if (existing) {
+      navigate(`/workout/${existing.id}`)
+      return
+    }
+    navigate(briefPath(day.routineId, active.id, progress.week, dayIndex))
   }
 
   // A tab called "Train" that couldn't start training was the one thing here

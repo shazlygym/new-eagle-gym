@@ -34,6 +34,7 @@ import { programProgress, sessionsThisWeek, volumeOf, volumeThisWeek, weekStreak
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
 import { formatShortDay, formatTimeAgo, formatVolume, unitLabel, volumeValue } from '../lib/format'
+import { briefPath } from '../lib/routes'
 import { useActiveProfile } from '../lib/useActiveProfile'
 import { useAppStore } from '../stores/appStore'
 
@@ -105,8 +106,19 @@ export default function Home() {
     unlockAudio()
     const existing = await getActiveSession(profile.id)
     // Never orphan a workout in progress — resume it rather than starting a second.
-    const sessionId = existing?.id ?? (await startSession(profile.id, routineId))
-    navigate(`/workout/${sessionId}`)
+    // Resuming also skips the brief: you are already past the point of deciding
+    // what to load.
+    if (existing) {
+      navigate(`/workout/${existing.id}`)
+      return
+    }
+    // A routine has a plan and a history worth reading before the first set.
+    // Starting from nothing has neither, so it goes straight in.
+    if (routineId) {
+      navigate(`/routines/${routineId}/start`)
+      return
+    }
+    navigate(`/workout/${await startSession(profile.id)}`)
   }
 
   const startProgramDay = async (dayIndex: number) => {
@@ -115,14 +127,13 @@ export default function Home() {
     if (!day) return
     unlockAudio()
     const existing = await getActiveSession(profile.id)
-    const sessionId =
-      existing?.id ??
-      (await startSession(profile.id, day.routineId, {
-        id: program.id,
-        week: programProgress(program, sessions).week,
-        dayIndex,
-      }))
-    navigate(`/workout/${sessionId}`)
+    if (existing) {
+      navigate(`/workout/${existing.id}`)
+      return
+    }
+    // The program context rides along in the query string, so a session started
+    // from the brief still counts against the right week and day.
+    navigate(briefPath(day.routineId, program.id, programProgress(program, sessions).week, dayIndex))
   }
 
   const repeat = async (sourceId: string) => {

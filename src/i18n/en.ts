@@ -113,6 +113,11 @@ export const en = {
   'routines.repRangeHint': 'Stay at this weight until every set hits the top, then go up and start again at the bottom. Leave the second box empty for a single target.',
   'routines.targetTime': 'Hold time',
   'routines.start': 'Start',
+
+  // Pre-workout brief: what the plan asks for, next to what you actually did.
+  'preview.intro': 'Your last three sessions on each exercise, so you know what to load before you touch the bar.',
+  'preview.firstTime': 'First time on this one — whatever you log today becomes the number to beat.',
+
   'routines.empty': 'No routines yet',
   'routines.emptyHint': 'A routine is a saved list of exercises you can start in one tap.',
   'routines.deleteConfirm': 'Delete this routine?',

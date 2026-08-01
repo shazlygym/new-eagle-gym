@@ -3,9 +3,10 @@ import { Copy, ListPlus, Pencil, Play, Plus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
-import { duplicateRoutine, getActiveSession, listRoutines, startSession } from '../db/repository'
+import { duplicateRoutine, getActiveSession, listRoutines } from '../db/repository'
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
+import { briefPath } from '../lib/routes'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Routines() {
@@ -21,8 +22,12 @@ export default function Routines() {
   const begin = async (routineId: string) => {
     unlockAudio()
     const existing = await getActiveSession(profile.id)
-    const sessionId = existing?.id ?? (await startSession(profile.id, routineId))
-    navigate(`/workout/${sessionId}`)
+    // A workout already running is past the point the brief helps with.
+    if (existing) {
+      navigate(`/workout/${existing.id}`)
+      return
+    }
+    navigate(briefPath(routineId))
   }
 
   return (
