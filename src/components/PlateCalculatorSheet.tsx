@@ -78,7 +78,7 @@ export default function PlateCalculatorSheet({ open, onClose, units, initialTarg
             </div>
 
             {plan.remainder > 0 && (
-              <p className="text-xs leading-relaxed text-amber-400">
+              <p className="text-xs leading-relaxed text-flame-400">
                 {t('plates.remainder', {
                   amount: `${formatNumber(plan.remainder)} ${unit}`,
                   total: `${formatNumber(achievable)} ${unit}`,

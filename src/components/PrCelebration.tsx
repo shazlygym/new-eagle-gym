@@ -11,7 +11,7 @@ export interface PrEvent {
 
 // Deterministic spread: index math instead of randomness, so the burst looks
 // the same every time and never re-rolls mid-animation on a re-render.
-const COLORS = ['#A3E635', '#22D3EE', '#BEF264', '#FACC15', '#67E8F9']
+const COLORS = ['#A3E635', '#BEF264', '#FBBF24', '#38BDF8', '#E879F9']
 const PIECES = Array.from({ length: 22 }, (_, index) => ({
   left: (index * 41) % 100,
   delay: (index * 73) % 500,

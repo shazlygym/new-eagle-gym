@@ -76,8 +76,11 @@ export default function PageHeader({ title, subtitle, onBack, action, large }: P
 
       {large && (
         <div className="px-5 pb-1 pt-1">
+          {/* Above the title, not below it. The subtitle on a large header is
+              always the orienting fact — today's date — and a date read after
+              the greeting it belongs to has already missed its moment. */}
+          {subtitle && <p className="eyebrow mb-1.5">{subtitle}</p>}
           <h2 className="display-title truncate">{title}</h2>
-          {subtitle && <p className="mt-1 text-sm text-ink-300">{subtitle}</p>}
         </div>
       )}
     </>

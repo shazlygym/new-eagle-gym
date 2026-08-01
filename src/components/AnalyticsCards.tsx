@@ -1,13 +1,110 @@
 import { Activity, Trophy } from 'lucide-react'
 import type { Exercise, Units } from '../db/schema'
-import type { BalanceKey, LoadRatio, MuscleVolume, PeriodComparison, RecordEvent } from '../db/queries'
+import type {
+  BalanceKey,
+  LoadRatio,
+  MuscleVolume,
+  MuscleWeek,
+  PeriodComparison,
+  RecordEvent,
+} from '../db/queries'
+import { WEEKLY_SETS_TARGET } from '../db/queries'
 import { exerciseName, useT } from '../i18n'
 import type { TranslationKey } from '../i18n/en'
 import { ChartCard } from './Chart'
 import { formatNumber, formatShortDay, toDisplayWeight, unitLabel, volumeValue } from '../lib/format'
 
-// These four read as a set: where the work went, whether it is balanced, whether
-// the jump week to week is sane, and whether any of it produced a record.
+// These read as a set: what this week owes each muscle, where the work went,
+// whether it is balanced, whether the jump week to week is sane, and whether any
+// of it produced a record.
+
+const WEEK_STATUS_BAR: Record<MuscleWeek['status'], string> = {
+  low: 'bg-flame-400',
+  onTarget: 'bg-brand-500',
+  high: 'bg-plum-500',
+  unrated: 'bg-ink-400',
+}
+
+const WEEK_STATUS_TEXT: Record<MuscleWeek['status'], string> = {
+  low: 'text-flame-400',
+  onTarget: 'text-brand-500',
+  high: 'text-plum-400',
+  unrated: 'text-ink-300',
+}
+
+/** Every row is drawn against the same ceiling, so the band never moves. */
+const WEEK_SCALE = 24
+
+/**
+ * What this week still owes each muscle.
+ *
+ * Every other volume view on this page is a ranking — which muscle got the most
+ * — and a ranking cannot tell you whether the week was any good, only who won
+ * it. This one puts the ten-to-twenty window on the track and asks a question
+ * with an answer: does the bar end inside it, while there is still a week left
+ * to fix it if it doesn't.
+ */
+export function WeeklyMuscleCard({ data }: { data: MuscleWeek[] }) {
+  const { t } = useT()
+
+  return (
+    <ChartCard title={t('analytics.weeklySets')} subtitle={t('analytics.weeklySetsRange')}>
+      {data.length === 0 ? (
+        <p className="py-8 text-center text-sm text-ink-300">{t('progress.noData')}</p>
+      ) : (
+        <>
+          <ul className="space-y-3">
+            {data.map((row) => (
+              <li key={row.muscleGroup}>
+                <div className="mb-1.5 flex items-baseline gap-2">
+                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink-100">
+                    {t(`group.${row.muscleGroup}` as TranslationKey)}
+                  </span>
+                  {row.baseline >= 1 && (
+                    <span className="tabular shrink-0 text-[10px] text-ink-400">
+                      {t('analytics.usually', { count: Math.round(row.baseline) })}
+                    </span>
+                  )}
+                  <span
+                    className={`tabular shrink-0 text-xs font-bold ${WEEK_STATUS_TEXT[row.status]}`}
+                  >
+                    {row.sets}
+                  </span>
+                </div>
+
+                {/* The pale block is the target window, in the same place on
+                    every row. Logical inset properties, so it sits under the
+                    same set counts when the page flips to Arabic. */}
+                <div className="relative h-2.5 overflow-hidden rounded-full bg-ink-700">
+                  {row.status !== 'unrated' && (
+                    <span
+                      className="absolute inset-y-0 bg-ink-500"
+                      style={{
+                        insetInlineStart: `${(WEEKLY_SETS_TARGET.min / WEEK_SCALE) * 100}%`,
+                        width: `${
+                          ((WEEKLY_SETS_TARGET.max - WEEKLY_SETS_TARGET.min) / WEEK_SCALE) * 100
+                        }%`,
+                      }}
+                    />
+                  )}
+                  <span
+                    className={`absolute inset-y-0 start-0 rounded-full transition-[width]
+                                duration-500 ${WEEK_STATUS_BAR[row.status]}`}
+                    style={{ width: `${Math.min(100, (row.sets / WEEK_SCALE) * 100)}%` }}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-4 text-xs leading-relaxed text-ink-300">
+            {t('analytics.weeklySetsHint')}
+          </p>
+        </>
+      )}
+    </ChartCard>
+  )
+}
 
 export function MuscleVolumeCard({
   data,
@@ -65,7 +162,7 @@ const BALANCE_LABEL: Record<BalanceKey, TranslationKey> = {
 // hues — sky sat too close to the cyan next to it.
 const BALANCE_COLOR: Record<BalanceKey, string> = {
   push: 'bg-brand-500',
-  pull: 'bg-fuchsia-500',
+  pull: 'bg-plum-500',
   legs: 'bg-aqua-500',
   other: 'bg-ink-400',
 }
@@ -115,9 +212,9 @@ export function BalanceCard({ data }: { data: Record<BalanceKey, number> }) {
 }
 
 const STATUS_STYLE: Record<LoadRatio['status'], string> = {
-  spike: 'text-amber-400',
-  steady: 'text-green-400',
-  easing: 'text-sky-400',
+  spike: 'text-flame-400',
+  steady: 'text-brand-400',
+  easing: 'text-aqua-400',
   unknown: 'text-ink-300',
 }
 
@@ -191,8 +288,8 @@ export function ComparisonCard({
                 row.delta === null || row.delta === 0
                   ? 'text-ink-300'
                   : row.delta > 0
-                    ? 'text-green-400'
-                    : 'text-red-400'
+                    ? 'text-brand-400'
+                    : 'text-danger-400'
               }`}
             >
               {row.delta === null || row.delta === 0

@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { CHART, ChartCard, ChartTooltip } from '../components/Chart'
 import EmptyState from '../components/EmptyState'
+import EnergyBalanceCard from '../components/EnergyBalanceCard'
 import PageHeader from '../components/PageHeader'
 import SegmentedControl from '../components/SegmentedControl'
 import { nutritionPeriod } from '../db/queries'
@@ -94,7 +95,7 @@ export default function NutritionHistory() {
     <div className="pb-6">
       <PageHeader title={t('nutrition.history')} onBack="history" />
 
-      <div className="space-y-4 px-4 py-4">
+      <div className="space-y-4 px-5 py-4">
         <SegmentedControl value={period} options={periodOptions} onChange={setPeriod} />
 
         {summary.loggedDays === 0 ? (
@@ -105,6 +106,11 @@ export default function NutritionHistory() {
           />
         ) : (
           <>
+            {/* First, because it is the only thing on this page that tells you
+                what to do next. It reads a fixed four-week window of its own —
+                a trend needs more room than the seven-day tab gives it. */}
+            <EnergyBalanceCard profile={profile} />
+
             <section className="card p-4">
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="section-title">{t('nutrition.average')}</h2>
@@ -165,7 +171,7 @@ export default function NutritionHistory() {
                       question is how far each day sat from it, not what the
                       target was on that date. */}
                   {profile.kcalTarget && (
-                    <ReferenceLine y={profile.kcalTarget} stroke="#22D3EE" strokeDasharray="4 4" />
+                    <ReferenceLine y={profile.kcalTarget} stroke="#38BDF8" strokeDasharray="4 4" />
                   )}
                   <Bar dataKey="kcal" fill={CHART.series} radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
@@ -191,11 +197,11 @@ export default function NutritionHistory() {
                   {profile.proteinTarget && (
                     <ReferenceLine
                       y={profile.proteinTarget}
-                      stroke="#22D3EE"
+                      stroke="#38BDF8"
                       strokeDasharray="4 4"
                     />
                   )}
-                  <Bar dataKey="protein" fill="#22D3EE" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="protein" fill="#38BDF8" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>

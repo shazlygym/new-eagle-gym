@@ -102,7 +102,7 @@ export default function NewFoodSheet({ open, onClose, onCreate }: Props) {
                 key={value}
                 type="button"
                 onClick={() => setCategory(value)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+                className={`rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                             ${category === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-600 text-ink-200'}`}
               >
                 {t(`foodCat.${value}` as TranslationKey)}
@@ -120,7 +120,7 @@ export default function NewFoodSheet({ open, onClose, onCreate }: Props) {
           <NumberField label={t('nutrition.fatPer100')} value={fat} onChange={setFat} />
         </div>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-danger-400">{error}</p>}
 
         <button type="button" onClick={submit} className="btn-primary w-full">
           {t('nutrition.createFood')}

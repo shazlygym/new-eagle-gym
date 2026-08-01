@@ -38,7 +38,7 @@ import {
   toStoredWeight,
   unitLabel,
 } from '../lib/format'
-import { suggestNextLoad } from '../lib/progression'
+import { SUGGESTION_REASON, suggestNextLoad } from '../lib/progression'
 import { formatRepRange } from '../lib/repRange'
 import { SET_TYPE_BADGE, SET_TYPE_LABEL, SET_TYPE_STYLE, nextSetType } from '../lib/setTypes'
 import { useExerciseTimerStore } from '../lib/useClock'
@@ -67,6 +67,8 @@ interface Props {
   /** True when the next exercise is in the same superset group as this one. */
   supersetContinues?: boolean
   trackRpe?: boolean
+  /** The active program's weekly jump, when this session belongs to one. */
+  progressionStepKg?: number
   /** Edit mode on a past workout: no rest timer, no progression nudges. */
   readOnlyContext?: boolean
 }
@@ -83,6 +85,7 @@ export default function WorkoutExerciseCard({
   isLast,
   supersetContinues,
   trackRpe = false,
+  progressionStepKg,
   readOnlyContext = false,
 }: Props) {
   const { t, locale } = useT()
@@ -121,7 +124,8 @@ export default function WorkoutExerciseCard({
             repsMax: sessionExercise.targetRepsMax,
             sets: sessionExercise.targetSets ?? 1,
           },
-          units
+          units,
+          { stepKg: progressionStepKg }
         )
 
   const topWeight = ordered.reduce((max, entry) => Math.max(max, entry.weight), 0)
@@ -252,7 +256,7 @@ export default function WorkoutExerciseCard({
             rel="noreferrer noopener"
             aria-label={t('exercises.watch')}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl
-                       text-red-400 active:bg-ink-600"
+                       text-danger-400 active:bg-ink-600"
           >
             <Play size={18} fill="currentColor" />
           </a>
@@ -294,11 +298,7 @@ export default function WorkoutExerciseCard({
         >
           <TrendingUp size={14} className="shrink-0 text-brand-500" />
           <span className="min-w-0 flex-1 text-xs text-ink-200">
-            {t(
-              suggestion.reason === 'hit-target'
-                ? 'workout.reasonHitTarget'
-                : 'workout.reasonRepeatedMiss'
-            )}
+            {t(SUGGESTION_REASON[suggestion.reason])}
           </span>
           <span className="tabular shrink-0 text-xs font-bold text-brand-500">
             {formatNumber(toDisplayWeight(suggestion.weight, units))} {unitLabel(units, locale)}
@@ -308,7 +308,7 @@ export default function WorkoutExerciseCard({
 
       <div className="px-3 py-2">
         <div
-          className={`grid ${gridClass} items-center gap-2 px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-ink-300`}
+          className={`grid ${gridClass} items-center gap-1.5 px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-ink-300`}
         >
           <span className="text-center">#</span>
           <span>{t('workout.previous')}</span>
@@ -331,8 +331,8 @@ export default function WorkoutExerciseCard({
             return (
               <li
                 key={entry.id}
-                className={`grid ${gridClass} items-center gap-2 rounded-xl px-1 py-1
-                            transition-colors ${entry.done ? 'bg-green-500/10' : ''}`}
+                className={`grid ${gridClass} items-center gap-1.5 rounded-xl px-1 py-1
+                            transition-colors ${entry.done ? 'bg-brand-500/10' : ''}`}
               >
                 {/* Tapping the number walks through working → warm-up → drop →
                     failure, which is faster mid-set than opening a menu. */}
@@ -340,17 +340,27 @@ export default function WorkoutExerciseCard({
                   type="button"
                   onClick={() => updateSet(entry.id, { setType: nextSetType(entry.setType) })}
                   title={t(SET_TYPE_LABEL[entry.setType])}
-                  className={`tabular h-8 rounded-lg text-xs font-bold ${SET_TYPE_STYLE[entry.setType]}`}
+                  // self-stretch, not a fixed h-8: the column is only 28px wide
+                  // and cannot grow without stealing from the weight and reps
+                  // inputs, so the target grows the other way and fills the
+                  // row's 50px instead of floating at 32 in the middle of it.
+                  className={`tabular min-h-8 self-stretch rounded-lg text-xs font-bold ${SET_TYPE_STYLE[entry.setType]}`}
                 >
                   {badge ?? entry.setNumber}
                 </button>
 
+                {/* Isolated for the same reason as the target line above: bare
+                    in Arabic "77.5×10" lays out as "10×77.5", and the sheet and
+                    the pre-workout brief already print the isolated form — the
+                    same set read two different ways on two screens. */}
                 <span className="tabular truncate text-xs text-ink-300">
                   {!prior
                     ? t('common.empty')
                     : isTimed
                       ? formatClock(prior.durationSeconds ?? 0)
-                      : `${formatNumber(toDisplayWeight(prior.weight, units))}×${prior.reps}`}
+                      : ltrIsolate(
+                          `${formatNumber(toDisplayWeight(prior.weight, units))}×${prior.reps}`
+                        )}
                 </span>
 
                 <NumberField
@@ -393,7 +403,7 @@ export default function WorkoutExerciseCard({
                     className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors
                                 ${
                                   entry.done
-                                    ? 'bg-green-500 text-ink-950'
+                                    ? 'bg-brand-500 text-ink-950'
                                     : 'bg-ink-600 text-ink-300 active:bg-ink-500'
                                 }`}
                   >
@@ -439,7 +449,7 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={addWarmup}
               aria-label={t('workout.addWarmup')}
-              className="rounded-xl bg-ink-600 px-3.5 text-sky-300 active:bg-ink-500"
+              className="rounded-xl bg-ink-600 px-3.5 text-aqua-300 active:bg-ink-500"
             >
               <Flame size={16} />
             </button>

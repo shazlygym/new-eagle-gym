@@ -96,7 +96,7 @@ export default function WorkoutSummary() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-ink-950 px-5 pb-10 pt-safe-t">
+    <div className="page-width flex min-h-dvh flex-col bg-ink-950 px-5 pb-10 pt-safe-t">
       <div className="flex-1 py-10">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 w-fit rounded-2xl bg-brand-500/15 p-4 text-brand-500">

@@ -11,6 +11,7 @@ import ProgramEdit from './pages/ProgramEdit'
 import Programs from './pages/Programs'
 import RoutineEdit from './pages/RoutineEdit'
 import RoutinePreview from './pages/RoutinePreview'
+import RoutineSheet from './pages/RoutineSheet'
 import Routines from './pages/Routines'
 import SessionDetail from './pages/SessionDetail'
 import Settings from './pages/Settings'
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="/routines/new" element={<RoutineEdit />} />
           <Route path="/routines/:routineId" element={<RoutineEdit />} />
           <Route path="/routines/:routineId/start" element={<RoutinePreview />} />
+          <Route path="/routines/:routineId/sheet" element={<RoutineSheet />} />
           <Route path="/exercises" element={<Exercises />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/programs/new" element={<ProgramEdit />} />

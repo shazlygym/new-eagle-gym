@@ -4,26 +4,34 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Near-black neutral surfaces. `ink` climbs from the page background up
-        // through card, raised and border steps, so components pick a depth
-        // rather than guessing at a hex. Kept hue-free so the lime accent is the
-        // only colour on the screen that carries meaning.
+        // Near-black surfaces with a faint blue cast — the colour of cold steel
+        // rather than of switched-off plastic. A truly hue-free ramp reads as
+        // "default dark mode"; two points of blue is enough to read as a
+        // material without tinting anything laid on top of it.
+        //
+        // The ramp climbs page → card → raised → border, so a component picks a
+        // depth instead of guessing at a hex.
         ink: {
-          950: '#09090B', // page background
-          900: '#0E0E11',
-          800: '#141417', // sunken (inputs)
-          700: '#18181B', // card
-          600: '#232327', // raised control
-          500: '#32323A', // border / divider
-          400: '#7A7A83', // dim text — 4.7:1 on the page background, so it
-          //                  stays readable where it labels rather than disables
-          300: '#A1A1AA', // muted text
-          200: '#C7C7D0', // secondary text
-          100: '#E4E4E7',
-          50: '#FAFAFA', // primary text
+          950: '#08080B', // page background
+          900: '#0D0E12', // sunken page — headers, the plane behind a sheet
+          800: '#131419', // sunken (inputs, wells)
+          700: '#191A20', // card
+          600: '#24262E', // raised control
+          500: '#343742', // border / divider
+          400: '#7D8191', // dim text — 5.2:1 on the page background, so it stays
+          //                  readable where it labels rather than disables
+          300: '#A3A7B5', // muted text — 8.4:1
+          200: '#C9CCD6', // secondary text
+          100: '#E6E8ED',
+          50: '#FAFAFC', // primary text
         },
         // Lime. Very bright against near-black (13:1), which is why every
         // surface painted with brand-500 carries dark text, not white.
+        //
+        // It is the app's only *action* colour: anything lime is either the
+        // thing to tap now or the thing that just went right. Data uses the
+        // ramps below. Spending lime on ornament is what stopped it meaning
+        // anything.
         brand: {
           50: '#F7FEE7',
           100: '#ECFCCB',
@@ -36,14 +44,44 @@ export default {
           800: '#5C8A12',
           900: '#48690F',
         },
-        // Cyan, the second accent — supersets, drop sets, the carbs bar. Far
-        // enough from lime in hue to read as a different thing at a glance.
+
+        // ─── Data hues ────────────────────────────────────────────────────
+        // Four accents chosen as a set: each sits at roughly the same lightness
+        // against near-black, so a chart reads as one family rather than as
+        // whatever colours were to hand. Each carries one fixed meaning, and
+        // nothing in the app reaches past these into a Tailwind default again.
+
+        /** Cool secondary — timed work, supersets, carbohydrate. */
         aqua: {
-          200: '#A5F3FC',
-          300: '#67E8F9',
-          400: '#22D3EE',
-          500: '#06B6D4',
-          600: '#0891B2',
+          200: '#BAE6FD',
+          300: '#7DD3FC',
+          400: '#38BDF8',
+          500: '#0EA5E9',
+          600: '#0284C7',
+        },
+        /** Heat — calories, warnings, a trend moving the wrong way. */
+        flame: {
+          200: '#FDE68A',
+          300: '#FCD34D',
+          400: '#FBBF24',
+          500: '#F59E0B',
+          600: '#D97706',
+        },
+        /** The fourth series, where three are not enough — fat, body weight. */
+        plum: {
+          200: '#F5D0FE',
+          300: '#F0ABFC',
+          400: '#E879F9',
+          500: '#D946EF',
+          600: '#C026D3',
+        },
+        /** Destructive only. Never decorative, never a data series. */
+        danger: {
+          200: '#FECACA',
+          300: '#FCA5A5',
+          400: '#F87171',
+          500: '#EF4444',
+          600: '#DC2626',
         },
       },
       spacing: {
@@ -57,7 +95,9 @@ export default {
       fontFamily: {
         // The iOS system font covers Latin (SF Pro) and Arabic (SF Arabic) with
         // zero bytes downloaded, which is what makes the app render instantly
-        // offline. The rest of the stack is for non-Apple browsers.
+        // offline. That rules out a display webface, so the display voice is
+        // built from weight, tracking and scale instead — see `.display-title`
+        // and `.num-hero` in index.css.
         sans: [
           '-apple-system',
           'BlinkMacSystemFont',
@@ -72,8 +112,21 @@ export default {
         numeric: ['ui-rounded', '-apple-system', 'SF Pro Rounded', 'Segoe UI', 'sans-serif'],
       },
       backgroundImage: {
-        'brand-gradient': 'linear-gradient(135deg, #A3E635 0%, #22D3EE 100%)',
-        'brand-soft': 'linear-gradient(135deg, rgba(163,230,53,0.16) 0%, rgba(34,211,238,0.16) 100%)',
+        // Lime only. This used to run lime → cyan: the single gradient in the
+        // app, and it read as decoration borrowed from a different design.
+        // Now it is a lit solid — one hue, brighter along the top edge, the way
+        // a painted plate catches the light.
+        'brand-gradient': 'linear-gradient(158deg, #C9F358 0%, #A3E635 46%, #8CCF22 100%)',
+        'brand-soft':
+          'linear-gradient(158deg, rgba(163,230,53,0.20) 0%, rgba(163,230,53,0.05) 100%)',
+        /**
+         * Knurling — the diagonal cross-hatch cut into a barbell so it will not
+         * slip. It is the one texture every lifter has under their hands every
+         * session, and at 5% alpha it is felt rather than seen. The only
+         * ornament in the app, and it is spent on one hero surface per screen.
+         */
+        knurl:
+          'repeating-linear-gradient(115deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 7px)',
       },
       boxShadow: {
         // Lower alpha than the old blue glow: lime is far brighter, so the same
@@ -81,6 +134,10 @@ export default {
         brand: '0 6px 24px -6px rgba(163,230,53,0.35)',
         'brand-lg': '0 12px 40px -8px rgba(163,230,53,0.4)',
         card: '0 1px 2px rgba(0,0,0,0.5)',
+        // Real elevation, for the one surface per screen that sits above the
+        // rest. Two shadows: a tight contact edge so it rests on the page, and
+        // a wide soft one so it rests *above* it.
+        lift: '0 2px 6px -2px rgb(0 0 0 / 0.55), 0 16px 32px -16px rgb(0 0 0 / 0.9)',
       },
       animation: {
         'fade-in': 'fadeIn 0.25s ease-out',

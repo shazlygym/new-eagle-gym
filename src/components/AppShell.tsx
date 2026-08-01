@@ -16,7 +16,10 @@ export default function AppShell() {
     <div className="flex min-h-dvh flex-col bg-ink-950">
       {/* pb-tabbar reserves room for the fixed bar plus the home indicator, so
           the last row of every list stays reachable. */}
-      <main className="scroll-area flex-1 pb-tabbar">
+      {/* page-width, not a full-bleed main: on a tablet or a desktop browser the
+          phone layout otherwise stretches to the window and every row turns into
+          a label on one edge and a control on the other. */}
+      <main className="scroll-area page-width flex-1 pb-tabbar">
         <Outlet />
       </main>
       <TabBar />

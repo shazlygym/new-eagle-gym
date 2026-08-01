@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Play, TrendingUp } from 'lucide-react'
+import { Play, Table2, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import type { ExerciseSessionLog, RoutineBriefItem } from '../db/repository'
 import { getActiveSession, getRoutine, routineBrief, startSession } from '../db/repository'
@@ -16,8 +16,9 @@ import {
   toDisplayWeight,
   unitLabel,
 } from '../lib/format'
-import { suggestNextLoad } from '../lib/progression'
+import { SUGGESTION_REASON, suggestNextLoad } from '../lib/progression'
 import { formatRepRange, isTimed } from '../lib/repRange'
+import { sheetPath } from '../lib/routes'
 import { countsAsWork } from '../lib/setTypes'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
@@ -83,9 +84,23 @@ export default function RoutinePreview() {
       <PageHeader
         title={routine ? routineName(routine, locale) : t('routines.title')}
         onBack="history"
+        action={
+          routineId ? (
+            // The brief shows the last three sessions one exercise at a time;
+            // the sheet shows every week at once. Same data, other axis.
+            <Link
+              to={sheetPath(routineId)}
+              className="flex items-center gap-1.5 rounded-xl bg-ink-700 px-3 py-2.5 text-xs
+                         font-medium text-ink-100 active:bg-ink-600"
+            >
+              <Table2 size={15} />
+              {t('sheet.open')}
+            </Link>
+          ) : undefined
+        }
       />
 
-      <div className="space-y-3 px-4 py-4">
+      <div className="space-y-3 px-5 py-4">
         <p className="px-1 text-xs leading-relaxed text-ink-300">{t('preview.intro')}</p>
 
         {(brief ?? []).map((entry, index) => (
@@ -97,18 +112,20 @@ export default function RoutinePreview() {
           starting has to stay one tap away. `bottom-tabbar` carries the home
           indicator inset; a plain `bottom-16` sits under the tab bar on any
           phone that has one. */}
-      <div className="fixed inset-x-0 bottom-tabbar z-30 border-t border-ink-500/40 bg-ink-900/95 px-4 py-3 backdrop-blur">
-        <button
-          type="button"
-          onClick={begin}
-          disabled={starting}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 py-3.5
-                     text-base font-bold text-ink-950 active:scale-[0.98] transition-transform
-                     disabled:opacity-60"
-        >
-          <Play size={19} fill="currentColor" />
-          {t('routines.start')}
-        </button>
+      <div className="fixed inset-x-0 bottom-tabbar z-30 border-t border-ink-500/40 bg-ink-900/95 backdrop-blur">
+        <div className="page-width px-4 py-3">
+          <button
+            type="button"
+            onClick={begin}
+            disabled={starting}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 py-3.5
+                       text-base font-bold text-ink-950 active:scale-[0.98] transition-transform
+                       disabled:opacity-60"
+          >
+            <Play size={19} fill="currentColor" />
+            {t('routines.start')}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -148,11 +165,7 @@ function BriefCard({ entry, units }: { entry: RoutineBriefItem; units: Units }) 
         <div className="flex items-center gap-2 border-y border-ink-500/40 bg-brand-500/5 px-4 py-2.5">
           <TrendingUp size={14} className="shrink-0 text-brand-500" />
           <span className="min-w-0 flex-1 text-xs text-ink-200">
-            {t(
-              suggestion.reason === 'hit-target'
-                ? 'workout.reasonHitTarget'
-                : 'workout.reasonRepeatedMiss'
-            )}
+            {t(SUGGESTION_REASON[suggestion.reason])}
           </span>
           <span className="tabular shrink-0 text-xs font-bold text-brand-500">
             {formatNumber(toDisplayWeight(suggestion.weight, units))} {unitLabel(units, locale)}

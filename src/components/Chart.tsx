@@ -6,9 +6,9 @@ import type { ReactNode } from 'react'
 
 export const CHART = {
   series: '#A3E635', // brand.500
-  grid: '#32323A', // ink.500
-  axis: '#A1A1AA', // ink.300
-  surface: '#18181B', // ink.700
+  grid: '#343742', // ink.500
+  axis: '#A3A7B5', // ink.300
+  surface: '#191A20', // ink.700
 } as const
 
 export function ChartCard({

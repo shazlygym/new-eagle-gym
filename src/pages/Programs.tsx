@@ -58,14 +58,14 @@ export default function Programs() {
           <Link
             to="/programs/new"
             aria-label={t('programs.new')}
-            className="rounded-xl bg-ink-700 p-2 text-brand-500 active:bg-ink-600"
+            className="icon-btn bg-ink-700 text-brand-500 active:bg-ink-600"
           >
             <Plus size={20} />
           </Link>
         }
       />
 
-      <div className="px-4 py-4">
+      <div className="px-5 py-4">
         {programs.length === 0 ? (
           <EmptyState
             icon={CalendarRange}
@@ -131,7 +131,7 @@ export default function Programs() {
                     <Link
                       to={`/programs/${program.id}`}
                       aria-label={t('common.edit')}
-                      className="shrink-0 rounded-xl bg-ink-600 p-2.5 text-ink-100 active:bg-ink-500"
+                      className="icon-btn bg-ink-600 text-ink-100 active:bg-ink-500"
                     >
                       <Pencil size={16} />
                     </Link>
@@ -159,7 +159,7 @@ export default function Programs() {
                                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold
                                             ${
                                               done
-                                                ? 'bg-green-500 text-ink-950'
+                                                ? 'bg-brand-500 text-ink-950'
                                                 : 'bg-ink-500 text-ink-200'
                                             }`}
                               >

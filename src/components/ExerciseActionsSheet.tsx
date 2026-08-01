@@ -109,7 +109,7 @@ function Row({
       disabled={disabled}
       className={`flex w-full items-center gap-3 rounded-xl bg-ink-700 px-4 py-3.5 text-start
                   active:bg-ink-600 disabled:opacity-35
-                  ${destructive ? 'text-red-400' : accent ? 'text-aqua-300' : 'text-ink-50'}`}
+                  ${destructive ? 'text-danger-400' : accent ? 'text-aqua-300' : 'text-ink-50'}`}
     >
       <Icon size={18} className="shrink-0" />
       <span className="min-w-0 flex-1">

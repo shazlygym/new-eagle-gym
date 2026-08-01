@@ -127,6 +127,28 @@ export const ar: Record<TranslationKey, string> = {
   'routines.needExercise': 'أضف تمريناً واحداً على الأقل.',
   'routines.exerciseCount': 'تمارين: {count}',
 
+  'sheet.title': 'شيت التدريب',
+  'sheet.open': 'الشيت',
+  'sheet.exercise': 'التمرين',
+  'sheet.sets': 'مجاميع',
+  'sheet.rest': 'راحة',
+  'sheet.week': 'أسبوع {week}',
+  'sheet.live': 'جارٍ الآن',
+  'sheet.resume': 'متابعة',
+  'sheet.previousWeek': 'آخر مرة',
+  'sheet.noPrevious': 'لا يوجد تسجيل سابق لهذا التمرين.',
+  'sheet.useSuggestion': 'املأ الوزن المقترح',
+  'sheet.copyWeek': 'انسخ الأسبوع الماضي هنا · {count} تمارين',
+  'sheet.reps': 'عدات',
+  'sheet.hold': 'المدة',
+  'sheet.blankHint': 'اترك العدات صفراً لحذف المجموعة. تفريغ كل المجاميع يفرّغ الخانة.',
+  'sheet.intro':
+    'الخطة على اليمين وكل الأسابيع بجانبها. اضغط أي خانة لتسجيل أسبوع أو تعديله — الأسبوع السابق يظل أمامك وأنت تكتب.',
+  'sheet.noPlan': 'أضف تمارين إلى هذا الروتين وستظهر هنا.',
+  'sheet.outsidePlan': 'خارج الخطة',
+  'sheet.showAll': 'عرض {count} أسابيع أقدم',
+  'sheet.tapToLog': 'سجّل هذا الأسبوع',
+
   'exercises.title': 'التمارين',
   'exercises.searchPlaceholder': 'ابحث عن تمرين',
   'exercises.new': 'تمرين جديد',
@@ -264,6 +286,7 @@ export const ar: Record<TranslationKey, string> = {
   'workout.reasonHitTarget': 'أكملت كل التكرارات المستهدفة آخر مرة — ارفع الوزن.',
   'workout.reasonMissedTarget': 'اثبت على هذا الوزن حتى تكمل الهدف في كل المجموعات.',
   'workout.reasonRepeatedMiss': 'توقّف تقدمك مرتين. خفّف الوزن وابنِ من جديد.',
+  'workout.reasonEasyTarget': 'أنهيت كل المجاميع وفي جعبتك تكرارات. ارفع قفزة أكبر.',
 
   'programs.title': 'البرامج',
   'programs.new': 'برنامج جديد',
@@ -314,6 +337,13 @@ export const ar: Record<TranslationKey, string> = {
   'analytics.other': 'أخرى',
   'analytics.balanceHint':
     'تقارب الدفع والسحب يحافظ على صحة الكتف. الفجوات الكبيرة تستحق التصحيح.',
+  'analytics.weeklySets': 'هذا الأسبوع لكل عضلة',
+  // Latin digits, like every other number the app prints — Arabic-Indic here
+  // would be the one place they appear and would read as a different figure.
+  'analytics.weeklySetsRange': 'مجاميع فعلية · المستهدف 10–20',
+  'analytics.usually': 'عادةً {count}',
+  'analytics.weeklySetsHint':
+    'من عشر إلى عشرين مجموعة جادّة أسبوعياً هي المدى الذي تُبنى فيه العضلة. الشريط الفاتح هو هذا المدى — والعمود الأقصر منه أمامه بقية الأسبوع ليلحق.',
   'analytics.load': 'حِمل التدريب',
   'analytics.loadRatio': 'نسبة الحِمل',
   'analytics.loadHint':
@@ -362,6 +392,7 @@ export const ar: Record<TranslationKey, string> = {
   'train.exercises': 'مكتبة التمارين',
   'train.exercisesHint': 'تصفّح المكتبة وأضف تماريـنك الخاصة',
   'train.activeProgram': 'البرنامج النشط',
+  'train.planning': 'التخطيط',
 
   'nav.nutrition': 'الأكل',
 
@@ -422,6 +453,24 @@ export const ar: Record<TranslationKey, string> = {
   'nutrition.maintenance': 'الثبات {kcal}',
   'nutrition.bmr': 'الراحة {kcal}',
   'nutrition.kcalUnit': 'سعر',
+
+  'energy.title': 'سعراتك الحقيقية للثبات',
+  'energy.subtitle': 'محسوبة من أربعة أسابيع من أكلك ووزنك أنت',
+  'energy.maintenance': 'سعر يومياً يثبّت وزنك',
+  'energy.avgIntake': 'متوسط ما تأكله',
+  'energy.weightTrend': 'اتجاه الوزن',
+  'energy.perWeek': 'أسبوعياً',
+  'energy.setTarget': 'اجعل هدفي اليومي {kcal}',
+  'energy.targetMatches': 'هدفك مضبوط على هذا الرقم',
+  'energy.basis': 'محسوبة من {days} يوم مسجّل و{weighIns} قياس وزن.',
+  'energy.basisLow':
+    'محسوبة من {days} يوم مسجّل و{weighIns} قياس وزن — تكفي لتراها، ولا تكفي لتبني عليها بعد. واصل التسجيل.',
+  'energy.needMore':
+    'سجّل أكلك وقِس وزنك لأسبوعين، وسيحسب لك هذا كم تحرق فعلاً — بأرقامك أنت، لا بمعادلة عامة.',
+  'energy.impossible':
+    'سجلّ أكلك والميزان لا يتّفقان — الرقم الخارج منهما ليس رقماً يستطيع جسم أن يعيش عليه. غالباً السبب أن أياماً سُجِّلت ناقصة. سجّل أياماً كاملة لأسبوعين وسيستقرّ الرقم.',
+  'energy.daysLogged': 'يوم مسجّل',
+  'energy.weighIns': 'قياس وزن',
   'nutrition.sex': 'النوع',
   'nutrition.male': 'ذكر',
   'nutrition.female': 'أنثى',

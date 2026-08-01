@@ -97,7 +97,14 @@ export default function NumberField({
               setDraft(null)
             }}
             onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
-            className="tabular field w-full text-center font-semibold"
+            // .field's px-4 is right for a full-width form field and wrong here:
+            // in the workout grid the box is ~57px, so 32px of padding left 22px
+            // of text room and a centred "77.5" rendered as "7.5" — the wrong
+            // number, silently. ps/pe are logical and are emitted after px in
+            // Tailwind's utility order, so they win over the component class.
+            className={`tabular field w-full ps-2 text-center font-semibold ${
+              suffix ? 'pe-9' : 'pe-2'
+            }`}
           />
           {suffix && (
             <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-xs text-ink-300">

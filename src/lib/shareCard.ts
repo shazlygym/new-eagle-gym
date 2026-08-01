@@ -57,8 +57,8 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
 
   // Background: the app's page black with a soft brand glow up top.
   const bg = ctx.createLinearGradient(0, 0, 0, H)
-  bg.addColorStop(0, '#17171B')
-  bg.addColorStop(1, '#09090B')
+  bg.addColorStop(0, '#1B1D25')
+  bg.addColorStop(1, '#08080B')
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, W, H)
 
@@ -70,8 +70,8 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
 
   // Brand strip along the top edge.
   const strip = ctx.createLinearGradient(0, 0, W, 0)
-  strip.addColorStop(0, '#A3E635')
-  strip.addColorStop(1, '#22D3EE')
+  strip.addColorStop(0, '#C9F358')
+  strip.addColorStop(1, '#8CCF22')
   ctx.fillStyle = strip
   ctx.fillRect(0, 0, W, 14)
 
@@ -88,12 +88,12 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   ctx.fillText(data.appName, startX, y)
 
   y += 108
-  ctx.fillStyle = '#FAFAFA'
+  ctx.fillStyle = '#FAFAFC'
   ctx.font = FONT('700', 76)
   ctx.fillText(truncate(ctx, data.title, contentWidth), startX, y)
 
   y += 62
-  ctx.fillStyle = '#A1A1AA'
+  ctx.fillStyle = '#A3A7B5'
   ctx.font = FONT('400', 36)
   ctx.fillText(data.dateLabel, startX, y)
 
@@ -107,19 +107,19 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
     const slot = data.rtl ? data.stats.length - 1 - index : index
     const x = MARGIN + slot * (tileWidth + gap)
 
-    ctx.fillStyle = '#18181B'
+    ctx.fillStyle = '#191A20'
     roundRect(ctx, x, y, tileWidth, tileHeight, 28)
     ctx.fill()
-    ctx.strokeStyle = '#32323A'
+    ctx.strokeStyle = '#343742'
     ctx.lineWidth = 2
     ctx.stroke()
 
     const centerX = x + tileWidth / 2
     ctx.textAlign = 'center'
-    ctx.fillStyle = '#FAFAFA'
+    ctx.fillStyle = '#FAFAFC'
     ctx.font = FONT('700', 58)
     ctx.fillText(truncate(ctx, stat.value, tileWidth - 32), centerX, y + 92)
-    ctx.fillStyle = '#C7C7D0'
+    ctx.fillStyle = '#C9CCD6'
     ctx.font = FONT('400', 30)
     ctx.fillText(truncate(ctx, stat.label, tileWidth - 32), centerX, y + 148)
     ctx.textAlign = data.rtl ? 'right' : 'left'
@@ -145,7 +145,7 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
       ctx.stroke()
 
       const middle = y + rowHeight / 2 + 14
-      ctx.fillStyle = '#FAFAFA'
+      ctx.fillStyle = '#FAFAFC'
       ctx.font = FONT('600', 38)
       ctx.fillText(truncate(ctx, record.name, contentWidth * 0.55), data.rtl ? W - MARGIN - 36 : MARGIN + 36, middle)
 
@@ -164,7 +164,7 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
 
   // Footer.
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#A1A1AA'
+  ctx.fillStyle = '#A3A7B5'
   ctx.font = FONT('400', 30)
   ctx.fillText(data.tagline, W / 2, H - 76)
 

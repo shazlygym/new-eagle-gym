@@ -255,7 +255,7 @@ function Choice<T extends string>({
             key={option.value}
             type="button"
             onClick={() => onSelect(option.value)}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+            className={`rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                         ${
                           selected === option.value
                             ? 'bg-brand-500 text-ink-950'

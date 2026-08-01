@@ -51,7 +51,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-ink-950 px-6 pb-10 pt-safe-t">
+    <div className="page-width flex min-h-dvh flex-col bg-ink-950 px-6 pb-10 pt-safe-t">
       <div className="flex flex-1 flex-col justify-center py-10">
         <img
           src="/icons/icon-192.png"
@@ -81,7 +81,7 @@ export default function Onboarding() {
               enterKeyHint="done"
               className="field"
             />
-            {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+            {error && <p className="mt-1.5 text-xs text-danger-400">{error}</p>}
           </div>
 
           <div>

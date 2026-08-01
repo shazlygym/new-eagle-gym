@@ -1,4 +1,4 @@
-import { format, subDays } from 'date-fns'
+import { differenceInCalendarWeeks, format, subDays } from 'date-fns'
 import {
   claimSharedExercises,
   db,
@@ -24,6 +24,7 @@ import {
 import { SEED_FOODS } from './foods'
 import { SEED_EXERCISES } from './seed'
 import { repTargetFor } from '../lib/repRange'
+import { countsAsWork } from '../lib/setTypes'
 
 // Every read and write in the app goes through this module — nothing else
 // imports Dexie directly. That keeps the storage engine swappable: adding a
@@ -737,6 +738,290 @@ export async function routineBrief(
       return { item, exercise, history }
     })
   )
+}
+
+// ─── Training sheet ───────────────────────────────────────────────────────────
+
+/** Weeks start on Saturday, matching db/queries.ts. */
+const SHEET_WEEK_OPTIONS = { weekStartsOn: 6 } as const
+
+/** One week column: the session it stands for. */
+export interface SheetColumn {
+  sessionId: string
+  /** The day trained. */
+  date: number
+  /** 1-based, counted in calendar weeks from the routine's first session. */
+  week: number
+  /** A workout running right now. Its column is read-only. */
+  live: boolean
+}
+
+/** One exercise row, with its working sets bucketed by session. */
+export interface SheetRow {
+  exerciseId: string
+  exercise: Exercise | undefined
+  /** The plan for it, or undefined once it has been dropped from the routine. */
+  item: RoutineItem | undefined
+  /** sessionId → completed working sets, in set order. */
+  cells: Record<string, SetEntry[]>
+}
+
+export interface RoutineSheet {
+  routine: Routine | undefined
+  columns: SheetColumn[]
+  rows: SheetRow[]
+  /** The routine's very first session, so week numbers survive a column cap. */
+  firstDate: number | undefined
+  /** Columns that exist but were cut by `limit`. */
+  hiddenColumns: number
+}
+
+/**
+ * The whole routine as a grid: one row per exercise, one column per session.
+ *
+ * The plan already answered "how many sets" and the brief answered "what did I
+ * do last time", but neither puts week 3 next to week 5 — the comparison that
+ * tells you whether the last month went anywhere. This assembles that view from
+ * the sets themselves; nothing here is stored, so it cannot drift from the log.
+ */
+export async function routineSheet(
+  profileId: string,
+  routineId: string,
+  limit = 12
+): Promise<RoutineSheet> {
+  const routine = await getRoutine(routineId)
+  if (!routine) {
+    return { routine: undefined, columns: [], rows: [], firstDate: undefined, hiddenColumns: 0 }
+  }
+
+  const sessions = (await listSessions(profileId)).filter((s) => s.routineId === routineId)
+  const sets = await listSetsForSessions(sessions.map((s) => s.id))
+
+  // sessionId → exerciseId → sets. Only completed working sets are shown: a row
+  // laid out by startSession and never ticked was planned, not performed, and
+  // rendering it would fill the sheet with weights nobody lifted.
+  const bySession = new Map<string, Map<string, SetEntry[]>>()
+  for (const set of sets) {
+    if (set.done !== 1 || !countsAsWork(set.setType)) continue
+    let exercises = bySession.get(set.sessionId)
+    if (!exercises) {
+      exercises = new Map()
+      bySession.set(set.sessionId, exercises)
+    }
+    const bucket = exercises.get(set.exerciseId)
+    if (bucket) bucket.push(set)
+    else exercises.set(set.exerciseId, [set])
+  }
+
+  // A session that was opened and abandoned has nothing to show, and an empty
+  // column would push the weeks that do have numbers off the screen. The live
+  // one is the exception — it has to stay visible so the sheet can hand you
+  // back to the workout instead of quietly logging a second one beside it.
+  const kept = sessions.filter((s) => s.status === 'active' || bySession.has(s.id))
+
+  // Oldest first only to find the baseline; `listSessions` already sorted the
+  // other way, which is the order the columns render in.
+  const firstDate = kept.length > 0 ? kept[kept.length - 1].startedAt : undefined
+
+  const columns: SheetColumn[] = kept.slice(0, limit).map((session) => ({
+    sessionId: session.id,
+    date: session.startedAt,
+    week: sheetWeekNumber(session.startedAt, firstDate),
+    live: session.status === 'active',
+  }))
+
+  const visible = new Set(columns.map((column) => column.sessionId))
+
+  // Exercises trained under this routine that the plan no longer lists. Dropping
+  // one from the routine must not silently hide the weeks it was trained for.
+  const planned = new Set(routine.items.map((item) => item.exerciseId))
+  const extra: string[] = []
+  for (const sessionId of visible) {
+    for (const exerciseId of bySession.get(sessionId)?.keys() ?? []) {
+      if (!planned.has(exerciseId) && !extra.includes(exerciseId)) extra.push(exerciseId)
+    }
+  }
+
+  const order = [...routine.items.map((item) => item.exerciseId), ...extra]
+  const exercises = await db.exercises.bulkGet(order)
+
+  const rows: SheetRow[] = order.map((exerciseId, index) => {
+    const cells: Record<string, SetEntry[]> = {}
+    for (const column of columns) {
+      const found = bySession.get(column.sessionId)?.get(exerciseId)
+      if (found) cells[column.sessionId] = [...found].sort((a, b) => a.setNumber - b.setNumber)
+    }
+    return {
+      exerciseId,
+      exercise: exercises[index] ?? undefined,
+      item: routine.items.find((item) => item.exerciseId === exerciseId),
+      cells,
+    }
+  })
+
+  return {
+    routine,
+    columns,
+    rows,
+    firstDate,
+    hiddenColumns: Math.max(0, kept.length - columns.length),
+  }
+}
+
+/**
+ * Which week of the routine a date falls in, 1-based. Exported so the sheet can
+ * label the column for a session that does not exist yet.
+ */
+export function sheetWeekNumber(date: number, firstDate: number | undefined): number {
+  if (firstDate === undefined) return 1
+  return differenceInCalendarWeeks(date, firstDate, SHEET_WEEK_OPTIONS) + 1
+}
+
+/** One row of the cell editor. Weight is in kilograms, like everywhere else. */
+export interface SheetSetInput {
+  weight: number
+  reps: number
+  durationSeconds?: number
+  rpe?: number
+  setType: SetType
+}
+
+/**
+ * Writes one cell of the sheet — every set of one exercise in one session.
+ *
+ * These are ordinary sets in an ordinary session, so History, the charts, the
+ * records and the backup all pick them up without knowing the sheet exists.
+ * Omit `sessionId` to start a new column; the returned id is that new session,
+ * so filling the rest of the week's exercises lands in the same one.
+ */
+export async function saveSheetCell(input: {
+  profileId: string
+  routineId: string
+  exerciseId: string
+  sessionId?: string
+  sets: SheetSetInput[]
+}): Promise<string | undefined> {
+  const existing = input.sessionId ? await db.sessions.get(input.sessionId) : undefined
+
+  // The workout screen owns a running session: it keeps un-ticked rows laid out
+  // ahead of you, and reconciling against them here would delete them.
+  if (existing?.status === 'active') {
+    throw new Error('Cannot edit a live session from the sheet')
+  }
+
+  // Empty rows are what an unfilled box looks like, not a set of zero reps.
+  // Weight stays free — a bodyweight set is 0 kg for real reps.
+  const rows = input.sets
+    .map((set) => ({
+      ...set,
+      weight: Math.max(0, set.weight),
+      reps: Math.max(0, Math.round(set.reps)),
+      durationSeconds: set.durationSeconds ? Math.max(0, Math.round(set.durationSeconds)) : undefined,
+    }))
+    .filter((set) => set.reps > 0 || (set.durationSeconds ?? 0) > 0)
+
+  // Nothing to write and nothing to clear.
+  if (rows.length === 0 && !existing) return undefined
+
+  const routine = await getRoutine(input.routineId)
+  const now = Date.now()
+
+  const session: Session = existing ?? {
+    id: newId(),
+    profileId: input.profileId,
+    routineId: input.routineId,
+    titleAr: routine?.nameAr,
+    titleEn: routine?.nameEn,
+    startedAt: now,
+    // Finished on arrival: a sheet entry is a record of training that already
+    // happened, and an active session would raise "workout in progress" on Home
+    // for a workout nobody is doing.
+    endedAt: now,
+    status: 'done',
+  }
+
+  // Sets added to a past workout belong to that workout's date, not today's —
+  // the same rule setSetDone follows. Stamping them with now would file last
+  // month's session under this week and skew every chart and record.
+  const completedAt = existing ? (existing.endedAt ?? existing.startedAt) : now
+
+  const item = routine?.items.find((entry) => entry.exerciseId === input.exerciseId)
+  const exercise = await db.exercises.get(input.exerciseId)
+  const plannedIndex = routine?.items.findIndex((entry) => entry.exerciseId === input.exerciseId)
+
+  await db.transaction('rw', db.sessions, db.sessionExercises, db.sets, async () => {
+    if (!existing) await db.sessions.add(session)
+
+    const siblings = await listSessionExercises(session.id)
+    const found = siblings.find((entry) => entry.exerciseId === input.exerciseId)
+
+    if (rows.length === 0) {
+      // The cell was cleared. Take the exercise back out, and the session with it
+      // if that emptied it — an empty session would otherwise sit in History as a
+      // workout that never happened. Count what is left rather than the total:
+      // clearing an exercise this session never had must not delete the ones it
+      // does have.
+      if (found) await removeSessionExerciseWithin(found.id)
+      const remaining = siblings.length - (found ? 1 : 0)
+      if (remaining === 0) await db.sessions.delete(session.id)
+      return
+    }
+
+    const slot: SessionExercise = found ?? {
+      id: newId(),
+      sessionId: session.id,
+      exerciseId: input.exerciseId,
+      // Follow the plan's order so the session reads top to bottom the way the
+      // routine does, however out of order the cells were filled in.
+      order: plannedIndex !== undefined && plannedIndex >= 0 ? plannedIndex : siblings.length,
+      targetSets: item?.targetSets ?? rows.length,
+      ...(item
+        ? { targetReps: item.targetReps, targetRepsMax: item.targetRepsMax }
+        : repTargetFor(exercise)),
+      restSeconds: item?.restSeconds ?? 90,
+      supersetGroup: item?.supersetGroup,
+    }
+    if (!found) await db.sessionExercises.add(slot)
+
+    const before = await db.sets.where('sessionExerciseId').equals(slot.id).toArray()
+
+    // Warm-ups are never shown in the sheet, so they are never the sheet's to
+    // delete. They keep the low set numbers they already had.
+    const warmups = before
+      .filter((set) => !countsAsWork(set.setType))
+      .sort((a, b) => a.setNumber - b.setNumber)
+
+    await db.sets.bulkDelete(before.filter((set) => countsAsWork(set.setType)).map((set) => set.id))
+    await Promise.all(
+      warmups.map((set, index) => db.sets.update(set.id, { setNumber: index + 1 }))
+    )
+
+    await db.sets.bulkAdd(
+      rows.map((row, index) => ({
+        id: newId(),
+        sessionExerciseId: slot.id,
+        sessionId: session.id,
+        profileId: input.profileId,
+        exerciseId: input.exerciseId,
+        setNumber: warmups.length + index + 1,
+        weight: row.weight,
+        reps: row.reps,
+        durationSeconds: row.durationSeconds,
+        rpe: row.rpe,
+        setType: row.setType,
+        done: 1 as const,
+        completedAt,
+      }))
+    )
+  })
+
+  return session.id
+}
+
+/** removeSessionExercise's body, for callers already inside a transaction. */
+async function removeSessionExerciseWithin(id: string): Promise<void> {
+  await db.sets.where('sessionExerciseId').equals(id).delete()
+  await db.sessionExercises.delete(id)
 }
 
 /**

@@ -1,4 +1,5 @@
 import {
+  differenceInCalendarDays,
   differenceInCalendarWeeks,
   eachWeekOfInterval,
   endOfWeek,
@@ -10,10 +11,12 @@ import {
   subWeeks,
 } from 'date-fns'
 import type {
+  BodyStat,
   Exercise,
   MealEntry,
   Movement,
   MuscleGroup,
+  NutritionGoal,
   Program,
   Session,
   SetEntry,
@@ -360,6 +363,87 @@ export function volumeByMuscle(sets: SetEntry[], exercises: Exercise[]): MuscleV
   return [...totals.values()].sort((a, b) => b.volume - a.volume)
 }
 
+/**
+ * Where the weekly set count for a muscle stops being too little and starts
+ * being too much. Ten to twenty is where the hypertrophy literature clusters:
+ * under ten a week barely moves the needle, and past twenty the returns flatten
+ * while the recovery bill does not.
+ */
+export const WEEKLY_SETS_TARGET = { min: 10, max: 20 } as const
+
+/** Rows always appear in this order, so the card reads the same place twice. */
+const MUSCLE_ORDER: MuscleGroup[] = [
+  'chest',
+  'back',
+  'shoulders',
+  'arms',
+  'legs',
+  'core',
+  'fullBody',
+  'cardio',
+]
+
+/** Cardio is measured in minutes and full-body work lands everywhere at once —
+ *  neither has an honest set target, so neither gets judged against one. */
+const UNRATED: MuscleGroup[] = ['cardio', 'fullBody']
+
+export interface MuscleWeek {
+  muscleGroup: MuscleGroup
+  /** Working sets logged since this week started. */
+  sets: number
+  /** Weekly average over the four weeks before this one — the personal norm. */
+  baseline: number
+  status: 'low' | 'onTarget' | 'high' | 'unrated'
+}
+
+/**
+ * This week's working sets per muscle, against the range a program is written in.
+ *
+ * `volumeByMuscle` answers where the work went all-time, which is a fine record
+ * and useless as a decision: nobody plans next week from a lifetime total. Sets
+ * per muscle per week is the unit programs are actually written in, and the one
+ * number that says "back is short, add a row" while there is still a week left
+ * to do it in.
+ *
+ * A muscle trained in the last month but not this week stays in the list at zero
+ * — that gap is the finding, and dropping the row would hide it.
+ */
+export function weeklyMuscleSets(sets: SetEntry[], exercises: Exercise[]): MuscleWeek[] {
+  const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]))
+  const now = new Date()
+  const weekStart = startOfWeek(now, WEEK_OPTIONS).getTime()
+  const baselineStart = startOfWeek(subWeeks(now, 4), WEEK_OPTIONS).getTime()
+
+  const current = new Map<MuscleGroup, number>()
+  const before = new Map<MuscleGroup, number>()
+
+  for (const set of sets) {
+    if (set.done !== 1 || !countsAsWork(set.setType)) continue
+    const at = set.completedAt
+    if (at === undefined || at < baselineStart) continue
+    const group = byId.get(set.exerciseId)?.muscleGroup
+    if (!group) continue
+    const bucket = at >= weekStart ? current : before
+    bucket.set(group, (bucket.get(group) ?? 0) + 1)
+  }
+
+  return MUSCLE_ORDER.filter((group) => current.has(group) || before.has(group)).map((group) => {
+    const count = current.get(group) ?? 0
+    return {
+      muscleGroup: group,
+      sets: count,
+      baseline: (before.get(group) ?? 0) / 4,
+      status: UNRATED.includes(group)
+        ? 'unrated'
+        : count < WEEKLY_SETS_TARGET.min
+          ? 'low'
+          : count > WEEKLY_SETS_TARGET.max
+            ? 'high'
+            : 'onTarget',
+    }
+  })
+}
+
 export type BalanceKey = 'push' | 'pull' | 'legs' | 'other'
 
 /**
@@ -618,6 +702,139 @@ export function nutritionPeriod(
     onTargetDays: kcalTarget
       ? logged.filter((day) => Math.abs(day.kcal - kcalTarget) <= kcalTarget * 0.1).length
       : undefined,
+  }
+}
+
+// ─── Energy balance ───────────────────────────────────────────────────────────
+
+/** Energy stored in a kilogram of body mass. The constant every diet runs on. */
+const KCAL_PER_KG = 7700
+
+/** Weekly weight change each goal is aiming for, in kilograms. */
+const GOAL_RATE: Record<NutritionGoal, number> = {
+  cut: -0.5,
+  maintain: 0,
+  bulk: 0.25,
+}
+
+/** Outside this, the arithmetic has picked up water weight rather than fat. */
+const PLAUSIBLE_TDEE = { min: 1000, max: 5500 }
+
+export interface EnergyBalance {
+  /** Mean daily intake over the days that were actually logged. */
+  avgKcal: number
+  loggedDays: number
+  /** Kilograms per week, from a least-squares fit through the weigh-ins. */
+  weightChangePerWeek: number
+  weighIns: number
+  /**
+   * Days between the first and last weigh-in. Two of them an hour apart are two
+   * readings of the same morning, not a trend, so the caller needs this to tell
+   * a met requirement from an unmet one.
+   */
+  spanDays: number
+  /** Maintenance implied by what was eaten and what the scale did. */
+  measuredTdee: number | null
+  confidence: 'none' | 'low' | 'good'
+  /**
+   * Why there is no number yet, so the caller can say which — "keep logging" and
+   * "these two numbers cannot both be true" are different problems and only one
+   * of them is solved by waiting.
+   */
+  reason: 'measured' | 'needMore' | 'impossible'
+  /** What to eat to hit the goal from here. Null without a goal or a number. */
+  suggestedKcal: number | null
+}
+
+/**
+ * Maintenance calories measured from your own data instead of predicted.
+ *
+ * `suggestTargets` runs Mifflin–St Jeor, which is a population average with a
+ * ±200 kcal spread on any individual — it is the right way to start and the
+ * wrong way to stay. Once there are a few weeks of food logs and weigh-ins the
+ * body has answered the question directly: whatever was eaten, plus or minus
+ * what the scale did, *is* maintenance for this person. That number beats any
+ * formula, and it is the one thing a calorie tracker can know that a calculator
+ * cannot.
+ *
+ * The weight trend is a least-squares slope rather than last minus first: a
+ * single salty dinner moves the scale a kilo, and two endpoints would report
+ * that as a fortnight of gaining.
+ */
+export function energyBalance(
+  entries: MealEntry[],
+  stats: BodyStat[],
+  endDate: string,
+  days: number,
+  goal?: NutritionGoal
+): EnergyBalance {
+  const period = nutritionPeriod(entries, endDate, days)
+  const logged = period.days.filter((day) => day.logged)
+  const avgKcal = period.average.kcal
+
+  const end = parseISO(endDate)
+  const start = subDays(end, days - 1)
+  const points = stats
+    .filter((stat) => stat.weight !== undefined && stat.weight > 0)
+    .map((stat) => ({ day: differenceInCalendarDays(parseISO(stat.date), start), kg: stat.weight! }))
+    .filter((point) => point.day >= 0 && point.day <= days - 1)
+    .sort((a, b) => a.day - b.day)
+
+  const span = points.length > 1 ? points[points.length - 1].day - points[0].day : 0
+  const empty: EnergyBalance = {
+    avgKcal,
+    loggedDays: logged.length,
+    weightChangePerWeek: 0,
+    weighIns: points.length,
+    spanDays: span,
+    measuredTdee: null,
+    confidence: 'none',
+    reason: 'needMore',
+    suggestedKcal: null,
+  }
+
+  if (points.length < 2 || span < 7 || logged.length < 7 || avgKcal <= 0) return empty
+
+  const meanDay = points.reduce((sum, p) => sum + p.day, 0) / points.length
+  const meanKg = points.reduce((sum, p) => sum + p.kg, 0) / points.length
+  const variance = points.reduce((sum, p) => sum + (p.day - meanDay) ** 2, 0)
+  if (variance <= 0) return empty
+
+  const perDay =
+    points.reduce((sum, p) => sum + (p.day - meanDay) * (p.kg - meanKg), 0) / variance
+  const weightChangePerWeek = perDay * 7
+
+  // Ate 2400, gained 0.2 kg a day: the extra energy came from somewhere, so
+  // maintenance is intake minus the surplus the scale banked.
+  const tdee = Math.round(avgKcal - perDay * KCAL_PER_KG)
+  const plausible = tdee >= PLAUSIBLE_TDEE.min && tdee <= PLAUSIBLE_TDEE.max
+  if (!plausible) {
+    // Nobody maintains on 400 kcal. A figure this far out means the food log is
+    // missing meals rather than that the body is unusual, and more weeks of the
+    // same half-logged days will not fix it — so it is reported as its own
+    // problem instead of as "not enough data yet".
+    return { ...empty, reason: 'impossible', weightChangePerWeek, weighIns: points.length }
+  }
+
+  // Three weigh-ins over a fortnight is where a slope stops being two dots and a
+  // line. Below that it is worth showing and worth hedging, not worth acting on.
+  // Twenty of twenty-eight days logged, too: the average is taken over the days
+  // that were logged, so a half-logged month understates intake and the whole
+  // sum tips with it.
+  const confidence = logged.length >= 20 && points.length >= 3 && span >= 14 ? 'good' : 'low'
+
+  return {
+    avgKcal,
+    loggedDays: logged.length,
+    weightChangePerWeek,
+    weighIns: points.length,
+    spanDays: span,
+    measuredTdee: tdee,
+    confidence,
+    reason: 'measured',
+    suggestedKcal: goal
+      ? Math.round((tdee + (GOAL_RATE[goal] * KCAL_PER_KG) / 7) / 10) * 10
+      : null,
   }
 }
 

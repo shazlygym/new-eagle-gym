@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CalendarDays, ChevronRight, Ruler, TrendingUp } from 'lucide-react'
+import { CalendarDays, ChevronRight, Ruler, TrendingUp, type LucideIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -19,6 +19,7 @@ import {
   LoadRatioCard,
   MuscleVolumeCard,
   RecordTimelineCard,
+  WeeklyMuscleCard,
 } from '../components/AnalyticsCards'
 import { CHART, ChartCard, ChartTooltip } from '../components/Chart'
 import EmptyState from '../components/EmptyState'
@@ -32,6 +33,7 @@ import {
   personalRecords,
   recordTimeline,
   volumeByMuscle,
+  weeklyMuscleSets,
   weeklyVolume,
 } from '../db/queries'
 import type { ExerciseRecord } from '../db/queries'
@@ -106,6 +108,7 @@ export default function Progress() {
     [records]
   )
 
+  const weeklySets = useMemo(() => weeklyMuscleSets(sets, exercises), [sets, exercises])
   const muscleVolume = useMemo(() => volumeByMuscle(sets, exercises), [sets, exercises])
   const balance = useMemo(() => movementBalance(sets, exercises), [sets, exercises])
   const load = useMemo(() => loadRatio(sessions, sets), [sessions, sets])
@@ -123,9 +126,8 @@ export default function Progress() {
           title={t('progress.noData')}
           body={t('progress.noDataHint')}
         />
-        <div className="space-y-3 px-4">
-          <HistoryLink />
-          <BodyLink />
+        <div className="px-5">
+          <ArchiveLinks />
         </div>
       </div>
     )
@@ -135,9 +137,8 @@ export default function Progress() {
     <div>
       <PageHeader title={t('progress.title')} large />
 
-      <div className="space-y-4 px-4 py-4">
-        <HistoryLink />
-        <BodyLink />
+      <div className="space-y-4 px-5 py-4">
+        <ArchiveLinks />
 
         <ChartCard title={t('progress.weeklyVolume')} subtitle={unitLabel(units, locale)}>
           <ResponsiveContainer width="100%" height={180}>
@@ -188,7 +189,7 @@ export default function Progress() {
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="shrink-0 rounded-lg bg-ink-600 px-3 py-1.5 text-xs font-medium text-ink-100 active:bg-ink-500"
+              className="shrink-0 rounded-lg bg-ink-600 px-3 py-2.5 text-xs font-medium text-ink-100 active:bg-ink-500"
             >
               {t('progress.selectExercise')}
             </button>
@@ -236,24 +237,30 @@ export default function Progress() {
         )}
 
         <LoadRatioCard data={load} units={units} />
+        {/* Before the all-time rankings, because this is the only card here you
+            can still act on — the week it describes has not finished yet. */}
+        <WeeklyMuscleCard data={weeklySets} />
         <MuscleVolumeCard data={muscleVolume} units={units} />
         <BalanceCard data={balance} />
         <ComparisonCard data={comparison} units={units} />
         <RecordTimelineCard events={timeline} exercises={exercises} units={units} />
 
         <section>
-          <h2 className="section-title mb-2 px-1">{t('progress.records')}</h2>
-          <ul className="space-y-1.5">
+          <h2 className="section-title mb-2.5">{t('progress.records')}</h2>
+          {/* One card, hairline rows. A record is a line in a table, not an
+              object — twenty of them as twenty separate cards was twenty
+              shadows to scroll past. */}
+          <ul className="card divide-y divide-ink-500/30 overflow-hidden">
             {rankedRecords.map((record) => (
-              <li key={record.exerciseId} className="card flex items-center gap-3 p-4">
+              <li key={record.exerciseId} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink-50">
+                  <p className="truncate text-sm font-semibold text-ink-50">
                     {exerciseName(
                       exercises.find((e) => e.id === record.exerciseId),
                       locale
                     )}
                   </p>
-                  <p className="mt-0.5 text-xs text-ink-300">
+                  <p className="mt-0.5 text-[11px] text-ink-400">
                     {t('progress.lastDone')} · {formatShortDay(record.lastPerformedAt, locale)}
                   </p>
                 </div>
@@ -310,11 +317,11 @@ function RecordValue({ record, units }: { record: ExerciseRecord; units: Units }
   if (record.bestE1rm > 0) {
     return (
       <div className="shrink-0 text-end">
-        <p className="tabular text-sm font-bold text-brand-500">
+        <p className="tabular font-numeric text-sm font-bold text-ink-50">
           {formatNumber(toDisplayWeight(record.bestWeight, units))} {unitLabel(units, locale)} ×{' '}
           {record.bestWeightReps}
         </p>
-        <p className="tabular mt-0.5 text-xs text-ink-300">
+        <p className="tabular mt-0.5 text-[11px] text-ink-400">
           {t('progress.e1rm')} {formatNumber(toDisplayWeight(record.bestE1rm, units))}
         </p>
       </div>
@@ -324,10 +331,10 @@ function RecordValue({ record, units }: { record: ExerciseRecord; units: Units }
   if (record.bestDuration > 0) {
     return (
       <div className="shrink-0 text-end">
-        <p className="tabular text-sm font-bold text-brand-500">
+        <p className="tabular font-numeric text-sm font-bold text-ink-50">
           {formatClock(record.bestDuration)}
         </p>
-        <p className="mt-0.5 text-xs text-ink-300">{t('progress.bestHold')}</p>
+        <p className="mt-0.5 text-[11px] text-ink-400">{t('progress.bestHold')}</p>
       </div>
     )
   }
@@ -338,39 +345,50 @@ function RecordValue({ record, units }: { record: ExerciseRecord; units: Units }
       <p className="tabular text-sm font-bold text-brand-500">
         {record.bestReps} {t('common.reps')}
       </p>
-      <p className="mt-0.5 text-xs text-ink-300">{t('progress.bestSet')}</p>
+      <p className="mt-0.5 text-[11px] text-ink-400">{t('progress.bestSet')}</p>
     </div>
   )
 }
 
-function HistoryLink() {
+/**
+ * The two archives behind this screen. One card, two hairline rows: they are
+ * navigation, and giving each its own surface with its own tinted icon tile put
+ * "where the old workouts live" at the same weight as the charts below.
+ */
+function ArchiveLinks() {
   const { t } = useT()
   return (
-    <Link to="/history" className="card flex items-center gap-3 p-4 active:bg-ink-600">
-      <div className="rounded-xl bg-ink-600 p-2.5 text-brand-400">
-        <CalendarDays size={18} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-ink-50">{t('history.title')}</p>
-        <p className="text-xs text-ink-300">{t('history.emptyHint')}</p>
-      </div>
-      <ChevronRight size={18} className="rtl-flip shrink-0 text-ink-300" />
-    </Link>
+    <div className="card divide-y divide-ink-500/30 overflow-hidden">
+      <ArchiveRow
+        to="/history"
+        icon={CalendarDays}
+        title={t('history.title')}
+        hint={t('history.emptyHint')}
+      />
+      <ArchiveRow to="/body" icon={Ruler} title={t('body.title')} hint={t('body.log')} />
+    </div>
   )
 }
 
-function BodyLink() {
-  const { t } = useT()
+function ArchiveRow({
+  to,
+  icon: Icon,
+  title,
+  hint,
+}: {
+  to: string
+  icon: LucideIcon
+  title: string
+  hint: string
+}) {
   return (
-    <Link to="/body" className="card flex items-center gap-3 p-4 active:bg-ink-600">
-      <div className="rounded-xl bg-ink-600 p-2.5 text-brand-500">
-        <Ruler size={18} />
-      </div>
+    <Link to={to} className="flex items-center gap-3 px-4 py-3.5 active:bg-ink-600/60">
+      <Icon size={17} className="shrink-0 text-brand-500" />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-ink-50">{t('body.title')}</p>
-        <p className="text-xs text-ink-300">{t('body.log')}</p>
+        <p className="truncate text-sm font-semibold text-ink-50">{title}</p>
+        <p className="mt-0.5 truncate text-[11px] text-ink-400">{hint}</p>
       </div>
-      <ChevronRight size={18} className="rtl-flip shrink-0 text-ink-300" />
+      <ChevronRight size={16} className="rtl-flip shrink-0 text-ink-500" />
     </Link>
   )
 }

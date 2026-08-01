@@ -68,7 +68,7 @@ export default function PhotoSection({ profileId }: { profileId: string }) {
           <button
             type="button"
             onClick={() => setCompareOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-medium text-brand-500"
+            className="-me-2 flex items-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-medium text-brand-500 active:bg-ink-600"
           >
             <ArrowLeftRight size={13} />
             {t('body.compare')}
@@ -103,7 +103,7 @@ export default function PhotoSection({ profileId }: { profileId: string }) {
             onClick={() => fileInput.current?.click()}
             aria-label={t('body.addPhoto')}
             className="flex h-32 w-24 shrink-0 items-center justify-center rounded-xl border
-                       border-dashed border-ink-400 text-brand-500 active:bg-ink-700
+                       border-dashed border-ink-500 text-brand-500 active:bg-ink-700
                        disabled:opacity-50"
           >
             <Camera size={20} />
@@ -111,7 +111,7 @@ export default function PhotoSection({ profileId }: { profileId: string }) {
         </div>
       )}
 
-      {error && <p className="mt-2 px-1 text-xs text-red-400">{error}</p>}
+      {error && <p className="mt-2 px-1 text-xs text-danger-400">{error}</p>}
 
       <input
         ref={fileInput}
@@ -133,7 +133,7 @@ export default function PhotoSection({ profileId }: { profileId: string }) {
             type="button"
             onClick={() => setConfirmDelete(true)}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink-600
-                       py-3 text-sm font-medium text-red-400 active:bg-ink-500"
+                       py-3 text-sm font-medium text-danger-400 active:bg-ink-500"
           >
             <Trash2 size={16} />
             {t('common.delete')}
@@ -251,7 +251,7 @@ function CompareColumn({
           disabled={index === 0}
           onClick={() => onStep(-1)}
           aria-label={t('common.previous')}
-          className="rounded-lg bg-ink-600 p-1.5 text-ink-200 active:bg-ink-500 disabled:opacity-30"
+          className="icon-btn-sm bg-ink-600 text-ink-200 active:bg-ink-500 disabled:opacity-30"
         >
           <ChevronLeft size={15} />
         </button>
@@ -263,7 +263,7 @@ function CompareColumn({
           disabled={index === photos.length - 1}
           onClick={() => onStep(1)}
           aria-label={t('common.next')}
-          className="rounded-lg bg-ink-600 p-1.5 text-ink-200 active:bg-ink-500 disabled:opacity-30"
+          className="icon-btn-sm bg-ink-600 text-ink-200 active:bg-ink-500 disabled:opacity-30"
         >
           <ChevronRight size={15} />
         </button>

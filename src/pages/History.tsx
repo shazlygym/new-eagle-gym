@@ -49,14 +49,14 @@ export default function History() {
     <div>
       <PageHeader title={t('history.title')} large />
 
-      <section className="px-4 py-4">
+      <section className="px-5 py-4">
         <div className="card p-4">
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
               onClick={() => setMonth(addMonths(month, -1))}
               aria-label={t('common.previous')}
-              className="rounded-lg p-1.5 text-ink-200 active:bg-ink-600"
+              className="icon-btn-sm text-ink-200 active:bg-ink-600"
             >
               <ChevronLeft size={20} className="rtl-flip" />
             </button>
@@ -67,7 +67,7 @@ export default function History() {
               type="button"
               onClick={() => setMonth(addMonths(month, 1))}
               aria-label={t('common.next')}
-              className="rounded-lg p-1.5 text-ink-200 active:bg-ink-600"
+              className="icon-btn-sm text-ink-200 active:bg-ink-600"
             >
               <ChevronRight size={20} className="rtl-flip" />
             </button>

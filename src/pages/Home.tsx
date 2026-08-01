@@ -3,6 +3,7 @@ import { startOfWeek } from 'date-fns'
 import {
   CalendarDays,
   CalendarClock,
+  ChevronLeft,
   Dumbbell,
   Flame,
   Play,
@@ -10,6 +11,7 @@ import {
   RotateCcw,
   ShieldAlert,
   Weight,
+  type LucideIcon,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
@@ -17,7 +19,6 @@ import InstallHint from '../components/InstallHint'
 import PageHeader from '../components/PageHeader'
 import ProgressRing from '../components/ProgressRing'
 import Reveal from '../components/Reveal'
-import StatCard from '../components/StatCard'
 import TodayPlanCard from '../components/TodayPlanCard'
 import WeightCard from '../components/WeightCard'
 import {
@@ -143,6 +144,14 @@ export default function Home() {
     navigate(`/workout/${sessionId}`)
   }
 
+  // Exactly one hero per screen, picked in the order the question is actually
+  // urgent: a workout already running beats the plan, the plan beats a routine
+  // you might pick, and a routine beats an empty start. Everything not chosen
+  // drops into the list below at list weight — which is what stopped the home
+  // screen being four identical cards with no answer among them.
+  const heroRoutine = !active && !program ? routines[0] : undefined
+  const listRoutines_ = heroRoutine ? routines.slice(1) : routines
+
   return (
     <div className="pb-6">
       <PageHeader
@@ -156,18 +165,20 @@ export default function Home() {
           <button
             type="button"
             onClick={() => navigate(`/workout/${active.id}`)}
-            className="flex w-full animate-pulse-brand items-center gap-3 rounded-2xl
+            className="flex w-full animate-pulse-brand items-center gap-3 rounded-[20px]
                        bg-brand-gradient p-4 text-start text-ink-950 active:scale-[0.99]
                        transition-transform"
           >
-            <Play size={20} className="shrink-0" fill="currentColor" />
+            <Play size={22} className="shrink-0" fill="currentColor" />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold">{t('home.activeTitle')}</p>
-              <p className="text-xs opacity-80">
+              <p className="text-[10px] font-bold uppercase tracking-[0.13em] opacity-70">
+                {t('home.activeTitle')}
+              </p>
+              <p className="truncate text-lg font-extrabold leading-tight">{t('home.resume')}</p>
+              <p className="text-xs font-medium opacity-80">
                 {t('home.activeBody', { time: formatTimeAgo(active.startedAt, locale) })}
               </p>
             </div>
-            <span className="shrink-0 text-sm font-bold">{t('home.resume')}</span>
           </button>
         </Reveal>
       )}
@@ -182,96 +193,96 @@ export default function Home() {
         </Reveal>
       )}
 
-      <Reveal index={2} className="px-5 pt-4">
-        <h2 className="section-title mb-3">{t('home.quickStart')}</h2>
-
-        {routines.length === 0 ? (
-          <p className="mb-3 text-sm text-ink-300">{t('home.noRoutines')}</p>
-        ) : (
-          <ul className="mb-3 space-y-2">
-            {routines.map((routine) => (
-              <li key={routine.id}>
-                <button
-                  type="button"
-                  onClick={() => begin(routine.id)}
-                  className="card flex w-full items-center gap-3 p-4 text-start active:bg-ink-600"
-                >
-                  <div className="rounded-xl bg-ink-600 p-2.5 text-brand-500">
-                    <Dumbbell size={18} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-ink-50">
-                      {routineName(routine, locale)}
-                    </p>
-                    <p className="text-xs text-ink-300">
-                      {t('routines.exerciseCount', { count: routine.items.length })}
-                    </p>
-                  </div>
-                  <Play size={18} className="shrink-0 text-brand-500" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="space-y-2">
-          {recent.length > 0 && (
-            <button
-              type="button"
-              onClick={() => repeat(recent[0].id)}
-              className="card flex w-full items-center gap-3 p-4 text-start active:bg-ink-600"
-            >
-              <div className="rounded-xl bg-ink-600 p-2.5 text-brand-500">
-                <RotateCcw size={18} className="rtl-flip" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-ink-50">{t('home.repeat')}</p>
-                <p className="truncate text-xs text-ink-300">
-                  {(locale === 'ar' ? recent[0].titleAr : recent[0].titleEn) ||
-                    t('workout.untitled')}{' '}
-                  · {formatTimeAgo(recent[0].startedAt, locale)}
-                </p>
-              </div>
-              <Play size={18} className="shrink-0 text-brand-500" />
-            </button>
-          )}
-
+      {heroRoutine && (
+        <Reveal index={1} className="px-5 pt-4">
           <button
             type="button"
-            onClick={() => begin()}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border
-                       border-dashed border-ink-400 py-3.5 text-sm font-medium
-                       text-brand-500 active:bg-ink-700"
+            onClick={() => begin(heroRoutine.id)}
+            className="card-hero flex w-full items-start gap-3 p-4 text-start active:bg-ink-50/[0.04]"
           >
-            <Plus size={18} />
-            {t('home.startEmpty')}
+            <div className="min-w-0 flex-1">
+              <p className="eyebrow text-brand-500">{t('home.nextUp')}</p>
+              <p className="mt-1.5 truncate text-[26px] font-extrabold leading-[1.1] tracking-[-0.02em] text-ink-50">
+                {routineName(heroRoutine, locale)}
+              </p>
+              <p className="mt-1 truncate text-xs text-ink-300">
+                {t('routines.exerciseCount', { count: heroRoutine.items.length })}
+              </p>
+            </div>
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full
+                         bg-brand-gradient text-ink-950 shadow-brand"
+            >
+              <Play size={20} fill="currentColor" className="ms-0.5 rtl-flip" />
+            </span>
           </button>
+        </Reveal>
+      )}
+
+      {/* One card, hairline rows. Four separate cards each 68px tall with a
+          20px icon and two short lines was a lot of scroll for very little —
+          a list of choices should look like a list, not like four decisions. */}
+      <Reveal index={2} className="px-5 pt-6">
+        <h2 className="section-title mb-2.5">{t('home.quickStart')}</h2>
+
+        <div className="card divide-y divide-ink-500/30 overflow-hidden">
+          {listRoutines_.length === 0 && !heroRoutine && (
+            <p className="px-4 py-3.5 text-sm text-ink-300">{t('home.noRoutines')}</p>
+          )}
+
+          {listRoutines_.map((routine) => (
+            <QuickRow
+              key={routine.id}
+              icon={Dumbbell}
+              title={routineName(routine, locale)}
+              meta={t('routines.exerciseCount', { count: routine.items.length })}
+              onClick={() => begin(routine.id)}
+            />
+          ))}
+
+          {recent.length > 0 && (
+            <QuickRow
+              icon={RotateCcw}
+              title={t('home.repeat')}
+              meta={`${
+                (locale === 'ar' ? recent[0].titleAr : recent[0].titleEn) || t('workout.untitled')
+              } · ${formatTimeAgo(recent[0].startedAt, locale)}`}
+              onClick={() => repeat(recent[0].id)}
+            />
+          )}
+
+          <QuickRow icon={Plus} title={t('home.startEmpty')} muted onClick={() => begin()} />
         </div>
       </Reveal>
 
-      <Reveal index={3} className="grid grid-cols-3 gap-2.5 px-5 pt-4">
-        <StatCard icon={Flame} label={t('home.streak')} value={String(streak)} />
-        <StatCard
-          icon={CalendarDays}
-          label={t('home.thisWeek')}
-          value={String(doneThisWeek)}
-          hint={t('home.workouts')}
-        />
-        <StatCard
-          icon={Weight}
-          label={t('common.volume')}
-          // Compact from the first thousand, unit in the hint — the tile is a
-          // third of a phone wide and can't hold both.
-          value={volumeValue(volumeThisWeek(sessions, weekSets), units, { compact: true })}
-          hint={unitLabel(units, locale)}
-        />
+      {/* One object, three readings — the three floating tiles read as three
+          unrelated facts, and at a third of a phone wide none of them had room
+          to say what it was. */}
+      <Reveal index={3} className="px-5 pt-3">
+        <div className="card flex divide-x divide-ink-500/30">
+          <Stat icon={Flame} label={t('home.streak')} value={String(streak)} />
+          <Stat
+            icon={CalendarDays}
+            label={t('home.thisWeek')}
+            value={String(doneThisWeek)}
+            hint={t('home.workouts')}
+          />
+          <Stat
+            icon={Weight}
+            label={t('common.volume')}
+            // Compact from the first thousand, unit in the hint — the column is
+            // a third of a phone wide and can't hold both.
+            value={volumeValue(volumeThisWeek(sessions, weekSets), units, { compact: true })}
+            hint={unitLabel(units, locale)}
+          />
+        </div>
       </Reveal>
 
       {weeklyTarget > 0 && (
         <Reveal index={4} className="px-5 pt-3">
           <div
             className={`card flex items-center gap-4 p-4 ${
-              doneThisWeek >= weeklyTarget ? 'border-green-500/40' : ''
+              doneThisWeek >= weeklyTarget ? 'border-brand-500/40' : ''
             }`}
           >
             <ProgressRing
@@ -295,8 +306,8 @@ export default function Home() {
 
       {showInactiveNudge && (
         <Reveal index={5} className="px-5 pt-3">
-          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
-            <CalendarClock size={20} className="shrink-0 text-amber-400" />
+          <div className="card flex items-center gap-3 border-flame-500/30 p-4">
+            <CalendarClock size={20} className="shrink-0 text-flame-400" />
             <p className="min-w-0 flex-1 text-sm text-ink-100">
               {t('home.inactiveNudge', { days: daysSinceLast })}
             </p>
@@ -306,21 +317,27 @@ export default function Home() {
 
       {showBackupNudge && (
         <Reveal index={6} className="px-5 pt-3">
-          <div className="card flex items-center gap-3 border-amber-500/30 p-4">
-            <ShieldAlert size={20} className="shrink-0 text-amber-400" />
+          <div className="card flex items-center gap-3 border-flame-500/30 p-4">
+            <ShieldAlert size={20} className="shrink-0 text-flame-400" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-ink-50">{t('home.backupNudge')}</p>
               <p className="mt-0.5 text-xs leading-relaxed text-ink-300">
                 {t('home.backupNudgeHint')}
               </p>
-              <div className="mt-2 flex gap-4">
-                <Link to="/settings" className="text-xs font-semibold text-brand-500">
+              {/* -mx-2 keeps the labels optically flush with the text above
+                  while the padding gives both a 36px-tall target — "Later" was
+                  23×16, which is a miss waiting to happen. */}
+              <div className="-mx-2 mt-1 flex gap-2">
+                <Link
+                  to="/settings"
+                  className="rounded-lg px-2 py-2.5 text-xs font-semibold text-brand-500 active:bg-ink-600"
+                >
                   {t('settings.export')}
                 </Link>
                 <button
                   type="button"
                   onClick={snoozeBackupNudge}
-                  className="text-xs font-medium text-ink-300"
+                  className="rounded-lg px-2 py-2.5 text-xs font-medium text-ink-300 active:bg-ink-600"
                 >
                   {t('common.later')}
                 </button>
@@ -342,7 +359,10 @@ export default function Home() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="section-title">{t('home.recent')}</h2>
           {recent.length > 0 && (
-            <Link to="/history" className="text-xs font-medium text-brand-500">
+            <Link
+              to="/history"
+              className="-me-2 rounded-lg px-2 py-2.5 text-xs font-medium text-brand-500 active:bg-ink-600"
+            >
               {t('common.viewAll')}
             </Link>
           )}
@@ -355,23 +375,23 @@ export default function Home() {
             body={t('home.noWorkoutsHint')}
           />
         ) : (
-          <ul className="space-y-2">
+          <ul className="card divide-y divide-ink-500/30 overflow-hidden">
             {recent.map((session) => (
               <li key={session.id}>
                 <Link
                   to={`/history/${session.id}`}
-                  className="card flex items-center gap-3 p-4 active:bg-ink-600"
+                  className="flex items-center gap-3 px-4 py-3 active:bg-ink-600/60"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-ink-50">
+                    <p className="truncate text-sm font-semibold text-ink-50">
                       {(locale === 'ar' ? session.titleAr : session.titleEn) ||
                         t('workout.untitled')}
                     </p>
-                    <p className="text-xs text-ink-300">
+                    <p className="mt-0.5 text-[11px] text-ink-400">
                       {formatTimeAgo(session.startedAt, locale)}
                     </p>
                   </div>
-                  <span className="tabular shrink-0 text-sm font-semibold text-brand-500">
+                  <span className="tabular font-numeric shrink-0 text-sm font-bold text-ink-100">
                     {/* volumeOf, not a raw sum — warm-ups and timed work must
                         not read as tonnage here when they don't anywhere else. */}
                     {formatVolume(
@@ -389,6 +409,72 @@ export default function Home() {
           </ul>
         )}
       </Reveal>
+    </div>
+  )
+}
+
+/**
+ * One line of the quick-start list. Deliberately not a card: these are choices
+ * inside one decision, and giving each its own surface made the screen read as
+ * four unrelated offers with nothing to pick between them.
+ */
+function QuickRow({
+  icon: Icon,
+  title,
+  meta,
+  muted,
+  onClick,
+}: {
+  icon: LucideIcon
+  title: string
+  meta?: string
+  /** The escape hatch at the bottom of the list — present, not promoted. */
+  muted?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 px-4 py-3 text-start active:bg-ink-600/60"
+    >
+      <Icon
+        size={17}
+        className={`shrink-0 rtl-flip ${muted ? 'text-ink-400' : 'text-brand-500'}`}
+      />
+      <span className="min-w-0 flex-1">
+        <span
+          className={`block truncate text-sm font-semibold ${muted ? 'text-ink-200' : 'text-ink-50'}`}
+        >
+          {title}
+        </span>
+        {meta && <span className="mt-0.5 block truncate text-[11px] text-ink-400">{meta}</span>}
+      </span>
+      <ChevronLeft size={16} className="shrink-0 text-ink-500 ltr:rotate-180" />
+    </button>
+  )
+}
+
+/** One reading in the week's strip. Three of these share a single card. */
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+  hint?: string
+}) {
+  return (
+    <div className="min-w-0 flex-1 px-3 py-3.5 text-center">
+      <Icon size={13} strokeWidth={2.2} className="mx-auto text-ink-400" />
+      <p className="num-lg mt-1.5 truncate text-ink-50">{value}</p>
+      {/* The label wraps rather than clips: Arabic "أسابيع متتالية" came out as
+          "أسابيع متت…", which names nothing. */}
+      <p className="mt-1 text-[10px] font-medium leading-tight text-ink-300">{label}</p>
+      {hint && <p className="text-[10px] leading-tight text-ink-500">{hint}</p>}
     </div>
   )
 }

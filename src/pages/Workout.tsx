@@ -14,6 +14,7 @@ import {
   addSet,
   deleteSession,
   finishSession,
+  getProgram,
   getSession,
   listSessionExercises,
   listSetsForSession,
@@ -44,6 +45,18 @@ export default function Workout() {
   const session = useLiveQuery(async () => (await getSession(sessionId)) ?? null, [sessionId])
   const sessionExercises = useLiveQuery(() => listSessionExercises(sessionId), [sessionId]) ?? []
   const sets = useLiveQuery(() => listSetsForSession(sessionId), [sessionId]) ?? []
+
+  // A block that says it adds 5 kg a week should add 5 kg a week. The setting
+  // has been on the program form since programs shipped and nothing ever read
+  // it, so every block quietly progressed at one plate step instead.
+  const program = useLiveQuery(
+    () => (session?.programId ? getProgram(session.programId) : undefined),
+    [session?.programId]
+  )
+  const progressionStepKg =
+    program?.progression.kind === 'linear' && program.progression.incrementKg > 0
+      ? program.progression.incrementKg
+      : undefined
 
   // Declared after the session query it reads from, and before the early
   // returns below — hooks must run unconditionally on every render.
@@ -93,7 +106,9 @@ export default function Workout() {
   }
 
   return (
-    <div className="min-h-dvh bg-ink-950">
+    // page-width because this screen renders outside AppShell and would
+    // otherwise be the one place that still stretches to a desktop window.
+    <div className="page-width min-h-dvh bg-ink-950">
       <PageHeader
         title={title}
         // A live stopwatch, not "less than a minute ago" — you want to know how
@@ -106,7 +121,8 @@ export default function Workout() {
             // Finishing with nothing ticked off would leave an empty workout in
             // History and a zero in every chart, so that path discards instead.
             onClick={() => (completedCount > 0 ? setConfirmFinish(true) : setConfirmDiscard(true))}
-            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-bold text-ink-950
+                       shadow-brand active:scale-95 transition-transform"
           >
             {t('workout.finish')}
           </button>
@@ -114,7 +130,7 @@ export default function Workout() {
       />
 
       {/* Bottom padding clears the rest timer bar when it is showing. */}
-      <div className={`space-y-3 px-4 py-4 ${timer.active ? 'pb-32' : 'pb-24'}`}>
+      <div className={`space-y-3 px-5 py-4 ${timer.active ? 'pb-32' : 'pb-24'}`}>
         {sessionExercises.length === 0 ? (
           <EmptyState
             icon={Dumbbell}
@@ -158,6 +174,7 @@ export default function Workout() {
                     sessionExercises[index + 1]?.supersetGroup === sessionExercise.supersetGroup
                 )}
                 trackRpe={profile.trackRpe === 1}
+                progressionStepKg={progressionStepKg}
               />
             ))}
 
@@ -165,10 +182,10 @@ export default function Workout() {
               type="button"
               onClick={() => setPickerOpen(true)}
               className="flex w-full items-center justify-center gap-2 rounded-2xl border
-                         border-dashed border-ink-400 py-3.5 text-sm font-medium
-                         text-brand-500 active:bg-ink-700"
+                         border-dashed border-ink-500 py-3.5 text-sm font-medium
+                         text-ink-200 active:bg-ink-700"
             >
-              <Plus size={18} />
+              <Plus size={18} className="text-brand-500" />
               {t('workout.addExercise')}
             </button>
           </>
@@ -193,7 +210,7 @@ export default function Workout() {
         <button
           type="button"
           onClick={() => setConfirmDiscard(true)}
-          className="w-full py-3 text-sm font-medium text-red-400 active:opacity-60"
+          className="w-full py-3 text-sm font-medium text-danger-400 active:opacity-60"
         >
           {t('workout.discard')}
         </button>

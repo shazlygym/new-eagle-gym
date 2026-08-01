@@ -123,7 +123,7 @@ export default function Settings() {
     <div>
       <PageHeader title={t('settings.title')} large />
 
-      <div className="space-y-6 px-4 py-4">
+      <div className="space-y-6 px-5 py-4">
         <Section title={t('settings.profile')}>
           <div className="card space-y-4 p-4">
             <div>
@@ -327,7 +327,7 @@ export default function Settings() {
                 </div>
                 <div
                   className={`flex items-center gap-3 text-xs ${
-                    storage.persisted ? 'text-green-400' : 'text-amber-400'
+                    storage.persisted ? 'text-brand-400' : 'text-flame-400'
                   }`}
                 >
                   {storage.persisted ? (
@@ -345,7 +345,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setConfirmClear(true)}
-              className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-red-400 active:bg-ink-600"
+              className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-danger-400 active:bg-ink-600"
             >
               <Trash2 size={18} className="shrink-0" />
               {t('settings.clearData')}
@@ -355,7 +355,7 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => setConfirmDeleteProfile(true)}
-                className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-red-400 active:bg-ink-600"
+                className="card flex w-full items-center gap-3 p-4 text-start text-sm font-medium text-danger-400 active:bg-ink-600"
               >
                 <Trash2 size={18} className="shrink-0" />
                 {t('settings.deleteProfile')}
@@ -375,8 +375,10 @@ export default function Settings() {
         </Section>
       </div>
 
+      {/* mx-auto with both insets set and no explicit width centres the toast on
+          a wide screen instead of stretching it across the whole window. */}
       {toast && (
-        <div className="fixed inset-x-4 bottom-24 z-50 animate-fade-in rounded-xl bg-ink-600 px-4 py-3 text-center text-sm text-ink-50 shadow-xl">
+        <div className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md animate-fade-in rounded-xl bg-ink-600 px-4 py-3 text-center text-sm text-ink-50 shadow-xl">
           {toast}
         </div>
       )}
@@ -438,8 +440,8 @@ function Section({
 }) {
   return (
     <section>
-      <h2 className="section-title mb-2 px-1">{title}</h2>
-      {hint && <p className="mb-2 px-1 text-xs leading-relaxed text-ink-300">{hint}</p>}
+      <h2 className="section-title mb-2.5">{title}</h2>
+      {hint && <p className="-mt-1 mb-2.5 text-xs leading-relaxed text-ink-300">{hint}</p>}
       {children}
     </section>
   )

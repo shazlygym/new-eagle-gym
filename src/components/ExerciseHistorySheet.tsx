@@ -4,7 +4,14 @@ import { e1rm } from '../db/queries'
 import { getExercise, listSetsForExercise } from '../db/repository'
 import type { SetEntry, Units } from '../db/schema'
 import { exerciseName, useT } from '../i18n'
-import { formatClock, formatNumber, formatShortDay, toDisplayWeight, unitLabel } from '../lib/format'
+import {
+  formatClock,
+  formatNumber,
+  formatShortDay,
+  ltrIsolate,
+  toDisplayWeight,
+  unitLabel,
+} from '../lib/format'
 import Sheet from './Sheet'
 
 // Recharts stays out of the workout bundle; it loads the first time a history
@@ -109,9 +116,14 @@ export default function ExerciseHistorySheet({
                       key={set.id}
                       className="tabular rounded-lg bg-ink-600 px-2.5 py-1 text-xs text-ink-50"
                     >
+                      {/* Digits and an × with no strong character anywhere, so
+                          bare in Arabic "70 × 10" lays out as "10 × 70" — ten
+                          kilos for seventy reps. */}
                       {set.durationSeconds
                         ? formatClock(set.durationSeconds)
-                        : `${formatNumber(toDisplayWeight(set.weight, units))} × ${set.reps}`}
+                        : ltrIsolate(
+                            `${formatNumber(toDisplayWeight(set.weight, units))} × ${set.reps}`
+                          )}
                     </span>
                   ))}
                 </div>

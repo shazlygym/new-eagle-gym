@@ -14,16 +14,15 @@
   body {
     @apply bg-ink-950 text-ink-50 font-sans antialiased;
     margin: 0;
-    /* A faint brand glow at the top of each screen — the difference between
-       "dark grey app" and a lit room. Cheap: one gradient, no extra element.
-       Weaker than the old blue one: lime at the same alpha tints the whole
-       page green instead of just lifting it. */
-    background-image: radial-gradient(
-      140% 44% at 50% 0%,
-      rgba(163, 230, 53, 0.055),
-      transparent 62%
-    );
+    /* Two lights, not one. A tight lime key light where the content starts, and
+       a wide cold fill behind it — the same way a gym is lit, one warm source
+       over the platform and the room falling off cool behind it. A single flat
+       glow is what made every screen read as one even grey plane. */
+    background-image:
+      radial-gradient(88% 26% at 50% -2%, rgba(163, 230, 53, 0.09), transparent 70%),
+      radial-gradient(120% 52% at 50% 0%, rgba(56, 189, 248, 0.045), transparent 72%);
     background-repeat: no-repeat;
+    background-attachment: fixed;
     /* Grey flash on tap is another browser tell. */
     -webkit-tap-highlight-color: transparent;
   }
@@ -80,11 +79,21 @@
 }
 
 @layer components {
+  /* ─── Elevation ─────────────────────────────────────────────────────────
+     Three tiers, and a screen should use all three. Everything being a `.card`
+     is what made the app read as one flat grey sheet: with no surface above or
+     below any other, nothing could be more important than anything else.
+
+       .card-sunk   recessed — a well the content sits *in* (rows, readouts)
+       .card        resting  — the default object on the page
+       .card-hero   raised   — the one thing per screen that matters most
+  */
+
   /* A card is a lit surface, not a hole: a soft top-down gradient plus a
      hairline highlight along the top edge. */
   .card {
     @apply rounded-2xl border border-ink-500/40;
-    background-image: linear-gradient(180deg, #1E1E22 0%, theme('colors.ink.700') 60%);
+    background-image: linear-gradient(180deg, #1F212A 0%, theme('colors.ink.700') 62%);
     box-shadow:
       inset 0 1px 0 0 rgb(255 255 255 / 0.05),
       0 1px 2px 0 rgb(0 0 0 / 0.45);
@@ -95,34 +104,107 @@
      at all — the gradient itself has to change. */
   button.card:active,
   a.card:active {
-    background-image: linear-gradient(180deg, #2A2A30 0%, theme('colors.ink.600') 60%);
+    background-image: linear-gradient(180deg, #2C2F3A 0%, theme('colors.ink.600') 62%);
   }
 
-  /* The accent surface, for the one thing on a screen that matters most. */
+  /* Recessed. The inset shadow along the top edge is the whole trick: light
+     falls from above, so a lit top edge reads as raised and a shadowed one
+     reads as cut into the page. */
+  .card-sunk {
+    @apply rounded-xl border border-ink-500/25 bg-ink-800;
+    box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  }
+
+  /* The single raised surface per screen. It carries the knurl texture, a
+     brighter top highlight and real elevation, so it wins by material rather
+     than by being the biggest thing — which is what lets the type stay calm. */
+  .card-hero {
+    @apply relative overflow-hidden rounded-[20px] border border-ink-500/60;
+    background-color: theme('colors.ink.700');
+    background-image:
+      repeating-linear-gradient(
+        115deg,
+        rgba(255, 255, 255, 0.05) 0px,
+        rgba(255, 255, 255, 0.05) 1px,
+        transparent 1px,
+        transparent 7px
+      ),
+      linear-gradient(168deg, #262932 0%, #1B1D25 58%, theme('colors.ink.700') 100%);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.08),
+      0 2px 6px -2px rgb(0 0 0 / 0.55),
+      0 16px 32px -16px rgb(0 0 0 / 0.9);
+  }
+
+  /* The accent surface, for the one thing on a screen that matters most. Lime
+     only now — the cyan half of the old gradient made it a second brand. */
   .card-accent {
     @apply rounded-2xl border border-brand-500/30;
     background-image: linear-gradient(
-      135deg,
-      rgba(163, 230, 53, 0.12) 0%,
-      rgba(34, 211, 238, 0.12) 100%
+      158deg,
+      rgba(163, 230, 53, 0.16) 0%,
+      rgba(163, 230, 53, 0.04) 100%
     );
   }
 
+  /* ─── Type ──────────────────────────────────────────────────────────────
+     No display webface: the app renders offline from the system stack, so the
+     display voice is built from weight, tracking and scale instead. Tight
+     tracking on the big sizes and wide tracking on the small ones is what
+     makes a scale read as deliberate rather than as "some text is bigger". */
+
+  /**
+   * A section heading with a lime collar — the clamp at the end of a loaded
+   * bar. It is the one repeated mark in the app: every section on every screen
+   * starts with the same 3px stop, so scrolling reads as passing plates rather
+   * than as an undifferentiated column of grey boxes.
+   */
   .section-title {
-    @apply text-[11px] font-bold uppercase tracking-[0.09em] text-ink-300;
+    @apply flex items-center gap-2 text-[10px] font-extrabold uppercase
+           tracking-[0.15em] text-ink-300;
+  }
+
+  .section-title::before {
+    content: '';
+    flex: none;
+    width: 3px;
+    height: 11px;
+    border-radius: 999px;
+    background-color: theme('colors.brand.500');
   }
 
   .display-title {
-    @apply text-[30px] font-bold leading-[1.15] tracking-tight text-ink-50;
+    @apply text-[29px] font-extrabold leading-[1.08] tracking-[-0.022em] text-ink-50;
   }
 
-  /* Dark label, not white: lime and cyan are both light enough that white text
-     on them lands around 1.5:1. Ink-950 on either end of the gradient is 11:1
-     or better. Every other brand-filled surface follows the same rule. */
+  /** A number that is the answer, not a statistic. One per screen at most. */
+  .num-hero {
+    @apply tabular font-numeric text-[40px] font-extrabold leading-[0.95]
+           tracking-[-0.035em];
+  }
+
+  /** The next step down — a figure inside a card that still leads it. */
+  .num-lg {
+    @apply tabular font-numeric text-[21px] font-bold leading-none tracking-[-0.02em];
+  }
+
+  /** A label above a number. Small, wide, quiet — it names, it does not speak. */
+  .eyebrow {
+    @apply text-[10px] font-bold uppercase tracking-[0.13em] text-ink-400;
+  }
+
+  /* Dark label, not white: lime is light enough that white text on it lands
+     around 1.5:1. Ink-950 on it is 11:1 or better, and every other
+     brand-filled surface in the app follows the same rule. */
   .btn-primary {
     @apply rounded-2xl bg-brand-gradient px-5 py-3.5 font-semibold text-ink-950 shadow-brand
            active:scale-[0.98] transition-transform disabled:opacity-40
            disabled:active:scale-100;
+    /* A bright hairline along the top edge. Without it the button is a flat
+       swatch; with it the surface has a lit edge like everything else here. */
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.4),
+      0 6px 24px -6px rgba(163, 230, 53, 0.35);
   }
 
   .btn-ghost {
@@ -134,6 +216,48 @@
     @apply w-full rounded-xl bg-ink-800 border border-ink-500/50 px-4 py-3
            text-ink-50 placeholder:text-ink-400 outline-none
            focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 transition;
+  }
+
+  /* Every screen here is laid out for a phone. With nothing capping the width,
+     a tablet or a desktop browser stretches the same card edge to edge and the
+     two controls that belong together end up 700px apart. Anything that spans
+     the viewport — page content, the tab bar, the rest timer — is centred on
+     this one column so the layout stays the shape it was designed in. */
+  .page-width {
+    @apply mx-auto w-full max-w-lg;
+  }
+
+  /* A square icon button that is actually thumb-sized. 44px is the floor in
+     Apple's HIG and roughly where mis-taps start; several of these were 28. */
+  .icon-btn {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+  }
+
+  /* One step down, for the icon clusters inside dense list rows where a 44px
+     square would squeeze the row's own text. Still a real target, and it does
+     not change the row height. */
+  .icon-btn-sm {
+    @apply flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg;
+  }
+
+  /* The frozen exercise column of the training sheet. A border on its own is
+     just one more rule in a table already full of rules; the shadow lifts the
+     column above the weeks the moment they start sliding under it, which is the
+     entire point of freezing it. It is a pseudo-element because box-shadow has
+     no logical form, and the gradient flips with the writing direction the same
+     way .rtl-flip does. */
+  .sheet-spine::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: -10px;
+    width: 10px;
+    pointer-events: none;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.4), transparent);
+  }
+
+  [dir='rtl'] .sheet-spine::after {
+    background-image: linear-gradient(to left, rgba(0, 0, 0, 0.4), transparent);
   }
 
   /* Any full-height scrolling region. Momentum scroll + no bounce-through. */

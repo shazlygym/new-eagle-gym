@@ -54,8 +54,12 @@ export default function ConfirmDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={body ? bodyId : undefined}
-        className="relative w-full max-w-xs animate-fade-in overflow-hidden rounded-2xl
-                   bg-ink-700 text-center shadow-2xl"
+        // overflow-y-auto rather than overflow-hidden: it still clips the corners
+        // the same way, but on a short screen (landscape, or a phone with the
+        // keyboard up) a long body used to be cut off with no way to reach the
+        // buttons underneath it.
+        className="relative max-h-full w-full max-w-xs animate-fade-in overflow-y-auto
+                   rounded-2xl bg-ink-700 text-center shadow-2xl"
       >
         <div className="px-5 py-5">
           <h2 id={titleId} className="text-base font-semibold text-ink-50">
@@ -80,7 +84,7 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             className={`py-3.5 text-sm font-semibold active:bg-ink-600
-                        ${destructive ? 'text-red-400' : 'text-brand-500'}`}
+                        ${destructive ? 'text-danger-400' : 'text-brand-500'}`}
           >
             {confirmLabel ?? t('common.done')}
           </button>

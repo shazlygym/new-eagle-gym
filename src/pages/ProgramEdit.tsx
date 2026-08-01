@@ -90,14 +90,14 @@ export default function ProgramEdit() {
           <button
             type="button"
             onClick={save}
-            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-bold text-ink-950 shadow-brand active:scale-95 transition-transform"
           >
             {t('common.save')}
           </button>
         }
       />
 
-      <div className="space-y-4 px-4 py-4">
+      <div className="space-y-4 px-5 py-4">
         <div className="card space-y-4 p-4">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-ink-200" htmlFor="p-ar">
@@ -133,7 +133,7 @@ export default function ProgramEdit() {
         </div>
 
         <section>
-          <h2 className="section-title mb-2 px-1">{t('programs.days')}</h2>
+          <h2 className="section-title mb-2.5">{t('programs.days')}</h2>
 
           <ul className="space-y-2">
             {days.map((day, index) => (
@@ -160,7 +160,7 @@ export default function ProgramEdit() {
                     disabled={index === 0}
                     onClick={() => move(index, -1)}
                     aria-label={t('workout.moveUp')}
-                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
+                    className="icon-btn-sm text-ink-300 active:bg-ink-600 disabled:opacity-25"
                   >
                     <ChevronUp size={18} />
                   </button>
@@ -169,7 +169,7 @@ export default function ProgramEdit() {
                     disabled={index === days.length - 1}
                     onClick={() => move(index, 1)}
                     aria-label={t('workout.moveDown')}
-                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600 disabled:opacity-25"
+                    className="icon-btn-sm text-ink-300 active:bg-ink-600 disabled:opacity-25"
                   >
                     <ChevronDown size={18} />
                   </button>
@@ -177,7 +177,7 @@ export default function ProgramEdit() {
                     type="button"
                     onClick={() => setDays((current) => current.filter((_, i) => i !== index))}
                     aria-label={t('common.delete')}
-                    className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
+                    className="icon-btn-sm text-ink-300 active:bg-ink-600"
                   >
                     <Trash2 size={17} />
                   </button>
@@ -204,7 +204,7 @@ export default function ProgramEdit() {
               setDays((current) => [...current, { routineId: '', labelAr: '', labelEn: '' }])
             }}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border
-                       border-dashed border-ink-400 py-3.5 text-sm font-medium
+                       border-dashed border-ink-500 py-3.5 text-sm font-medium
                        text-brand-500 active:bg-ink-700"
           >
             <Plus size={18} />
@@ -233,13 +233,13 @@ export default function ProgramEdit() {
           <p className="text-xs leading-relaxed text-ink-300">{t('programs.progressionHint')}</p>
         </section>
 
-        {error && <p className="px-1 text-xs text-red-400">{error}</p>}
+        {error && <p className="px-1 text-xs text-danger-400">{error}</p>}
 
         {programId && (
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}
-            className="w-full py-3 text-sm font-medium text-red-400 active:opacity-60"
+            className="w-full py-3 text-sm font-medium text-danger-400 active:opacity-60"
           >
             {t('common.delete')}
           </button>

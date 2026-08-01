@@ -68,7 +68,10 @@ export default function WeekCalories({ profileId, date, kcalTarget, onPickDate }
               className="group flex h-full min-w-0 flex-1 flex-col justify-end gap-1"
               aria-label={`${format(day.day, 'd MMM', { locale: dateLocale(locale) })} — ${Math.round(day.kcal)}`}
             >
-              <span className="tabular text-[9px] font-semibold text-ink-300" dir="ltr">
+              {/* 10px, not 9: below 10 a four-digit calorie count stops being
+                  legible at arm's length, and this is the only text in the app
+                  that was under it. Four digits still fit a 39px bar. */}
+              <span className="tabular text-[10px] font-semibold text-ink-300" dir="ltr">
                 {day.kcal > 0 ? Math.round(day.kcal) : ''}
               </span>
               <span
@@ -77,7 +80,7 @@ export default function WeekCalories({ profileId, date, kcalTarget, onPickDate }
                               day.kcal === 0
                                 ? 'bg-ink-600'
                                 : over
-                                  ? 'bg-amber-400'
+                                  ? 'bg-flame-400'
                                   : selected
                                     ? 'bg-brand-400'
                                     : 'bg-brand-500/60'

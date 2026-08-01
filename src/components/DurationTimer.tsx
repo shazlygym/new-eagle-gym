@@ -35,8 +35,8 @@ export default function DurationTimer({ sessionExerciseId, target, onFinish }: P
         disabled={busyElsewhere}
         onClick={() => start(sessionExerciseId)}
         className="flex w-full items-center justify-center gap-2 border-b border-ink-500/40
-                   bg-sky-500/10 py-3 text-sm font-semibold text-sky-300
-                   active:bg-sky-500/20 disabled:opacity-40"
+                   bg-aqua-500/10 py-3 text-sm font-semibold text-aqua-300
+                   active:bg-aqua-500/20 disabled:opacity-40"
       >
         <Play size={16} fill="currentColor" />
         {t('workout.startTimer')}
@@ -52,11 +52,11 @@ export default function DurationTimer({ sessionExerciseId, target, onFinish }: P
   return (
     <div
       className={`flex items-center gap-3 border-b border-ink-500/40 px-4 py-3 transition-colors
-                  ${reachedTarget ? 'bg-green-500/15' : 'bg-sky-500/10'}`}
+                  ${reachedTarget ? 'bg-brand-500/15' : 'bg-aqua-500/10'}`}
     >
       <span
         className={`tabular font-numeric text-2xl font-bold ${
-          reachedTarget ? 'text-green-400' : 'text-sky-300'
+          reachedTarget ? 'text-brand-400' : 'text-aqua-300'
         }`}
       >
         {formatClock(elapsed)}
@@ -71,7 +71,7 @@ export default function DurationTimer({ sessionExerciseId, target, onFinish }: P
       <button
         type="button"
         onClick={() => onFinish(stop())}
-        className="flex items-center gap-1.5 rounded-xl bg-green-500 px-3.5 py-2 text-sm font-bold
+        className="flex items-center gap-1.5 rounded-xl bg-brand-gradient px-3.5 py-2 text-sm font-bold
                    text-ink-950 active:scale-95 transition-transform"
       >
         <Square size={13} fill="currentColor" />
@@ -83,7 +83,7 @@ export default function DurationTimer({ sessionExerciseId, target, onFinish }: P
         type="button"
         onClick={cancel}
         aria-label={t('common.cancel')}
-        className="rounded-xl bg-ink-600 p-2 text-ink-200 active:bg-ink-500"
+        className="icon-btn bg-ink-600 text-ink-200 active:bg-ink-500"
       >
         <X size={16} />
       </button>

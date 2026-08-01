@@ -110,7 +110,7 @@ export default function Nutrition() {
             <Link
               to="/nutrition/history"
               aria-label={t('nutrition.history')}
-              className="rounded-xl bg-ink-700 p-2 text-brand-400 active:bg-ink-600"
+              className="icon-btn bg-ink-700 text-brand-400 active:bg-ink-600"
             >
               <CalendarRange size={20} />
             </Link>
@@ -118,7 +118,7 @@ export default function Nutrition() {
               type="button"
               onClick={() => setTargetsOpen(true)}
               aria-label={t('nutrition.targets')}
-              className="rounded-xl bg-ink-700 p-2 text-brand-400 active:bg-ink-600"
+              className="icon-btn bg-ink-700 text-brand-400 active:bg-ink-600"
             >
               <Target size={20} />
             </button>
@@ -126,14 +126,16 @@ export default function Nutrition() {
         }
       />
 
-      <div className="space-y-4 px-4 py-4">
-        {/* Day switcher. Yesterday's log is the one people fill in most often. */}
-        <div className="flex items-center justify-between rounded-xl bg-ink-700 px-2 py-1.5">
+      <div className="space-y-4 px-5 py-4">
+        {/* Day switcher. Yesterday's log is the one people fill in most often.
+            Recessed, because it is a control you reach into rather than an
+            object on the page. */}
+        <div className="card-sunk flex items-center justify-between px-2 py-1.5">
           <button
             type="button"
             onClick={() => shift(-1)}
             aria-label={t('common.previous')}
-            className="rounded-lg p-2 text-ink-200 active:bg-ink-600"
+            className="icon-btn-sm text-ink-200 active:bg-ink-600"
           >
             <ChevronLeft size={18} className="rtl-flip" />
           </button>
@@ -145,7 +147,7 @@ export default function Nutrition() {
             disabled={date >= today()}
             onClick={() => shift(1)}
             aria-label={t('common.next')}
-            className="rounded-lg p-2 text-ink-200 active:bg-ink-600 disabled:opacity-25"
+            className="icon-btn-sm text-ink-200 active:bg-ink-600 disabled:opacity-25"
           >
             <ChevronRight size={18} className="rtl-flip" />
           </button>
@@ -185,7 +187,7 @@ export default function Nutrition() {
                     {t(SLOT_LABEL[slot])}
                   </h2>
                   {slotKcal > 0 && (
-                    <span className="tabular shrink-0 text-sm font-bold text-brand-400">
+                    <span className="tabular font-numeric shrink-0 text-sm font-bold text-ink-100">
                       {Math.round(slotKcal)}
                     </span>
                   )}
@@ -194,7 +196,7 @@ export default function Nutrition() {
                       type="button"
                       onClick={() => setSavingSlot(slot)}
                       aria-label={t('nutrition.saveAsMeal')}
-                      className="rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
+                      className="icon-btn-sm text-ink-300 active:bg-ink-600"
                     >
                       <BookmarkPlus size={17} />
                     </button>
@@ -232,7 +234,7 @@ export default function Nutrition() {
                           type="button"
                           onClick={() => setPendingDelete(entry.id)}
                           aria-label={t('common.delete')}
-                          className="shrink-0 rounded-lg p-1.5 text-ink-400 active:bg-ink-600"
+                          className="icon-btn-sm text-ink-400 active:bg-ink-600"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -241,14 +243,21 @@ export default function Nutrition() {
                   </ul>
                 )}
 
-                <div className="flex gap-2 p-3">
+                {/* A hairline row rather than a filled pill in a padded tray.
+                    Four meals × a 44px grey button inside a 12px tray was more
+                    chrome than food on a day with two entries logged. */}
+                <div
+                  className={`flex items-stretch ${
+                    slotEntries.length > 0 ? 'border-t border-ink-500/30' : ''
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => setPicking(slot)}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-ink-600
-                               py-2.5 text-xs font-semibold text-ink-100 active:bg-ink-500"
+                    className="flex flex-1 items-center gap-2 px-4 py-3 text-start text-xs
+                               font-semibold text-ink-200 active:bg-ink-600/60"
                   >
-                    <Plus size={15} />
+                    <Plus size={15} className="shrink-0 text-brand-500" />
                     {t('nutrition.addFood')}
                   </button>
                   {savedMeals.length > 0 && (
@@ -256,7 +265,8 @@ export default function Nutrition() {
                       type="button"
                       onClick={() => setMealsOpen(slot)}
                       aria-label={t('nutrition.savedMeals')}
-                      className="rounded-xl bg-ink-600 px-3 text-brand-400 active:bg-ink-500"
+                      className="flex w-12 shrink-0 items-center justify-center border-s
+                                 border-ink-500/30 text-brand-400 active:bg-ink-600/60"
                     >
                       <UtensilsCrossed size={15} />
                     </button>

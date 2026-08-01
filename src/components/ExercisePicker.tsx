@@ -62,7 +62,7 @@ export default function ExercisePicker({
                 key={value}
                 type="button"
                 onClick={() => setGroup(value)}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+                className={`shrink-0 rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                             ${
                               group === value
                                 ? 'bg-brand-500 text-ink-950'

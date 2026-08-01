@@ -7,6 +7,11 @@
  * against the program.
  */
 
+/** The week-by-week grid for a routine. */
+export function sheetPath(routineId: string): string {
+  return `/routines/${encodeURIComponent(routineId)}/sheet`
+}
+
 /** The brief for a routine, optionally as day `dayIndex` of week `week` of a program. */
 export function briefPath(
   routineId: string,

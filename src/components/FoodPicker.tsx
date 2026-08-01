@@ -86,7 +86,7 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
                 key={value}
                 type="button"
                 onClick={() => setCategory(value)}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+                className={`shrink-0 rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                             ${
                               category === value
                                 ? 'bg-brand-500 text-ink-950'
@@ -205,7 +205,7 @@ function PortionSheet({
                   key={portion.nameEn + portion.grams}
                   type="button"
                   onClick={() => setGrams(portion.grams)}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+                  className={`rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                               ${
                                 grams === portion.grams
                                   ? 'bg-brand-500 text-ink-950'

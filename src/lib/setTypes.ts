@@ -14,10 +14,10 @@ export const SET_TYPE_BADGE: Record<SetType, string | null> = {
 }
 
 export const SET_TYPE_STYLE: Record<SetType, string> = {
-  warmup: 'bg-sky-500/15 text-sky-300',
+  warmup: 'bg-aqua-500/15 text-aqua-300',
   working: 'text-ink-200',
   drop: 'bg-aqua-500/15 text-aqua-300',
-  failure: 'bg-red-500/15 text-red-300',
+  failure: 'bg-danger-500/15 text-danger-300',
 }
 
 export const SET_TYPE_LABEL: Record<SetType, TranslationKey> = {

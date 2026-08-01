@@ -61,14 +61,14 @@ export default function Body() {
           <button
             type="button"
             onClick={() => setFormOpen(true)}
-            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 active:scale-95 transition-transform"
+            className="rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-bold text-ink-950 shadow-brand active:scale-95 transition-transform"
           >
             {t('common.add')}
           </button>
         }
       />
 
-      <div className="space-y-4 px-4 py-4">
+      <div className="space-y-4 px-5 py-4">
         {series.length >= 2 && (
           <ChartCard title={t('body.chartTitle')} subtitle={unitLabel(units, locale)}>
             <ResponsiveContainer width="100%" height={180}>
@@ -113,7 +113,7 @@ export default function Body() {
           <EmptyState icon={Ruler} title={t('body.empty')} body={t('body.emptyHint')} />
         ) : (
           <section>
-            <h2 className="section-title mb-2 px-1">{t('body.history')}</h2>
+            <h2 className="section-title mb-2.5">{t('body.history')}</h2>
             <ul className="space-y-1.5">
               {[...stats].reverse().map((stat) => (
                 <li key={stat.id} className="card flex items-start gap-3 p-4">
@@ -145,7 +145,7 @@ export default function Body() {
                     type="button"
                     onClick={() => setPendingDelete(stat.id)}
                     aria-label={t('common.delete')}
-                    className="shrink-0 rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
+                    className="icon-btn-sm text-ink-300 active:bg-ink-600"
                   >
                     <Trash2 size={16} />
                   </button>

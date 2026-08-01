@@ -1,12 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Copy, ListPlus, Pencil, Play, Plus } from 'lucide-react'
+import { ChevronRight, Copy, ListPlus, Pencil, Play, Plus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import { duplicateRoutine, getActiveSession, listRoutines } from '../db/repository'
 import { routineName, useT } from '../i18n'
 import { unlockAudio } from '../lib/audio'
-import { briefPath } from '../lib/routes'
+import { briefPath, sheetPath } from '../lib/routes'
 import { useActiveProfile } from '../lib/useActiveProfile'
 
 export default function Routines() {
@@ -39,14 +39,14 @@ export default function Routines() {
           <Link
             to="/routines/new"
             aria-label={t('routines.new')}
-            className="rounded-xl bg-ink-700 p-2 text-brand-500 active:bg-ink-600"
+            className="icon-btn bg-ink-700 text-brand-500 active:bg-ink-600"
           >
             <Plus size={20} />
           </Link>
         }
       />
 
-      <div className="px-4 py-4">
+      <div className="px-5 py-4">
         {routines.length === 0 ? (
           <EmptyState
             icon={ListPlus}
@@ -63,7 +63,12 @@ export default function Routines() {
           <ul className="space-y-2">
             {routines.map((routine) => (
               <li key={routine.id} className="card overflow-hidden">
-                <div className="flex items-center gap-2 p-4">
+                {/* The name is the way into the sheet rather than a fifth icon:
+                    four controls already fill the row at 375px. */}
+                <Link
+                  to={sheetPath(routine.id)}
+                  className="flex items-center gap-2 p-4 active:bg-ink-600/40"
+                >
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink-50">
                       {routineName(routine, locale)}
@@ -72,29 +77,38 @@ export default function Routines() {
                       {t('routines.exerciseCount', { count: routine.items.length })}
                     </p>
                   </div>
+                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-brand-500">
+                    {t('sheet.open')}
+                    {/* Points the way the reader is going: right in English,
+                        mirrored to left in Arabic by .rtl-flip. */}
+                    <ChevronRight size={15} className="rtl-flip" />
+                  </span>
+                </Link>
 
+                <div className="flex items-center gap-2 border-t border-ink-500/50 px-4 py-3">
                   <button
                     type="button"
                     // Suffixes are record data, not UI copy — each name field
                     // gets its own language regardless of the current locale.
                     onClick={() => duplicateRoutine(routine.id, { ar: '(نسخة)', en: '(copy)' })}
                     aria-label={t('routines.duplicate')}
-                    className="rounded-xl bg-ink-600 p-2.5 text-ink-100 active:bg-ink-500"
+                    className="icon-btn bg-ink-600 text-ink-100 active:bg-ink-500"
                   >
                     <Copy size={16} />
                   </button>
                   <Link
                     to={`/routines/${routine.id}`}
                     aria-label={t('common.edit')}
-                    className="rounded-xl bg-ink-600 p-2.5 text-ink-100 active:bg-ink-500"
+                    className="icon-btn bg-ink-600 text-ink-100 active:bg-ink-500"
                   >
                     <Pencil size={16} />
                   </Link>
                   <button
                     type="button"
                     onClick={() => begin(routine.id)}
-                    className="flex items-center gap-1.5 rounded-xl bg-brand-500 px-3.5 py-2.5
-                               text-sm font-semibold text-ink-950 active:scale-95 transition-transform"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl
+                               bg-brand-gradient px-3.5 py-2.5 text-sm font-bold text-ink-950
+                               active:scale-95 transition-transform"
                   >
                     <Play size={15} fill="currentColor" />
                     {t('routines.start')}

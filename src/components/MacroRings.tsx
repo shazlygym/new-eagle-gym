@@ -29,7 +29,10 @@ export default function MacroRings({ totals, targets, onSetTargets }: Props) {
   const over = remaining < 0
 
   return (
-    <section className="card-accent p-5">
+    // The one raised surface on the food screen, the same material the plan
+    // gets on Home. It used to be a lime-tinted panel, which spent the accent
+    // on a background instead of on the one number that changes all day.
+    <section className="card-hero p-5">
       <div className="flex items-center gap-4">
         {hasKcalTarget ? (
           <ProgressRing
@@ -41,15 +44,17 @@ export default function MacroRings({ totals, targets, onSetTargets }: Props) {
         ) : null}
 
         <div className="min-w-0 flex-1">
-          <p className="section-title">{t('nutrition.calories')}</p>
-          <p className="tabular font-numeric text-3xl font-bold leading-tight text-ink-50">
+          <p className="eyebrow">{t('nutrition.calories')}</p>
+          {/* Eaten today, at display size. The target beside it is the frame,
+              not the fact — so it stays at a third of the weight. */}
+          <p className="num-hero mt-1 text-ink-50">
             {Math.round(totals.kcal)}
             {hasKcalTarget && (
-              <span className="text-base font-semibold text-ink-300"> / {kcalTarget}</span>
+              <span className="text-base font-semibold text-ink-400"> / {kcalTarget}</span>
             )}
           </p>
           {hasKcalTarget && (
-            <p className={`tabular mt-0.5 text-xs font-semibold ${over ? 'text-amber-400' : 'text-brand-400'}`}>
+            <p className={`tabular mt-1 text-xs font-bold ${over ? 'text-flame-400' : 'text-brand-400'}`}>
               {Math.abs(Math.round(remaining))} {over ? t('nutrition.over') : t('nutrition.remaining')}
             </p>
           )}
@@ -62,7 +67,7 @@ export default function MacroRings({ totals, targets, onSetTargets }: Props) {
           <button
             type="button"
             onClick={onSetTargets}
-            className="shrink-0 rounded-xl bg-ink-600 px-3.5 py-2 text-xs font-semibold
+            className="shrink-0 rounded-xl bg-ink-600 px-3.5 py-2.5 text-xs font-semibold
                        text-brand-400 active:bg-ink-500"
           >
             {t('nutrition.setTargets')}
@@ -73,7 +78,7 @@ export default function MacroRings({ totals, targets, onSetTargets }: Props) {
       <div className="mt-5 grid grid-cols-3 gap-3">
         <MacroBar label={t('nutrition.protein')} value={totals.protein} target={targets.protein} tint="bg-brand-500" />
         <MacroBar label={t('nutrition.carbs')} value={totals.carbs} target={targets.carbs} tint="bg-aqua-500" />
-        <MacroBar label={t('nutrition.fat')} value={totals.fat} target={targets.fat} tint="bg-amber-400" />
+        <MacroBar label={t('nutrition.fat')} value={totals.fat} target={targets.fat} tint="bg-flame-400" />
       </div>
     </section>
   )
@@ -95,15 +100,21 @@ function MacroBar({
 
   return (
     <div className="min-w-0">
-      <p className="truncate text-[11px] font-medium text-ink-300">{label}</p>
+      {/* A dot in the macro's own colour, so the bar underneath is identifiable
+          without reading back up to the label — the three bars are the same
+          shape and only colour tells them apart. */}
+      <p className="flex items-center gap-1.5 truncate text-[11px] font-medium text-ink-300">
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tint}`} />
+        <span className="truncate">{label}</span>
+      </p>
       {/* The number and its unit read left-to-right in both languages, so the
           pair is isolated — otherwise Arabic puts the unit in front of it. */}
-      <p className="tabular mt-0.5 truncate text-sm font-bold text-ink-50" dir="ltr">
+      <p className="tabular mt-1 truncate text-sm font-bold text-ink-50" dir="ltr">
         {Math.round(value)}
         {target ? <span className="font-medium text-ink-400">/{Math.round(target)}</span> : null}
         <span className="text-[10px] font-medium text-ink-400"> {t('common.g')}</span>
       </p>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink-600">
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink-950/60">
         <div
           className={`h-full rounded-full transition-[width] duration-500 ${tint}`}
           style={{ width: `${ratio * 100}%` }}

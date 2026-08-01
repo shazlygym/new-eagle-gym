@@ -50,7 +50,7 @@ export default function WeightCard() {
                 {delta !== null && Math.abs(delta) >= 0.05 && (
                   <span
                     className={`ms-2 inline-flex items-center gap-0.5 text-xs font-medium
-                                ${delta < 0 ? 'text-emerald-400' : 'text-amber-400'}`}
+                                ${delta < 0 ? 'text-brand-400' : 'text-flame-400'}`}
                   >
                     <Trend size={12} />
                     {formatNumber(Math.abs(delta))}
@@ -66,7 +66,7 @@ export default function WeightCard() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="shrink-0 rounded-xl bg-brand-500 px-3.5 py-2 text-xs font-semibold
+          className="shrink-0 rounded-xl bg-brand-gradient px-3.5 py-2.5 text-xs font-bold
                      text-ink-950 transition-transform active:scale-95"
         >
           {t('body.logWeight')}
@@ -124,7 +124,10 @@ function QuickWeightSheet({
         >
           {t('common.save')}
         </button>
-        <Link to="/body" className="block text-center text-xs font-medium text-brand-500">
+        <Link
+          to="/body"
+          className="block rounded-lg py-2.5 text-center text-xs font-medium text-brand-500 active:bg-ink-600"
+        >
           {t('body.fullMeasurements')}
         </Link>
       </div>

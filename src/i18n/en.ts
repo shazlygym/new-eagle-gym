@@ -126,6 +126,28 @@ export const en = {
   'routines.needExercise': 'Add at least one exercise.',
   'routines.exerciseCount': 'Exercises: {count}',
 
+  'sheet.title': 'Training sheet',
+  'sheet.open': 'Sheet',
+  'sheet.exercise': 'Exercise',
+  'sheet.sets': 'Sets',
+  'sheet.rest': 'Rest',
+  'sheet.week': 'Week {week}',
+  'sheet.live': 'In progress',
+  'sheet.resume': 'Resume',
+  'sheet.previousWeek': 'Last time',
+  'sheet.noPrevious': 'Nothing logged for this exercise yet.',
+  'sheet.useSuggestion': 'Fill in the suggested load',
+  'sheet.copyWeek': 'Copy last week into this one · {count} exercises',
+  'sheet.reps': 'Reps',
+  'sheet.hold': 'Hold',
+  'sheet.blankHint': 'Leave a row at zero reps to drop it. Clearing every row clears the cell.',
+  'sheet.intro':
+    'The plan on the left, every week beside it. Tap a cell to log or fix a week — the previous one stays on screen while you type.',
+  'sheet.noPlan': 'Add exercises to this routine and they will show up here.',
+  'sheet.outsidePlan': 'Not in the plan',
+  'sheet.showAll': 'Show {count} older weeks',
+  'sheet.tapToLog': 'Log this week',
+
   'exercises.title': 'Exercises',
   'exercises.searchPlaceholder': 'Search exercises',
   'exercises.new': 'New exercise',
@@ -263,6 +285,7 @@ export const en = {
   'workout.reasonHitTarget': 'You hit every target rep last time — go up.',
   'workout.reasonMissedTarget': 'Stay here until every set hits the target.',
   'workout.reasonRepeatedMiss': 'Stalled twice. Back off and build again.',
+  'workout.reasonEasyTarget': 'Every set finished with reps left. Take a bigger jump.',
 
   'programs.title': 'Programs',
   'programs.new': 'New program',
@@ -313,6 +336,11 @@ export const en = {
   'analytics.other': 'Other',
   'analytics.balanceHint':
     'Roughly even push and pull keeps the shoulders healthy. Large gaps are worth correcting.',
+  'analytics.weeklySets': 'This week per muscle',
+  'analytics.weeklySetsRange': 'Working sets · target 10–20',
+  'analytics.usually': 'usually {count}',
+  'analytics.weeklySetsHint':
+    'Ten to twenty hard sets a week is where most muscle is built. The pale band is that window — a bar short of it still has the week to catch up.',
   'analytics.load': 'Training load',
   'analytics.loadRatio': 'Load ratio',
   'analytics.loadHint':
@@ -361,6 +389,7 @@ export const en = {
   'train.exercises': 'Exercise library',
   'train.exercisesHint': 'Browse the library and add your own',
   'train.activeProgram': 'Active program',
+  'train.planning': 'Planning',
 
   'nav.nutrition': 'Food',
 
@@ -423,6 +452,24 @@ export const en = {
   'nutrition.maintenance': 'Maintenance {kcal}',
   'nutrition.bmr': 'Resting {kcal}',
   'nutrition.kcalUnit': 'kcal',
+
+  'energy.title': 'Your real maintenance',
+  'energy.subtitle': 'Measured from four weeks of your own food logs and weigh-ins',
+  'energy.maintenance': 'kcal a day to hold your weight',
+  'energy.avgIntake': 'Average intake',
+  'energy.weightTrend': 'Weight trend',
+  'energy.perWeek': 'a week',
+  'energy.setTarget': 'Set my daily target to {kcal}',
+  'energy.targetMatches': 'Your target already matches',
+  'energy.basis': 'Worked out from {days} logged days and {weighIns} weigh-ins.',
+  'energy.basisLow':
+    'Worked out from {days} logged days and {weighIns} weigh-ins — enough to show you, not yet enough to bet on. Keep logging.',
+  'energy.needMore':
+    'Log your food and step on the scale for two weeks, and this works out what you actually burn — your own numbers, not a formula.',
+  'energy.impossible':
+    'Your food log and the scale disagree — together they imply a maintenance figure no body could have. Usually that means some days were only part-logged. Log full days for two weeks and this will settle.',
+  'energy.daysLogged': 'days logged',
+  'energy.weighIns': 'weigh-ins',
   'nutrition.sex': 'Sex',
   'nutrition.male': 'Male',
   'nutrition.female': 'Female',

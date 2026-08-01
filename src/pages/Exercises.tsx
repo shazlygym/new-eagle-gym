@@ -46,7 +46,7 @@ export default function Exercises() {
             type="button"
             onClick={() => setFormOpen(true)}
             aria-label={t('exercises.new')}
-            className="rounded-xl bg-ink-700 p-2 text-brand-500 active:bg-ink-600"
+            className="icon-btn bg-ink-700 text-brand-500 active:bg-ink-600"
           >
             <Plus size={20} />
           </button>
@@ -74,7 +74,7 @@ export default function Exercises() {
               key={value}
               type="button"
               onClick={() => setGroup(value)}
-              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+              className={`shrink-0 rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                           ${group === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-700 text-ink-200'}`}
             >
               {value === 'all' ? t('common.all') : t(`group.${value}` as TranslationKey)}
@@ -144,7 +144,7 @@ export default function Exercises() {
                     target="_blank"
                     rel="noreferrer noopener"
                     aria-label={t('exercises.watch')}
-                    className="shrink-0 rounded-lg p-1.5 text-red-400 active:bg-ink-600"
+                    className="icon-btn-sm text-danger-400 active:bg-ink-600"
                   >
                     <Play size={16} fill="currentColor" />
                   </a>
@@ -153,7 +153,7 @@ export default function Exercises() {
                   type="button"
                   onClick={() => setEditing(exercise)}
                   aria-label={t('common.edit')}
-                  className="shrink-0 rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
+                  className="icon-btn-sm text-ink-300 active:bg-ink-600"
                 >
                   <Pencil size={16} />
                 </button>
@@ -161,7 +161,7 @@ export default function Exercises() {
                   type="button"
                   onClick={() => setPendingDelete(exercise.id)}
                   aria-label={t('common.delete')}
-                  className="shrink-0 rounded-lg p-1.5 text-ink-300 active:bg-ink-600"
+                  className="icon-btn-sm text-ink-300 active:bg-ink-600"
                 >
                   <Trash2 size={16} />
                 </button>

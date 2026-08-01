@@ -16,10 +16,15 @@ export default function TabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-500/60
-                 bg-ink-800/95 pb-safe-b backdrop-blur-xl"
+      // Near-black and translucent rather than a lighter grey slab: the bar is
+      // the edge of the page, not a panel sitting on top of it, and content
+      // scrolling underneath should be visible through it.
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-500/50
+                 bg-ink-950/80 pb-safe-b backdrop-blur-xl"
     >
-      <ul className="flex">
+      {/* The bar spans the window so its background reaches both edges, but the
+          tabs themselves stay on the same column as the content above them. */}
+      <ul className="page-width flex">
         {TABS.map(({ to, icon: Icon, label }) => (
           <li key={to} className="flex-1">
             <NavLink
@@ -28,20 +33,28 @@ export default function TabBar() {
               // on every nested route.
               end={to === '/'}
               className={({ isActive }) =>
-                `flex h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-medium
-                 transition-colors ${isActive ? 'text-brand-500' : 'text-ink-200'}`
+                `relative flex h-16 flex-col items-center justify-center gap-0.5 text-[10px]
+                 transition-colors ${
+                   isActive ? 'font-bold text-brand-500' : 'font-medium text-ink-300'
+                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* iOS-style pill behind the active icon; the transition makes
-                      switching tabs read as movement rather than a repaint. */}
+                  {/* A lime cap at the top edge of the active tab — the same
+                      3px mark that opens every section heading, so "where you
+                      are" and "what this section is" are told the same way. */}
+                  <span
+                    className={`absolute inset-x-0 top-0 mx-auto h-[3px] w-8 rounded-b-full
+                                transition-opacity duration-200
+                                ${isActive ? 'bg-brand-500 opacity-100' : 'opacity-0'}`}
+                  />
                   <span
                     className={`flex h-7 w-12 items-center justify-center rounded-full
                                 transition-colors duration-200
                                 ${isActive ? 'bg-brand-500/15' : 'bg-transparent'}`}
                   >
-                    <Icon size={21} strokeWidth={isActive ? 2.4 : 1.8} />
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
                   </span>
                   <span>{t(label)}</span>
                 </>

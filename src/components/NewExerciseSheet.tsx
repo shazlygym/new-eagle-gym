@@ -156,7 +156,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
                 key={value}
                 type="button"
                 onClick={() => setMuscleGroup(value)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+                className={`rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                             ${muscleGroup === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-700 text-ink-200'}`}
               >
                 {t(`group.${value}` as TranslationKey)}
@@ -175,7 +175,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
                 key={value}
                 type="button"
                 onClick={() => setEquipment(value)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors
+                className={`rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors
                             ${equipment === value ? 'bg-brand-500 text-ink-950' : 'bg-ink-700 text-ink-200'}`}
               >
                 {t(`equipment.${value}` as TranslationKey)}
@@ -253,7 +253,7 @@ export default function NewExerciseSheet({ open, onClose, onCreate, initial }: P
           <p className="mt-1.5 text-xs leading-relaxed text-ink-300">{t('exercises.videoHint')}</p>
         </div>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-danger-400">{error}</p>}
 
         <button type="button" onClick={submit} className="btn-primary w-full">
           {initial ? t('common.save') : t('exercises.create')}

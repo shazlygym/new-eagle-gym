@@ -73,7 +73,7 @@ export default function SessionDetail() {
         }
       />
 
-      <div className="space-y-4 px-4 py-4">
+      <div className="space-y-4 px-5 py-4">
         <div className="grid grid-cols-3 gap-3">
           <StatCard
             icon={Clock}
@@ -114,7 +114,7 @@ export default function SessionDetail() {
             type="button"
             onClick={() => setPickerOpen(true)}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border
-                       border-dashed border-ink-400 py-3.5 text-sm font-medium
+                       border-dashed border-ink-500 py-3.5 text-sm font-medium
                        text-brand-500 active:bg-ink-700"
           >
             <Plus size={18} />
@@ -193,7 +193,7 @@ export default function SessionDetail() {
         <button
           type="button"
           onClick={() => setConfirmDelete(true)}
-          className="w-full py-3 text-sm font-medium text-red-400 active:opacity-60"
+          className="w-full py-3 text-sm font-medium text-danger-400 active:opacity-60"
         >
           {t('common.delete')}
         </button>
