@@ -1,6 +1,7 @@
 import { Minus, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useT } from '../i18n'
+import { focusNextSetCell, setInputCells, useSetInputBar } from '../lib/useSetInputBar'
 
 interface Props {
   value: number
@@ -92,6 +93,40 @@ export default function NumberField({
     setDraft(null)
   }
 
+  // ── The keyboard bar ──────────────────────────────────────────────────────
+  // A grid cell is 60px wide and has no room for −/+ beside it, but the strip
+  // above the on-screen keyboard is empty for exactly as long as the cell is
+  // focused. So the focused cell publishes itself and `SetInputBar` draws the
+  // controls up there instead. Form fields keep their own inline steppers.
+  const isCell = variant === 'cell'
+  const fieldId = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [focused, setFocused] = useState(false)
+
+  // Read through a ref so the published callback always nudges from the
+  // current value, without the bar having to re-subscribe on every keystroke.
+  const nudgeRef = useRef(nudge)
+  nudgeRef.current = nudge
+
+  useEffect(() => {
+    if (!isCell || !focused) return
+    const cells = setInputCells()
+    const index = cells.indexOf(inputRef.current as HTMLInputElement)
+    useSetInputBar.getState().focus({
+      key: fieldId,
+      value,
+      step,
+      min,
+      label: ariaLabel ?? '',
+      hasNext: index >= 0 && index < cells.length - 1,
+      nudge: (delta) => nudgeRef.current(delta),
+    })
+  }, [isCell, focused, value, step, min, ariaLabel, fieldId])
+
+  // Unmounting while focused — finishing an exercise, deleting a set — has to
+  // take the bar with it, or it goes on offering to change a set that is gone.
+  useEffect(() => () => useSetInputBar.getState().blur(fieldId), [fieldId])
+
   return (
     <div className={className}>
       {label && <label className="mb-1 block text-xs font-medium text-ink-200">{label}</label>}
@@ -109,9 +144,14 @@ export default function NumberField({
 
         <div className="relative flex-1">
           <input
+            ref={inputRef}
             type="text"
             inputMode="decimal"
-            enterKeyHint="done"
+            // The pad's own key says what the bar's button says: keep going
+            // down the workout, or put the keyboard away at the last cell.
+            enterKeyHint={isCell ? 'next' : 'done'}
+            // How the bar finds the cells and walks between them.
+            data-set-cell={isCell ? '' : undefined}
             value={shown}
             placeholder={placeholder}
             onChange={(event) => {
@@ -121,14 +161,20 @@ export default function NumberField({
             onFocus={(event) => {
               setDraft(shown)
               event.target.select()
+              setFocused(true)
             }}
             // Hands the draft back to the prop, so a field left as "12." or ""
             // settles to how the number actually reads.
             onBlur={(event) => {
               push(event.target.value)
               setDraft(null)
+              setFocused(false)
+              useSetInputBar.getState().blur(fieldId)
             }}
-            onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter') return
+              if (!isCell || !focusNextSetCell()) event.currentTarget.blur()
+            }}
             aria-label={ariaLabel}
             // Two different controls, not one control with a modifier. `.field`
             // is a form input: 16px of side padding, which is right under a

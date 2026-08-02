@@ -80,6 +80,8 @@ export const ar: Record<TranslationKey, string> = {
   'workout.emptyHint': 'أضف أول تمرين لتبدأ.',
   'workout.previous': 'السابق',
   'workout.copyPrevious': 'انسخ المرة السابقة',
+  'workout.repeatLast': 'سجّل الباقي زي المرة اللي فاتت',
+  'workout.repeatLastHint': 'الخانات الفاضية تاخد أرقام المرة اللي فاتت وتتسجل كلها',
   'workout.volumeToday': 'الحجم اليوم',
   'workout.target': 'الهدف: {value}',
   'workout.addSet': 'إضافة مجموعة',

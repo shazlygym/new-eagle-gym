@@ -79,6 +79,8 @@ export const en = {
   'workout.emptyHint': 'Add your first exercise to get going.',
   'workout.previous': 'Prev',
   'workout.copyPrevious': 'Use last time',
+  'workout.repeatLast': 'Log the rest like last time',
+  'workout.repeatLastHint': 'Empty boxes take last session, then every set ticks',
   'workout.volumeToday': 'Volume today',
   'workout.target': 'Target: {value}',
   'workout.addSet': 'Add set',

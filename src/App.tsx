@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import AppShell from './components/AppShell'
+import SetInputBar from './components/SetInputBar'
 import { ensurePresetProgram } from './db/repository'
 import { useActiveProfile } from './lib/useActiveProfile'
 import Exercises from './pages/Exercises'
@@ -109,6 +110,11 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* Rides above the on-screen keyboard whenever a set cell is focused, and
+          renders nothing the rest of the time. It lives here rather than on the
+          workout screen because past sessions are editable too. */}
+      <SetInputBar />
     </Router>
   )
 }

@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   Play,
   Plus,
+  Repeat,
   Timer,
   TrendingUp,
 } from 'lucide-react'
@@ -149,26 +150,35 @@ export default function WorkoutExerciseCard({
     0
   )
 
+  /**
+   * What an empty box should take from last session when the row is ticked.
+   *
+   * The last session's numbers sit in the empty boxes as grey placeholders, so
+   * ticking a row you never typed into means "same as last time" — the most
+   * common set there is. Taking the placeholder at its word is what makes it a
+   * real default instead of a hint: without this the set would save as 0 × 0
+   * and read as a broken tick. A box you *did* type into is never touched.
+   */
+  const adoptPrior = (entry: SetEntry, prior: SetEntry) => {
+    const patch: Partial<SetEntry> = {}
+    if (entry.weight <= 0 && prior.weight > 0) patch.weight = prior.weight
+    if (isTimed) {
+      if (!entry.durationSeconds && prior.durationSeconds)
+        patch.durationSeconds = prior.durationSeconds
+    } else if (entry.reps <= 0 && prior.reps > 0) {
+      patch.reps = prior.reps
+    }
+    return patch
+  }
+
   const toggleDone = async (entry: SetEntry, prior?: SetEntry) => {
     const nowDone = entry.done === 0
     // A small physical tick on Android; Safari has no vibration API.
     if (nowDone) navigator.vibrate?.(30)
 
-    // The last session's numbers sit in the empty boxes as grey placeholders,
-    // so ticking a row you never typed into means "same as last time" — the
-    // most common set there is. Taking the placeholder at its word here is what
-    // makes it a real default instead of a hint: without this the set would
-    // save as 0 × 0 and read as a broken tick.
     let saved = entry
     if (nowDone && prior) {
-      const patch: Partial<SetEntry> = {}
-      if (entry.weight <= 0 && prior.weight > 0) patch.weight = prior.weight
-      if (isTimed) {
-        if (!entry.durationSeconds && prior.durationSeconds)
-          patch.durationSeconds = prior.durationSeconds
-      } else if (entry.reps <= 0 && prior.reps > 0) {
-        patch.reps = prior.reps
-      }
+      const patch = adoptPrior(entry, prior)
       if (Object.keys(patch).length > 0) {
         await updateSet(entry.id, patch)
         saved = { ...entry, ...patch }
@@ -190,6 +200,39 @@ export default function WorkoutExerciseCard({
         ? { durationSeconds: prior.durationSeconds ?? 0, reps: 0 }
         : { weight: prior.weight, reps: prior.reps }
     )
+
+  /**
+   * Finish the exercise the way last session went, in one tap.
+   *
+   * Row by row that is eight taps for four sets, and on the days you match last
+   * week — most days — not one of them decides anything. Anything you already
+   * typed stands: only the empty boxes take last session's number, exactly as a
+   * single tick would, so this is "tick the rest of them for me" and never an
+   * overwrite of a weight you chose today.
+   *
+   * No rest timer either: this is a backfill of work already done, not the
+   * moment you racked the bar, and a countdown here would be a lie about when.
+   */
+  const repeatCount = readOnlyContext
+    ? 0
+    : workingSets.filter((entry, index) => entry.done === 0 && previous[index]).length
+
+  const repeatLast = async () => {
+    const filled: SetEntry[] = []
+    for (const [index, entry] of workingSets.entries()) {
+      const prior = previous[index]
+      if (entry.done === 1 || !prior) continue
+      const patch = adoptPrior(entry, prior)
+      if (Object.keys(patch).length > 0) await updateSet(entry.id, patch)
+      await setSetDone(entry.id, true)
+      filled.push({ ...entry, ...patch })
+    }
+    if (filled.length === 0) return
+    navigator.vibrate?.(30)
+    // Every filled set is offered for a record; the check keeps its own high
+    // water mark, so a four-set repeat still raises at most one celebration.
+    for (const entry of filled) await celebrateIfRecord(entry)
+  }
 
   /**
    * A live PR: this set's estimated 1RM beats every previous session. Only
@@ -231,10 +274,11 @@ export default function WorkoutExerciseCard({
 
   // RPE adds a sixth column; without it the two number fields get more room.
   // The weight and rep boxes are the ones being typed into with one thumb, so
-  // every millimetre the fixed columns give up goes to them.
+  // every millimetre the fixed columns give up goes to them — except the tick,
+  // which is the most-tapped control in the app and gets its full 44px back.
   const gridClass = trackRpe
-    ? 'grid-cols-[1.75rem_3rem_1fr_1fr_2.25rem_2.5rem]'
-    : 'grid-cols-[1.75rem_4rem_1fr_1fr_2.5rem]'
+    ? 'grid-cols-[1.75rem_3rem_1fr_1fr_2.25rem_2.75rem]'
+    : 'grid-cols-[1.75rem_4rem_1fr_1fr_2.75rem]'
 
   const finishTimedSet = async (seconds: number) => {
     if (seconds <= 0) return
@@ -520,13 +564,17 @@ export default function WorkoutExerciseCard({
                   />
                 )}
 
+                {/* 44px, the same floor `.icon-btn` documents. This is the
+                    single most-tapped control in the app and it was the one
+                    control still under it — missed at 36 while holding a bar,
+                    it either ticks the row above or nothing at all. */}
                 <div className="flex items-center justify-center">
                   <button
                     type="button"
                     onClick={() => toggleDone(entry, prior)}
                     aria-label={t('common.done')}
                     aria-pressed={entry.done === 1}
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl
                                 transition-transform active:scale-90
                                 ${
                                   entry.done
@@ -553,6 +601,33 @@ export default function WorkoutExerciseCard({
               {formatVolume(volume, units, locale, { compact: true })}
             </span>
           </p>
+        )}
+
+        {/* The day you match last week — which is most days — this is the whole
+            exercise in one tap instead of eight. It is only offered while there
+            is something to fill, so a finished exercise goes quiet again. */}
+        {repeatCount > 0 && (
+          <button
+            type="button"
+            onClick={() => void repeatLast()}
+            className="btn-soft mt-2 flex w-full items-center gap-2.5 px-3 py-2.5 text-start"
+          >
+            <Repeat size={16} className="shrink-0 text-brand-500" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold text-ink-50">
+                {t('workout.repeatLast')}
+              </span>
+              <span className="mt-0.5 block text-[11px] text-ink-300">
+                {t('workout.repeatLastHint')}
+              </span>
+            </span>
+            {/* How many rows the tap fills, as a figure rather than a sentence —
+                Arabic agrees its plurals with the number and this i18n layer
+                interpolates, so "1 مجموعات" is the sentence version's fate. */}
+            <span className="tabular shrink-0 rounded-lg bg-ink-600 px-2 py-1 text-[11px] font-bold text-ink-100">
+              {formatNumber(repeatCount)}
+            </span>
+          </button>
         )}
 
         <div className="mt-2 flex flex-wrap gap-2">
