@@ -28,6 +28,15 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# Proves to Android that the packaged app and this site are the same product.
+# Never cache it: the fingerprint has to change the day Play re-signs the app,
+# and a stale copy puts the browser address bar back on top of the app.
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Cache-Control = "no-cache, must-revalidate"
+
 [[headers]]
   for = "/assets/*"
   [headers.values]

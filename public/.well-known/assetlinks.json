@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.new_eagle_gym_h7fm.twa",
+      "sha256_cert_fingerprints": [
+        "A9:80:16:C8:48:C9:AD:7B:E8:4F:F7:6E:A7:39:ED:78:EE:F7:E5:EA:E1:1F:A7:55:6F:54:FC:35:A8:04:28:19"
+      ]
+    }
+  }
+]

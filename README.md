@@ -207,5 +207,42 @@ the SPA fallback and the same cache rules. Put it behind a TLS terminator.
 Open the HTTPS URL in **Safari** (not Chrome — only Safari can install to the
 Home Screen on iOS) → Share → **Add to Home Screen**.
 
+### Install on Android
+
+Chrome offers **Install app** from its menu, same as any PWA. For a real
+installable `.apk` / `.aab` — one that appears in the launcher and can go on the
+Play Store — run the deployed URL through [pwabuilder.com](https://www.pwabuilder.com)
+and download the Android package. It wraps the site in a Trusted Web Activity.
+
+Android refuses to install anything unsigned, so PWABuilder generates a signing
+key and hands it back in the zip as `signing.keystore` and
+`signing-key-info.txt`. **Keep both.** Lose them and the app can never be
+updated — only republished under a new package name, with every existing
+install stranded on the old one. They are private keys: they do not belong in
+this repo, in a chat, or in cloud storage you do not control.
+
+`public/.well-known/assetlinks.json` is the other half. It carries the package
+name and the signing certificate's SHA-256 fingerprint, and it is what tells
+Android the packaged app really speaks for this domain. Without it the app still
+runs — with the browser's address bar pinned across the top, which is the exact
+thing packaging was meant to remove.
+
+Two ways it silently goes wrong:
+
+- **The catch-all rewrite.** Every host config here falls back to
+  `index.html`, so a missing `assetlinks.json` answers `200 text/html` rather
+  than `404`. Verification fails and nothing says why. Check it with
+  `curl -sI <url>/.well-known/assetlinks.json` — the content type has to read
+  `application/json`.
+- **Play re-signs the app.** Play App Signing is mandatory, so the certificate
+  that ships to users is Google's, not the one in the zip. After the first
+  upload, take the SHA-256 from **Play Console → App integrity → App signing**
+  and replace the fingerprint here. Sideloaded builds keep the original.
+
+The fingerprint is derived from the domain, so a custom domain later means a
+fresh package and a fresh `assetlinks.json`.
+
+### Moving to a new phone
+
 Data lives on the device it was logged on. Moving to a new phone means
 **Settings → Export backup** on the old one and importing on the new one.

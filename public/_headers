@@ -12,5 +12,12 @@
 /manifest.webmanifest
   Cache-Control: no-cache
 
+# Proves to Android that the packaged app and this site are the same product.
+# Never cache it: the fingerprint has to change the day Play re-signs the app,
+# and a stale copy puts the browser address bar back on top of the app.
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Cache-Control: no-cache, must-revalidate
+
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
