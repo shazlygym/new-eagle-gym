@@ -151,34 +151,53 @@ export default function WorkoutExerciseCard({
   )
 
   /**
-   * What an empty box should take from last session when the row is ticked.
+   * What each row's empty boxes stand for, row by row.
    *
-   * The last session's numbers sit in the empty boxes as grey placeholders, so
-   * ticking a row you never typed into means "same as last time" — the most
-   * common set there is. Taking the placeholder at its word is what makes it a
-   * real default instead of a hint: without this the set would save as 0 × 0
-   * and read as a broken tick. A box you *did* type into is never touched.
+   * Last session is the right guess right up until you log something today, and
+   * then it is wrong for every row under it: put 65 on the bar for set 1 and
+   * set 2 would still read last week's 60, and ticking it would save the 60.
+   * So the most recent set you have actually logged today carries down the
+   * exercise, and last session fills only the rows you have not reached yet.
+   * The "PREV" column is unaffected — that one is a record, not a suggestion.
    */
-  const adoptPrior = (entry: SetEntry, prior: SetEntry) => {
+  const seeds: (SetEntry | undefined)[] = []
+  {
+    let carried: SetEntry | undefined
+    workingSets.forEach((entry, index) => {
+      seeds[index] = carried ?? previous[index]
+      if (entry.done === 1 && (entry.weight > 0 || entry.durationSeconds)) carried = entry
+    })
+  }
+
+  /**
+   * What an empty box should take from its seed when the row is ticked.
+   *
+   * The seed sits in the empty boxes as a grey placeholder, so ticking a row
+   * you never typed into means "same again" — the most common set there is.
+   * Taking the placeholder at its word is what makes it a real default instead
+   * of a hint: without this the set would save as 0 × 0 and read as a broken
+   * tick. A box you *did* type into is never touched.
+   */
+  const adoptSeed = (entry: SetEntry, seed: SetEntry) => {
     const patch: Partial<SetEntry> = {}
-    if (entry.weight <= 0 && prior.weight > 0) patch.weight = prior.weight
+    if (entry.weight <= 0 && seed.weight > 0) patch.weight = seed.weight
     if (isTimed) {
-      if (!entry.durationSeconds && prior.durationSeconds)
-        patch.durationSeconds = prior.durationSeconds
-    } else if (entry.reps <= 0 && prior.reps > 0) {
-      patch.reps = prior.reps
+      if (!entry.durationSeconds && seed.durationSeconds)
+        patch.durationSeconds = seed.durationSeconds
+    } else if (entry.reps <= 0 && seed.reps > 0) {
+      patch.reps = seed.reps
     }
     return patch
   }
 
-  const toggleDone = async (entry: SetEntry, prior?: SetEntry) => {
+  const toggleDone = async (entry: SetEntry, seed?: SetEntry) => {
     const nowDone = entry.done === 0
     // A small physical tick on Android; Safari has no vibration API.
     if (nowDone) navigator.vibrate?.(30)
 
     let saved = entry
-    if (nowDone && prior) {
-      const patch = adoptPrior(entry, prior)
+    if (nowDone && seed) {
+      const patch = adoptSeed(entry, seed)
       if (Object.keys(patch).length > 0) {
         await updateSet(entry.id, patch)
         saved = { ...entry, ...patch }
@@ -202,27 +221,27 @@ export default function WorkoutExerciseCard({
     )
 
   /**
-   * Finish the exercise the way last session went, in one tap.
+   * Finish the exercise the way the grey numbers say, in one tap.
    *
-   * Row by row that is eight taps for four sets, and on the days you match last
-   * week — most days — not one of them decides anything. Anything you already
-   * typed stands: only the empty boxes take last session's number, exactly as a
-   * single tick would, so this is "tick the rest of them for me" and never an
-   * overwrite of a weight you chose today.
+   * Row by row that is eight taps for four sets, and on the days nothing
+   * changes between sets — most days — not one of them decides anything.
+   * Anything you already typed stands: only the empty boxes take their
+   * placeholder, exactly as a single tick would, so this is "tick the rest of
+   * them for me" and never an overwrite of a weight you chose today.
    *
    * No rest timer either: this is a backfill of work already done, not the
    * moment you racked the bar, and a countdown here would be a lie about when.
    */
   const repeatCount = readOnlyContext
     ? 0
-    : workingSets.filter((entry, index) => entry.done === 0 && previous[index]).length
+    : workingSets.filter((entry, index) => entry.done === 0 && seeds[index]).length
 
   const repeatLast = async () => {
     const filled: SetEntry[] = []
     for (const [index, entry] of workingSets.entries()) {
-      const prior = previous[index]
-      if (entry.done === 1 || !prior) continue
-      const patch = adoptPrior(entry, prior)
+      const seed = seeds[index]
+      if (entry.done === 1 || !seed) continue
+      const patch = adoptSeed(entry, seed)
       if (Object.keys(patch).length > 0) await updateSet(entry.id, patch)
       await setSetDone(entry.id, true)
       filled.push({ ...entry, ...patch })
@@ -451,11 +470,17 @@ export default function WorkoutExerciseCard({
               .slice(0, index + 1)
               .filter((s) => s.setType !== 'warmup').length - 1
             const prior = entry.setType === 'warmup' ? undefined : previous[workingIndex]
+            // What the empty boxes will commit: today's numbers if there are
+            // any yet, last session's if there are not.
+            const seed = entry.setType === 'warmup' ? undefined : seeds[workingIndex]
             const badge = SET_TYPE_BADGE[entry.setType]
 
             return (
               <li
                 key={entry.id}
+                // How the keyboard bar finds the row it is standing in, and the
+                // tick that ends it.
+                data-set-row=""
                 // A ring rather than a leading rail: box-shadow has no logical
                 // form, so a rail would sit on the left in Arabic too, and an
                 // actual border would shift every column by 3px the moment a
@@ -510,18 +535,17 @@ export default function WorkoutExerciseCard({
                         )}
                 </button>
 
-                {/* The placeholders are last session's numbers, not "0". An
-                    empty row therefore already reads as the set you are about
-                    to do, and `toggleDone` commits exactly what is showing. */}
+                {/* The placeholders are real numbers, not "0" — the set you are
+                    about to do, already written out. `toggleDone` commits
+                    exactly what is showing, so the grey text is never a guess
+                    about what a tick would save. */}
                 <NumberField
                   variant="cell"
                   done={entry.done === 1}
                   ariaLabel={unitLabel(units, locale)}
                   value={toDisplayWeight(entry.weight, units)}
                   onChange={(value) => updateSet(entry.id, { weight: toStoredWeight(value, units) })}
-                  placeholder={
-                    prior ? formatNumber(toDisplayWeight(prior.weight, units)) : '0'
-                  }
+                  placeholder={seed ? formatNumber(toDisplayWeight(seed.weight, units)) : '0'}
                   step={2.5}
                 />
                 {isTimed ? (
@@ -536,7 +560,7 @@ export default function WorkoutExerciseCard({
                       updateSet(entry.id, { durationSeconds: Math.round(value), reps: 0 })
                     }
                     placeholder={String(
-                      prior?.durationSeconds ?? sessionExercise.targetReps ?? 0
+                      seed?.durationSeconds ?? sessionExercise.targetReps ?? 0
                     )}
                     step={5}
                   />
@@ -547,7 +571,7 @@ export default function WorkoutExerciseCard({
                     ariaLabel={t('common.reps')}
                     value={entry.reps}
                     onChange={(value) => updateSet(entry.id, { reps: Math.round(value) })}
-                    placeholder={String(prior?.reps ?? sessionExercise.targetReps ?? 0)}
+                    placeholder={String(seed?.reps ?? sessionExercise.targetReps ?? 0)}
                   />
                 )}
 
@@ -571,7 +595,8 @@ export default function WorkoutExerciseCard({
                 <div className="flex items-center justify-center">
                   <button
                     type="button"
-                    onClick={() => toggleDone(entry, prior)}
+                    data-set-tick=""
+                    onClick={() => toggleDone(entry, seed)}
                     aria-label={t('common.done')}
                     aria-pressed={entry.done === 1}
                     className={`flex h-11 w-11 items-center justify-center rounded-xl

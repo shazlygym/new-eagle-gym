@@ -2,6 +2,7 @@ import { Timer, X } from 'lucide-react'
 import { useT } from '../i18n'
 import { formatClock } from '../lib/format'
 import type { RestTimer } from '../lib/useRestTimer'
+import { useSetInputBar } from '../lib/useSetInputBar'
 
 interface Props {
   timer: RestTimer
@@ -9,12 +10,25 @@ interface Props {
 
 export default function RestTimerBar({ timer }: Props) {
   const { t } = useT()
+  // The rest starts the instant you tick a set — which, now that the bar can
+  // tick one, is the instant you are typing into the next. Both live on the
+  // bottom edge, so this one stands on the other's shoulders instead of
+  // underneath it, where the countdown would be invisible for its whole life.
+  const inset = useSetInputBar((state) => state.bottomInset)
   if (!timer.active) return null
 
   const finished = timer.remaining <= 0
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-500/60 bg-ink-800/95 pb-safe-b backdrop-blur-xl">
+    <div
+      data-rest-timer-bar=""
+      className={`fixed inset-x-0 z-40 border-t border-ink-500/60 bg-ink-800/95 backdrop-blur-xl ${
+        inset === 0 ? 'pb-safe-b' : ''
+      }`}
+      // Not a Tailwind class: the value is however tall the input bar and the
+      // keyboard under it happen to be right now.
+      style={{ bottom: inset }}
+    >
       {/* Progress drains left-to-right in LTR and right-to-left in RTL, because
           it is a flex child rather than an absolutely positioned bar. */}
       {/* Cyan for "done", not green: the running state is already lime, and one

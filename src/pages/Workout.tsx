@@ -27,6 +27,7 @@ import { formatClock } from '../lib/format'
 import { useElapsed, useExerciseTimerStore } from '../lib/useClock'
 import { useActiveProfile } from '../lib/useActiveProfile'
 import { useRestTimer } from '../lib/useRestTimer'
+import { useSetInputBar } from '../lib/useSetInputBar'
 
 export default function Workout() {
   const { sessionId = '' } = useParams()
@@ -34,6 +35,7 @@ export default function Workout() {
   const navigate = useNavigate()
   const { profile, units } = useActiveProfile()
   const timer = useRestTimer()
+  const setInputInset = useSetInputBar((state) => state.bottomInset)
 
   const [pickerOpen, setPickerOpen] = useState(false)
   const [confirmFinish, setConfirmFinish] = useState(false)
@@ -214,6 +216,12 @@ export default function Workout() {
         >
           {t('workout.discard')}
         </button>
+
+        {/* Room to scroll the last set clear of the keyboard and the bar above
+            it. iOS does not shorten the page when the keyboard opens, it just
+            covers the bottom of it, so without this the final row of a workout
+            has nowhere to scroll to. */}
+        <div aria-hidden style={{ height: setInputInset }} />
       </div>
 
       <RestTimerBar timer={timer} />

@@ -1,7 +1,12 @@
 import { Minus, Plus } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useT } from '../i18n'
-import { focusNextSetCell, setInputCells, useSetInputBar } from '../lib/useSetInputBar'
+import {
+  focusNextSetCell,
+  revealSetCell,
+  setInputCells,
+  useSetInputBar,
+} from '../lib/useSetInputBar'
 
 interface Props {
   value: number
@@ -87,11 +92,25 @@ export default function NumberField({
   /** Parse and hand upstream. An unparseable field is a zero, same as empty. */
   const push = (raw: string) => onChange(parse(raw, min))
 
-  const nudge = (delta: number) => {
-    const next = Math.max(min, Math.round((value + delta) * 100) / 100)
-    onChange(next)
+  /** Writes an exact number, from a stepper or from the bar. */
+  const commit = (next: number) => {
+    onChange(Math.max(min, Math.round(next * 100) / 100))
     setDraft(null)
   }
+
+  const nudge = (delta: number) => commit(value + delta)
+
+  /**
+   * The number the field stands for right now — what it holds, or the grey
+   * placeholder it would commit if ticked as-is.
+   *
+   * An empty weight box showing a grey 20 means "20 unless you say otherwise",
+   * so + on the bar has to read 22.5. Counting from the literal 0 made the one
+   * case the placeholder exists for — nudging last time's number up a plate —
+   * the slowest way to get there.
+   */
+  const hint = Number.parseFloat(placeholder)
+  const standsFor = value > 0 || !Number.isFinite(hint) ? value : Math.max(min, hint)
 
   // ── The keyboard bar ──────────────────────────────────────────────────────
   // A grid cell is 60px wide and has no room for −/+ beside it, but the strip
@@ -103,25 +122,36 @@ export default function NumberField({
   const inputRef = useRef<HTMLInputElement>(null)
   const [focused, setFocused] = useState(false)
 
-  // Read through a ref so the published callback always nudges from the
-  // current value, without the bar having to re-subscribe on every keystroke.
-  const nudgeRef = useRef(nudge)
-  nudgeRef.current = nudge
+  // Read through a ref so the published callback always writes to the current
+  // field, without the bar having to re-subscribe on every keystroke.
+  const commitRef = useRef(commit)
+  commitRef.current = commit
 
   useEffect(() => {
     if (!isCell || !focused) return
+    const input = inputRef.current as HTMLInputElement
     const cells = setInputCells()
-    const index = cells.indexOf(inputRef.current as HTMLInputElement)
+    const index = cells.indexOf(input)
+
+    // A row can be finished from the bar once its numbers are in — which means
+    // the row still has an untapped tick, and you have moved past its first
+    // box, i.e. you have typed at least the weight. On the first box "next" is
+    // still the honest offer, because there is a rep count to come.
+    const row = input.closest('[data-set-row]')
+    const tick = row?.querySelector('[data-set-tick]')
+    const first = row?.querySelector('input[data-set-cell]')
+
     useSetInputBar.getState().focus({
       key: fieldId,
-      value,
+      value: standsFor,
       step,
       min,
       label: ariaLabel ?? '',
       hasNext: index >= 0 && index < cells.length - 1,
-      nudge: (delta) => nudgeRef.current(delta),
+      canLog: Boolean(tick) && !done && first !== input,
+      set: (next) => commitRef.current(next),
     })
-  }, [isCell, focused, value, step, min, ariaLabel, fieldId])
+  }, [isCell, focused, standsFor, step, min, ariaLabel, fieldId, done])
 
   // Unmounting while focused — finishing an exercise, deleting a set — has to
   // take the bar with it, or it goes on offering to change a set that is gone.
@@ -162,6 +192,10 @@ export default function NumberField({
               setDraft(shown)
               event.target.select()
               setFocused(true)
+              // Tapping a cell near the fold puts it behind the bar. Move it
+              // clear now; the bar moves it again once the keyboard has opened
+              // and there is a real height to measure against.
+              if (isCell) revealSetCell(event.target)
             }}
             // Hands the draft back to the prop, so a field left as "12." or ""
             // settles to how the number actually reads.
