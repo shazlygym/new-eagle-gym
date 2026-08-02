@@ -86,6 +86,12 @@ export interface Profile {
    * value, so someone who always rests two minutes says it once.
    */
   defaultRestSeconds?: number
+  /**
+   * Which version of the built-in four-day block this member has been given.
+   * Absent means never — see db/presetProgram.ts. Installing it once and
+   * recording it here is what stops a deleted plan from growing back.
+   */
+  presetVersion?: number
   createdAt: number
 }
 

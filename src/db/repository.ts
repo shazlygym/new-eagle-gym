@@ -22,8 +22,16 @@ import {
   type Units,
 } from './schema'
 import { SEED_FOODS } from './foods'
+import {
+  PRESET_DAYS,
+  PRESET_EXERCISES,
+  PRESET_ITEM_BY_SLUG,
+  PRESET_PROGRAM,
+  PRESET_VERSION,
+} from './presetProgram'
 import { SEED_EXERCISES } from './seed'
-import { repTargetFor } from '../lib/repRange'
+import { normalizeSearch } from '../lib/exerciseSearch'
+import { normalizeRepTarget, repTargetFor } from '../lib/repRange'
 import { countsAsWork } from '../lib/setTypes'
 
 // Every read and write in the app goes through this module — nothing else
@@ -274,6 +282,133 @@ export async function restartProgram(id: string): Promise<void> {
 
 export async function deleteProgram(id: string): Promise<void> {
   await db.programs.delete(id)
+}
+
+/**
+ * Gives a member the gym's four-day block the first time the app opens, and
+ * never again. The "never again" is the important half: a plan that grows back
+ * after you delete it is not a default, it is a fight.
+ *
+ * Everything it writes is an ordinary exercise, routine and program — nothing is
+ * flagged built-in, so all of it can be renamed, re-ranged or thrown away.
+ * Returns whether anything was actually installed.
+ */
+export async function ensurePresetProgram(profileId: string): Promise<boolean> {
+  const profile = await db.profiles.get(profileId)
+  if (!profile || (profile.presetVersion ?? 0) >= PRESET_VERSION) return false
+
+  let installed = false
+
+  await db.transaction('rw', db.profiles, db.exercises, db.routines, db.programs, async () => {
+    // Re-read inside the transaction: React mounts effects twice in
+    // development and a second tab is always possible. IndexedDB serialises
+    // overlapping read-write transactions, so this is the check that counts.
+    const fresh = await db.profiles.get(profileId)
+    if (!fresh || (fresh.presetVersion ?? 0) >= PRESET_VERSION) return
+
+    // Someone who already added "leg curl" gets their own row reused, rather
+    // than a near-identical second one sitting under it in every picker.
+    const owned = await db.exercises.where('profileId').anyOf([SHARED, profileId]).toArray()
+    const byName = new Map<string, Exercise>()
+    for (const exercise of owned) {
+      for (const name of [exercise.nameEn, exercise.nameAr]) {
+        const key = normalizeSearch(name)
+        if (key && !byName.has(key)) byName.set(key, exercise)
+      }
+    }
+
+    const idBySlug = new Map<string, string>()
+    const newExercises: Exercise[] = []
+
+    for (const preset of PRESET_EXERCISES) {
+      const match =
+        byName.get(normalizeSearch(preset.nameEn)) ?? byName.get(normalizeSearch(preset.nameAr))
+
+      if (match) {
+        idBySlug.set(preset.slug, match.id)
+        // Their name and their rep range stay theirs. A form video is the one
+        // thing worth adding, and only because there wasn't one.
+        if (!match.videoUrl) await db.exercises.update(match.id, { videoUrl: preset.videoUrl })
+        continue
+      }
+
+      // Deterministic ids, so a duplicated install overwrites instead of doubling.
+      const id = `preset-${preset.slug}-${profileId}`
+      idBySlug.set(preset.slug, id)
+
+      const planned = PRESET_ITEM_BY_SLUG.get(preset.slug)
+      const range = normalizeRepTarget(planned?.repsMin ?? 8, planned?.repsMax)
+      newExercises.push({
+        id,
+        profileId,
+        nameAr: preset.nameAr,
+        nameEn: preset.nameEn,
+        muscleGroup: preset.muscleGroup,
+        equipment: preset.equipment,
+        movement: preset.movement,
+        videoUrl: preset.videoUrl,
+        defaultRepsMin: range.targetReps,
+        defaultRepsMax: range.targetRepsMax,
+        isCustom: 1,
+      })
+    }
+
+    if (newExercises.length > 0) await db.exercises.bulkPut(newExercises)
+
+    const now = Date.now()
+    await db.routines.bulkPut(
+      PRESET_DAYS.map((day, index) => ({
+        id: `preset-${day.key}-${profileId}`,
+        profileId,
+        nameAr: day.nameAr,
+        nameEn: day.nameEn,
+        items: day.items.flatMap<RoutineItem>((item) => {
+          const exerciseId = idBySlug.get(item.slug)
+          if (!exerciseId) return []
+          return [
+            {
+              exerciseId,
+              targetSets: item.sets,
+              ...normalizeRepTarget(item.repsMin, item.repsMax),
+              restSeconds: item.restSeconds,
+            },
+          ]
+        }),
+        // A millisecond apart, so day 1 stays above day 4 wherever routines
+        // are listed by creation date.
+        createdAt: now + index,
+      }))
+    )
+
+    const programId = `preset-program-${profileId}`
+    const existing = await db.programs.get(programId)
+    // Only claim the active slot if nothing holds it. A member who already
+    // built their own block should not have it swapped out from under them.
+    const running = await db.programs.where('[profileId+active]').equals([profileId, 1]).first()
+    const active: 0 | 1 = existing?.active ?? (running ? 0 : 1)
+
+    await db.programs.put({
+      id: programId,
+      profileId,
+      nameAr: PRESET_PROGRAM.nameAr,
+      nameEn: PRESET_PROGRAM.nameEn,
+      weeks: PRESET_PROGRAM.weeks,
+      days: PRESET_DAYS.map((day) => ({
+        routineId: `preset-${day.key}-${profileId}`,
+        labelAr: day.labelAr,
+        labelEn: day.labelEn,
+      })),
+      progression: { kind: 'linear', incrementKg: PRESET_PROGRAM.incrementKg },
+      startedAt: existing?.startedAt ?? (active === 1 ? now : undefined),
+      active,
+      createdAt: existing?.createdAt ?? now,
+    })
+
+    await db.profiles.update(profileId, { presetVersion: PRESET_VERSION })
+    installed = true
+  })
+
+  return installed
 }
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────

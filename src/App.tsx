@@ -1,6 +1,7 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import AppShell from './components/AppShell'
+import { ensurePresetProgram } from './db/repository'
 import { useActiveProfile } from './lib/useActiveProfile'
 import Exercises from './pages/Exercises'
 import History from './pages/History'
@@ -31,6 +32,15 @@ const NutritionHistory = lazy(() => import('./pages/NutritionHistory'))
 
 export default function App() {
   const { profile, loading } = useActiveProfile()
+  const profileId = profile?.id
+
+  // The gym's four-day block, installed once per member and then left alone.
+  // It lives here rather than in main.tsx because there is no profile in scope
+  // that early, and here rather than in useActiveProfile because half the app
+  // calls that hook — this component mounts exactly once.
+  useEffect(() => {
+    if (profileId) void ensurePresetProgram(profileId)
+  }, [profileId])
 
   // Dexie reads are fast but not synchronous; painting the onboarding screen
   // during that gap would flash it at every returning user.
