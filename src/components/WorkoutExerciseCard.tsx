@@ -33,6 +33,7 @@ import { exerciseName, useT } from '../i18n'
 import {
   formatClock,
   formatNumber,
+  formatVolume,
   ltrIsolate,
   toDisplayWeight,
   toStoredWeight,
@@ -40,7 +41,13 @@ import {
 } from '../lib/format'
 import { SUGGESTION_REASON, suggestNextLoad } from '../lib/progression'
 import { formatRepRange } from '../lib/repRange'
-import { SET_TYPE_BADGE, SET_TYPE_LABEL, SET_TYPE_STYLE, nextSetType } from '../lib/setTypes'
+import {
+  SET_TYPE_BADGE,
+  SET_TYPE_LABEL,
+  SET_TYPE_STYLE,
+  countsAsWork,
+  nextSetType,
+} from '../lib/setTypes'
 import { useExerciseTimerStore } from '../lib/useClock'
 import { warmupSets } from '../lib/warmup'
 import ConfirmDialog from './ConfirmDialog'
@@ -130,16 +137,59 @@ export default function WorkoutExerciseCard({
 
   const topWeight = ordered.reduce((max, entry) => Math.max(max, entry.weight), 0)
 
-  const toggleDone = async (entry: SetEntry) => {
+  // How far through the exercise you are. The plan's set count wins when there
+  // is one, so an exercise written as 3 sets reads "1/3" from the first tick
+  // rather than "1/1" until you remember to add the next row.
+  const workingSets = ordered.filter((entry) => countsAsWork(entry.setType))
+  const doneSets = workingSets.filter((entry) => entry.done === 1).length
+  const totalSets = Math.max(sessionExercise.targetSets ?? 0, workingSets.length)
+  const allDone = totalSets > 0 && doneSets >= totalSets
+  const volume = workingSets.reduce(
+    (sum, entry) => (entry.done === 1 ? sum + entry.weight * entry.reps : sum),
+    0
+  )
+
+  const toggleDone = async (entry: SetEntry, prior?: SetEntry) => {
     const nowDone = entry.done === 0
     // A small physical tick on Android; Safari has no vibration API.
     if (nowDone) navigator.vibrate?.(30)
+
+    // The last session's numbers sit in the empty boxes as grey placeholders,
+    // so ticking a row you never typed into means "same as last time" — the
+    // most common set there is. Taking the placeholder at its word here is what
+    // makes it a real default instead of a hint: without this the set would
+    // save as 0 × 0 and read as a broken tick.
+    let saved = entry
+    if (nowDone && prior) {
+      const patch: Partial<SetEntry> = {}
+      if (entry.weight <= 0 && prior.weight > 0) patch.weight = prior.weight
+      if (isTimed) {
+        if (!entry.durationSeconds && prior.durationSeconds)
+          patch.durationSeconds = prior.durationSeconds
+      } else if (entry.reps <= 0 && prior.reps > 0) {
+        patch.reps = prior.reps
+      }
+      if (Object.keys(patch).length > 0) {
+        await updateSet(entry.id, patch)
+        saved = { ...entry, ...patch }
+      }
+    }
+
     await setSetDone(entry.id, nowDone)
     // Inside a superset you move straight to the next exercise, so rest only
     // starts once the group is finished.
     if (nowDone && !supersetContinues) onSetCompleted(sessionExercise.restSeconds)
-    if (nowDone && entry.setType !== 'warmup') void celebrateIfRecord(entry)
+    if (nowDone && countsAsWork(saved.setType)) void celebrateIfRecord(saved)
   }
+
+  /** One tap on last session's numbers copies them into the row beside them. */
+  const copyPrevious = (entry: SetEntry, prior: SetEntry) =>
+    updateSet(
+      entry.id,
+      isTimed
+        ? { durationSeconds: prior.durationSeconds ?? 0, reps: 0 }
+        : { weight: prior.weight, reps: prior.reps }
+    )
 
   /**
    * A live PR: this set's estimated 1RM beats every previous session. Only
@@ -180,9 +230,11 @@ export default function WorkoutExerciseCard({
   }
 
   // RPE adds a sixth column; without it the two number fields get more room.
+  // The weight and rep boxes are the ones being typed into with one thumb, so
+  // every millimetre the fixed columns give up goes to them.
   const gridClass = trackRpe
-    ? 'grid-cols-[1.75rem_3.25rem_1fr_1fr_2.5rem_2.25rem]'
-    : 'grid-cols-[2rem_4.5rem_1fr_1fr_2.5rem]'
+    ? 'grid-cols-[1.75rem_3rem_1fr_1fr_2.25rem_2.5rem]'
+    : 'grid-cols-[1.75rem_4rem_1fr_1fr_2.5rem]'
 
   const finishTimedSet = async (seconds: number) => {
     if (seconds <= 0) return
@@ -205,7 +257,25 @@ export default function WorkoutExerciseCard({
     // Superset members stay as separate cards — the list has a gap between them,
     // so merging their borders would just look broken. A cyan edge and a chip
     // carry the grouping instead.
-    <article className={`card overflow-hidden ${inSuperset ? 'border-aqua-500/40' : ''}`}>
+    <article
+      className={`card overflow-hidden ${
+        inSuperset ? 'border-aqua-500/40' : allDone ? 'border-brand-500/35' : ''
+      }`}
+    >
+      {/* How much of this exercise is behind you, read at a glance from the top
+          of the card. Scrolling a workout is mostly scanning for the next thing
+          that isn't finished, and a card whose only "done" signal was inside
+          the rows made that a reading exercise. It fills from the leading edge,
+          so it runs right-to-left in Arabic without being told to. */}
+      {totalSets > 0 && (
+        <div className="h-[3px] w-full bg-ink-600/60" aria-hidden>
+          <div
+            className="h-full rounded-e-full bg-brand-gradient transition-[width] duration-300 ease-out"
+            style={{ width: `${Math.min(100, (doneSets / totalSets) * 100)}%` }}
+          />
+        </div>
+      )}
+
       <header className="flex items-center gap-2 border-b border-ink-500/50 px-4 py-3">
         {/* The name is a button: tapping it answers "what did I lift last time?"
             without leaving the workout. */}
@@ -242,6 +312,15 @@ export default function WorkoutExerciseCard({
                   ),
                 })
               : null}
+            {totalSets > 0 && (
+              <span
+                className={`tabular shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  allDone ? 'bg-brand-500/15 text-brand-400' : 'bg-ink-600 text-ink-200'
+                }`}
+              >
+                {ltrIsolate(`${doneSets}/${totalSets}`)}
+              </span>
+            )}
           </p>
         </button>
 
@@ -293,14 +372,16 @@ export default function WorkoutExerciseCard({
         <button
           type="button"
           onClick={applySuggestion}
-          className="flex w-full items-center gap-2 border-b border-ink-500/40 bg-brand-500/5
-                     px-4 py-2.5 text-start active:bg-brand-500/10"
+          className="flex w-full items-center gap-2 border-b border-ink-500/40 bg-brand-soft
+                     px-4 py-2.5 text-start active:bg-brand-500/15"
         >
           <TrendingUp size={14} className="shrink-0 text-brand-500" />
-          <span className="min-w-0 flex-1 text-xs text-ink-200">
+          <span className="min-w-0 flex-1 text-xs text-ink-100">
             {t(SUGGESTION_REASON[suggestion.reason])}
           </span>
-          <span className="tabular shrink-0 text-xs font-bold text-brand-500">
+          {/* The weight reads as a chip rather than as more text, because it is
+              what the tap does: put this number in every set below. */}
+          <span className="tabular shrink-0 rounded-lg bg-brand-500 px-2 py-1 text-[11px] font-bold text-ink-950">
             {formatNumber(toDisplayWeight(suggestion.weight, units))} {unitLabel(units, locale)}
           </span>
         </button>
@@ -331,8 +412,16 @@ export default function WorkoutExerciseCard({
             return (
               <li
                 key={entry.id}
+                // A ring rather than a leading rail: box-shadow has no logical
+                // form, so a rail would sit on the left in Arabic too, and an
+                // actual border would shift every column by 3px the moment a
+                // set was ticked.
                 className={`grid ${gridClass} items-center gap-1.5 rounded-xl px-1 py-1
-                            transition-colors ${entry.done ? 'bg-brand-500/10' : ''}`}
+                            ring-1 ring-inset transition-colors ${
+                              entry.done
+                                ? 'bg-brand-500/[0.07] ring-brand-500/25'
+                                : 'ring-transparent'
+                            }`}
               >
                 {/* Tapping the number walks through working → warm-up → drop →
                     failure, which is faster mid-set than opening a menu. */}
@@ -349,11 +438,25 @@ export default function WorkoutExerciseCard({
                   {badge ?? entry.setNumber}
                 </button>
 
-                {/* Isolated for the same reason as the target line above: bare
+                {/* Last session's numbers, and a button: tapping them copies
+                    them into this row. The column used to be four characters of
+                    grey text you could only read — which is the answer to "what
+                    did I do last time?" but not to "log that again", the thing
+                    you actually want most sets of most exercises.
+
+                    Isolated for the same reason as the target line above: bare
                     in Arabic "77.5×10" lays out as "10×77.5", and the sheet and
                     the pre-workout brief already print the isolated form — the
                     same set read two different ways on two screens. */}
-                <span className="tabular truncate text-xs text-ink-300">
+                <button
+                  type="button"
+                  disabled={!prior}
+                  onClick={() => prior && void copyPrevious(entry, prior)}
+                  aria-label={prior ? t('workout.copyPrevious') : undefined}
+                  className="tabular min-h-8 self-stretch truncate rounded-lg px-1 text-start
+                             text-xs text-ink-300 transition-colors enabled:active:bg-ink-600
+                             enabled:active:text-ink-50 disabled:text-ink-400"
+                >
                   {!prior
                     ? t('common.empty')
                     : isTimed
@@ -361,50 +464,74 @@ export default function WorkoutExerciseCard({
                       : ltrIsolate(
                           `${formatNumber(toDisplayWeight(prior.weight, units))}×${prior.reps}`
                         )}
-                </span>
+                </button>
 
+                {/* The placeholders are last session's numbers, not "0". An
+                    empty row therefore already reads as the set you are about
+                    to do, and `toggleDone` commits exactly what is showing. */}
                 <NumberField
+                  variant="cell"
+                  done={entry.done === 1}
+                  ariaLabel={unitLabel(units, locale)}
                   value={toDisplayWeight(entry.weight, units)}
                   onChange={(value) => updateSet(entry.id, { weight: toStoredWeight(value, units) })}
+                  placeholder={
+                    prior ? formatNumber(toDisplayWeight(prior.weight, units)) : '0'
+                  }
                   step={2.5}
                 />
                 {isTimed ? (
                   // Editable in seconds so a mistimed hold can be corrected;
                   // the label above the column says what the unit is.
                   <NumberField
+                    variant="cell"
+                    done={entry.done === 1}
+                    ariaLabel={t('common.time')}
                     value={entry.durationSeconds ?? 0}
                     onChange={(value) =>
                       updateSet(entry.id, { durationSeconds: Math.round(value), reps: 0 })
                     }
+                    placeholder={String(
+                      prior?.durationSeconds ?? sessionExercise.targetReps ?? 0
+                    )}
                     step={5}
                   />
                 ) : (
                   <NumberField
+                    variant="cell"
+                    done={entry.done === 1}
+                    ariaLabel={t('common.reps')}
                     value={entry.reps}
                     onChange={(value) => updateSet(entry.id, { reps: Math.round(value) })}
+                    placeholder={String(prior?.reps ?? sessionExercise.targetReps ?? 0)}
                   />
                 )}
 
                 {trackRpe && (
                   <NumberField
+                    variant="cell"
+                    done={entry.done === 1}
+                    ariaLabel={t('workout.rpe')}
                     value={entry.rpe ?? 0}
                     onChange={(value) =>
                       updateSet(entry.id, { rpe: value > 0 ? Math.min(10, value) : undefined })
                     }
+                    placeholder="–"
                   />
                 )}
 
                 <div className="flex items-center justify-center">
                   <button
                     type="button"
-                    onClick={() => toggleDone(entry)}
+                    onClick={() => toggleDone(entry, prior)}
                     aria-label={t('common.done')}
                     aria-pressed={entry.done === 1}
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl
+                                transition-transform active:scale-90
                                 ${
                                   entry.done
-                                    ? 'bg-brand-500 text-ink-950'
-                                    : 'bg-ink-600 text-ink-300 active:bg-ink-500'
+                                    ? 'bg-brand-gradient text-ink-950 shadow-brand'
+                                    : 'border border-ink-500/60 bg-ink-600 text-ink-300 active:bg-ink-500'
                                 }`}
                   >
                     <Check size={18} strokeWidth={3} />
@@ -415,12 +542,25 @@ export default function WorkoutExerciseCard({
           })}
         </ul>
 
+        {/* What this exercise has actually put on the bar today. Sets ticked is
+            effort; tonnage is work, and it is the number that tells you whether
+            a session where you dropped the weight and added reps went forwards
+            or backwards. Hidden until there is something to count. */}
+        {volume > 0 && (
+          <p className="mt-2 flex items-center justify-between px-1 text-[11px]">
+            <span className="text-ink-400">{t('workout.volumeToday')}</span>
+            <span className="tabular font-bold text-ink-100">
+              {formatVolume(volume, units, locale, { compact: true })}
+            </span>
+          </p>
+        )}
+
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => addSet(sessionExercise.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-ink-600
-                       py-2.5 text-xs font-semibold text-ink-100 active:bg-ink-500"
+            className="btn-soft flex flex-1 items-center justify-center gap-1.5 py-2.5
+                       text-xs font-semibold"
           >
             <Plus size={15} />
             {t('workout.addSet')}
@@ -434,8 +574,8 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={() => setRestOpen(true)}
               aria-label={t('workout.restLength')}
-              className="tabular flex items-center gap-1.5 rounded-xl bg-ink-600 px-3 py-2.5
-                         text-xs font-semibold text-ink-100 active:bg-ink-500"
+              className="btn-soft tabular flex items-center gap-1.5 px-3 py-2.5
+                         text-xs font-semibold"
             >
               <Timer size={15} className="text-brand-400" />
               {sessionExercise.restSeconds > 0
@@ -449,7 +589,7 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={addWarmup}
               aria-label={t('workout.addWarmup')}
-              className="rounded-xl bg-ink-600 px-3.5 text-aqua-300 active:bg-ink-500"
+              className="btn-soft px-3.5 text-aqua-300"
             >
               <Flame size={16} />
             </button>
@@ -462,7 +602,7 @@ export default function WorkoutExerciseCard({
               type="button"
               onClick={() => deleteSet(ordered[ordered.length - 1].id)}
               aria-label={t('workout.removeSet')}
-              className="rounded-xl bg-ink-600 px-3.5 text-ink-300 active:bg-ink-500"
+              className="btn-soft px-3.5 text-ink-300"
             >
               <Minus size={16} />
             </button>

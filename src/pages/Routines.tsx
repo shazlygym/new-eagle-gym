@@ -92,14 +92,14 @@ export default function Routines() {
                     // gets its own language regardless of the current locale.
                     onClick={() => duplicateRoutine(routine.id, { ar: '(نسخة)', en: '(copy)' })}
                     aria-label={t('routines.duplicate')}
-                    className="icon-btn bg-ink-600 text-ink-100 active:bg-ink-500"
+                    className="btn-soft icon-btn"
                   >
                     <Copy size={16} />
                   </button>
                   <Link
                     to={`/routines/${routine.id}`}
                     aria-label={t('common.edit')}
-                    className="icon-btn bg-ink-600 text-ink-100 active:bg-ink-500"
+                    className="btn-soft icon-btn"
                   >
                     <Pencil size={16} />
                   </Link>

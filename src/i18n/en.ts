@@ -78,6 +78,8 @@ export const en = {
   'workout.empty': 'No exercises yet',
   'workout.emptyHint': 'Add your first exercise to get going.',
   'workout.previous': 'Prev',
+  'workout.copyPrevious': 'Use last time',
+  'workout.volumeToday': 'Volume today',
   'workout.target': 'Target: {value}',
   'workout.addSet': 'Add set',
   'workout.warmup': 'Warm-up',

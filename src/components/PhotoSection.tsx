@@ -251,7 +251,7 @@ function CompareColumn({
           disabled={index === 0}
           onClick={() => onStep(-1)}
           aria-label={t('common.previous')}
-          className="icon-btn-sm bg-ink-600 text-ink-200 active:bg-ink-500 disabled:opacity-30"
+          className="btn-soft icon-btn-sm text-ink-200 disabled:opacity-30"
         >
           <ChevronLeft size={15} />
         </button>
@@ -263,7 +263,7 @@ function CompareColumn({
           disabled={index === photos.length - 1}
           onClick={() => onStep(1)}
           aria-label={t('common.next')}
-          className="icon-btn-sm bg-ink-600 text-ink-200 active:bg-ink-500 disabled:opacity-30"
+          className="btn-soft icon-btn-sm text-ink-200 disabled:opacity-30"
         >
           <ChevronRight size={15} />
         </button>

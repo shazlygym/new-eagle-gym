@@ -79,6 +79,8 @@ export const ar: Record<TranslationKey, string> = {
   'workout.empty': 'لا توجد تمارين بعد',
   'workout.emptyHint': 'أضف أول تمرين لتبدأ.',
   'workout.previous': 'السابق',
+  'workout.copyPrevious': 'انسخ المرة السابقة',
+  'workout.volumeToday': 'الحجم اليوم',
   'workout.target': 'الهدف: {value}',
   'workout.addSet': 'إضافة مجموعة',
   'workout.warmup': 'إحماء',

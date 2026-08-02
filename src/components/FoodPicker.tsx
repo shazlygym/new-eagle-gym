@@ -145,7 +145,7 @@ export default function FoodPicker({ open, profileId, onClose, onPick }: Props) 
                 <button
                   type="button"
                   onClick={() => setSelected(food)}
-                  className="flex w-full items-center gap-3 rounded-xl bg-ink-600 px-4 py-3 text-start active:bg-ink-500"
+                  className="btn-soft flex w-full items-center gap-3 px-4 py-3 text-start"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-ink-50">

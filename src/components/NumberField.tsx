@@ -13,7 +13,22 @@ interface Props {
   placeholder?: string
   /** Adds −/+ buttons either side; skip them where space is tight. */
   steppers?: boolean
+  /**
+   * `form` is the full-width field with a label above it. `cell` is the dense
+   * scoreboard box used inside the workout grid — see `.field-num`.
+   */
+  variant?: 'form' | 'cell'
+  /** `cell` only: paints the box as a logged set rather than an empty entry. */
+  done?: boolean
   className?: string
+  /** Announces the column when there is no visible label — the grid rows. */
+  ariaLabel?: string
+}
+
+/** What a field's text means as a number. Unparseable reads as empty, i.e. 0. */
+function parse(raw: string, min: number) {
+  const parsed = Number.parseFloat(raw.replace(',', '.'))
+  return Number.isFinite(parsed) ? Math.max(min, parsed) : 0
 }
 
 /**
@@ -40,19 +55,36 @@ export default function NumberField({
   label,
   placeholder = '0',
   steppers = false,
+  variant = 'form',
+  done = false,
   className = '',
+  ariaLabel,
 }: Props) {
   const { t } = useT()
   // While `draft` is non-null the input owns its own text; outside of that it
   // renders straight from props, so external updates flow in normally.
   const [draft, setDraft] = useState<string | null>(null)
+
+  // A focused field is not a sealed one. Tapping "use last time", or the
+  // progression chip, writes a new weight into every set while the field you
+  // last touched still holds a draft — and on iOS a button takes the tap
+  // without moving focus, so no blur ever arrives to clear it. The draft would
+  // go on painting the old text over a value that had already changed
+  // underneath it, which reads as the button doing nothing.
+  //
+  // So the draft survives only while it still agrees with the value. Typing
+  // pushes on every keystroke, so mid-word the two always agree and "12." is
+  // left alone; an external write is the only thing that can disagree.
+  const [seen, setSeen] = useState(value)
+  if (value !== seen) {
+    setSeen(value)
+    if (draft !== null && parse(draft, min) !== value) setDraft(null)
+  }
+
   const shown = draft ?? (value === 0 ? '' : String(value))
 
   /** Parse and hand upstream. An unparseable field is a zero, same as empty. */
-  const push = (raw: string) => {
-    const parsed = Number.parseFloat(raw.replace(',', '.'))
-    onChange(Number.isFinite(parsed) ? Math.max(min, parsed) : 0)
-  }
+  const push = (raw: string) => onChange(parse(raw, min))
 
   const nudge = (delta: number) => {
     const next = Math.max(min, Math.round((value + delta) * 100) / 100)
@@ -97,14 +129,21 @@ export default function NumberField({
               setDraft(null)
             }}
             onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
-            // .field's px-4 is right for a full-width form field and wrong here:
-            // in the workout grid the box is ~57px, so 32px of padding left 22px
-            // of text room and a centred "77.5" rendered as "7.5" — the wrong
-            // number, silently. ps/pe are logical and are emitted after px in
-            // Tailwind's utility order, so they win over the component class.
-            className={`tabular field w-full ps-2 text-center font-semibold ${
-              suffix ? 'pe-9' : 'pe-2'
-            }`}
+            aria-label={ariaLabel}
+            // Two different controls, not one control with a modifier. `.field`
+            // is a form input: 16px of side padding, which is right under a
+            // label and wrong in a 70px grid box — it left 22px of text room and
+            // a centred "77.5" rendered as "7.5", the wrong number, silently.
+            // `.field-num` is that box's own control and needs no override.
+            // (ps/pe are logical and are emitted after px in Tailwind's utility
+            // order, so they still win over `.field` where they are used.)
+            className={
+              variant === 'cell'
+                ? `field-num ${done ? 'field-num-done' : ''}`
+                : `tabular field w-full ps-2 text-center font-semibold ${
+                    suffix ? 'pe-9' : 'pe-2'
+                  }`
+            }
           />
           {suffix && (
             <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-xs text-ink-300">

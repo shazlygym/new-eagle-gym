@@ -131,7 +131,7 @@ export default function Programs() {
                     <Link
                       to={`/programs/${program.id}`}
                       aria-label={t('common.edit')}
-                      className="icon-btn bg-ink-600 text-ink-100 active:bg-ink-500"
+                      className="btn-soft icon-btn"
                     >
                       <Pencil size={16} />
                     </Link>
@@ -205,7 +205,7 @@ export default function Programs() {
                       <button
                         type="button"
                         onClick={() => deactivateProgram(program.id)}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink-600 py-2.5 text-sm font-medium text-ink-100 active:bg-ink-500"
+                        className="btn-soft flex w-full items-center justify-center gap-2 py-2.5 text-sm font-medium"
                       >
                         <Square size={14} />
                         {t('programs.stop')}

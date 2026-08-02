@@ -381,7 +381,7 @@ function SavedMealsSheet({
               <button
                 type="button"
                 onClick={() => onPick(meal.id)}
-                className="flex w-full items-center gap-3 rounded-xl bg-ink-600 px-4 py-3 text-start active:bg-ink-500"
+                className="btn-soft flex w-full items-center gap-3 px-4 py-3 text-start"
               >
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-50">
                   {locale === 'ar' ? meal.nameAr : meal.nameEn}

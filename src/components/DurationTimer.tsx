@@ -83,7 +83,7 @@ export default function DurationTimer({ sessionExerciseId, target, onFinish }: P
         type="button"
         onClick={cancel}
         aria-label={t('common.cancel')}
-        className="icon-btn bg-ink-600 text-ink-200 active:bg-ink-500"
+        className="btn-soft icon-btn text-ink-200"
       >
         <X size={16} />
       </button>
